@@ -74,6 +74,7 @@ struct LocalTalkApp: App {
 @MainActor
 enum AppComposition {
     static let audio = AudioService()
+    static let whisperEngine = WhisperKitEngine()
 
     static func makeAppModel() -> AppModel {
         let settings = SettingsStore()
@@ -85,7 +86,7 @@ enum AppComposition {
                 case .parakeet:
                     ParakeetEngine(version: route.parakeetVersion ?? .v2)
                 case .whisperKit:
-                    ParakeetEngine(version: .v2)
+                    whisperEngine
                 }
             },
             audioStart: {

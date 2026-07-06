@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import FluidAudio
+@preconcurrency import WhisperKit
 
 @MainActor @Observable
 final class ModelManager {
@@ -52,6 +53,24 @@ final class ModelManager {
             setParakeet(version, .ready)
         } catch {
             setParakeet(version, .failed(error.localizedDescription))
+        }
+    }
+
+    func downloadWhisper() async {
+        whisperLargeTurbo = .downloading(0)
+        do {
+            _ = try await WhisperKit.download(
+                variant: Self.whisperModelName,
+                downloadBase: Self.whisperDownloadBase,
+                progressCallback: { [weak self] progress in
+                    Task { @MainActor [weak self] in
+                        self?.whisperLargeTurbo = .downloading(progress.fractionCompleted)
+                    }
+                }
+            )
+            whisperLargeTurbo = .ready
+        } catch {
+            whisperLargeTurbo = .failed(error.localizedDescription)
         }
     }
 
