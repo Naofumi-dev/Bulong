@@ -15,8 +15,9 @@ struct LocalTalkApp: App {
 
     var body: some Scene {
         MenuBarExtra("Bulong", systemImage: menuIcon) {
-            MenuBarView(model: appModel)
+            MenuPopoverView(model: appModel)
         }
+        .menuBarExtraStyle(.window)
 
         Window("Bulong", id: "main") {
             MainWindowView(model: appModel, modelManager: AppComposition.modelManager)
