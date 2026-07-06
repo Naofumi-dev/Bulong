@@ -1,33 +1,33 @@
 # LocalTalk
 
-LocalTalk is a local-only macOS dictation prototype for private voice input.
+Private, on-device dictation for macOS. Press a hotkey in any app, speak, and the words appear. Nothing leaves your Mac.
 
-- A native desktop window opens with Home, Dictation, Hotkeys, and Preferences sections.
-- `Control+Option+Space` toggles recording from anywhere.
-- A small floating dictation bar appears while recording and transcribing.
-- Audio is recorded as a temporary WAV file on this Mac.
-- Transcription runs through the local `whisper` executable.
-- Results are copied to the clipboard and can be pasted automatically after Accessibility permission is granted.
-- Recent transcripts are stored locally in macOS user defaults for quick review.
+- Apple Silicon, macOS 14+
+- Engines: NVIDIA Parakeet through FluidAudio for English and supported European languages; WhisperKit for everything else, including translate-to-English
+- Filipino (Tagalog) support routes through WhisperKit
+- The only network traffic is one-time model downloads from Hugging Face
+- No telemetry, no cloud transcription, no API key
 
-## Run
+## Develop
 
 ```bash
-./script/build_and_run.sh
+brew install xcodegen
+./script/dev_build.sh
+xcodebuild test -project LocalTalk.xcodeproj -scheme LocalTalk -destination 'platform=macOS,arch=arm64'
 ```
 
-The app bundle is staged at `dist/LocalTalk.app`.
+## Release
 
-This build uses Objective-C/AppKit because the Command Line Tools on this Mac
-currently fail to import Swift Foundation modules. A SwiftUI version is also
-present in `Sources/LocalTalk`, but the working app path is `SourcesObjC/main.m`.
+Requires Apple Developer Program membership and a Developer ID Application certificate.
 
-## Local AI Notes
+```bash
+TEAM_ID=XXXXXXXXXX ./script/release.sh
+./script/sign_and_notarize.sh
+./script/make_dmg.sh
+```
 
-This version uses the installed OpenAI Whisper command-line tool. The first time a model is used, Whisper may download that model into its local cache. After that, inference is local and no API key is used.
+Run the manual release checks in `docs/superpowers/specs/smoke-checklist.md` before shipping.
 
-For translation into English, choose a multilingual model such as `small` or `medium`. English-only models like `base.en` are best for English transcription.
+`SourcesObjC/main.m` is the original prototype, kept as a design reference for the Phase 2 visual pass.
 
-## MVP Limits
-
-This prototype focuses on the core personal workflow: hotkey dictation, local transcription, paste into the focused app, and a polished settings shell. Single-key push-to-talk, custom dictionaries, snippets, account features, background audio ducking, packaging, signing, and auto-updates are intentionally left for the next product pass.
+Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0.
