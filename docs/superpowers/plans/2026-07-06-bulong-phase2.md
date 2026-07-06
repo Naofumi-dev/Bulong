@@ -754,7 +754,7 @@ enum HUDPosition: String, Codable, CaseIterable {
 }
 ```
 
-In `SettingsStore`: add `var hudPosition: HUDPosition { didSet { defaults.set(hudPosition.rawValue, forKey: "hudPosition") } }`, initialized in `init` via `HUDPosition(rawValue: defaults.string(forKey: "hudPosition") ?? "") ?? .bottomCenter`. Also append `"hudPosition"` to `MigrationService.settingsKeys`. Run TEST → the new test passes.
+In `SettingsStore`: add `var hudPosition: HUDPosition { didSet { defaults.set(hudPosition.rawValue, forKey: "hudPosition") } }`, initialized in `init` via `HUDPosition(rawValue: defaults.string(forKey: "hudPosition") ?? "") ?? .bottomCenter`. Do NOT touch `MigrationService.settingsKeys` — it is a frozen snapshot of LocalTalk-era keys and `hudPosition` never existed in the old domain. Run TEST → the new test passes.
 
 - [ ] **Step 2: Replace `LocalTalk/UI/MainWindow/SettingsView.swift`**
 
