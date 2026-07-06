@@ -94,6 +94,31 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(partials, ["hel", "hello"])
     }
 
+    func testCaptureTargetRunsBeforeRecordingAndHistoryUsesCapturedApp() async throws {
+        let engine = FakeEngine()
+        let audio = AudioStub()
+        var captured = false
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in engine },
+            audioStart: { audio.start() },
+            audioStop: { audio.stop() },
+            captureTarget: { captured = true },
+            insertText: { _ in .insertedDirectly },
+            frontmostAppName: { captured ? "Captured App" : "Wrong App" },
+            minimumDuration: 0,
+            watchdogSeconds: 5
+        )
+
+        await model.toggleDictation()
+        audio.emitSilence(buffers: 1)
+        await model.toggleDictation()
+        await model.waitForIdle()
+
+        XCTAssertEqual(model.history.entries.first?.appName, "Captured App")
+    }
+
     func testFailedStateClearsOnNextStart() async throws {
         let engine = FakeEngine()
         engine.scriptedError = EngineError.engineFailure("boom")

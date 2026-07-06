@@ -81,6 +81,7 @@ struct LocalTalkApp: App {
 enum AppComposition {
     static let audio = AudioService()
     static let hotkey = HotkeyService()
+    static let paste = PasteService()
     static let whisperEngine = WhisperKitEngine()
 
     static func makeAppModel() -> AppModel {
@@ -104,13 +105,14 @@ enum AppComposition {
             audioStop: {
                 audio.stop()
             },
+            captureTarget: {
+                paste.captureTarget()
+            },
             insertText: { text in
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(text, forType: .string)
-                return .clipboardOnly(reason: "PasteService arrives in Task 10")
+                await paste.insert(text, alsoCopy: true)
             },
             frontmostAppName: {
-                NSWorkspace.shared.frontmostApplication?.localizedName ?? "Unknown"
+                paste.targetAppName
             }
         )
     }
