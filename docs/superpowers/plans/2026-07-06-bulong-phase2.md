@@ -630,6 +630,7 @@ private struct HistoryCard: View {
     let entry: HistoryEntry
     @State private var hovering = false
     @State private var copied = false
+    @State private var copyResetTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -649,7 +650,11 @@ private struct HistoryCard: View {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(entry.text, forType: .string)
                         copied = true
-                        Task { try? await Task.sleep(for: .seconds(1.2)); copied = false }
+                        copyResetTask?.cancel()
+                        copyResetTask = Task {
+                            try? await Task.sleep(for: .seconds(1.2))
+                            if !Task.isCancelled { copied = false }
+                        }
                     }
                     .buttonStyle(.plain)
                     .font(Theme.Fonts.caption)
@@ -706,7 +711,7 @@ Note: `HistoryView(history:)` becomes `HistoryView(model:)` — update the call 
 
 - [ ] **Step 2: Cross-fade + ladder in `MainWindowView.swift`**
 
-In the detail `ZStack`, give each section view `.transition(.opacity)` and wrap the `section` switch driver with `.animation(Theme.easeFast, value: section)`. Sidebar rows: replace plain `Label` with a row that gets `Theme.textPrimary` when selected, `Theme.textSecondary` otherwise, hover background `Theme.ink1` via `.listRowBackground` alternatives — where `.listStyle(.sidebar)` fights custom hover, keep the stock selection but add `.tint(Theme.accent)` (already present at window level) and move on; do not burn more than 30 minutes fighting AppKit here (spec allows "where feasible").
+In the detail `ZStack`, give each section view `.transition(.opacity)` and wrap the `section` switch driver with `.animation(Theme.easeFast, value: section)`. NOTE (post-review): the section selection was hoisted out of MainWindowView's local `@State` into `AppComposition.uiState` (an `@Observable UIState`) by Task 3's fixes so the popover can navigate — bind to that (via `@Bindable`), do NOT reintroduce local section state. Sidebar rows: replace plain `Label` with a row that gets `Theme.textPrimary` when selected, `Theme.textSecondary` otherwise, hover background `Theme.ink1` via `.listRowBackground` alternatives — where `.listStyle(.sidebar)` fights custom hover, keep the stock selection but add `.tint(Theme.accent)` (already present at window level) and move on; do not burn more than 30 minutes fighting AppKit here (spec allows "where feasible").
 
 - [ ] **Step 3: Build, tests, manual check, commit**
 
