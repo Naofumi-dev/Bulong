@@ -19,11 +19,11 @@ enum MainSection: String, CaseIterable, Identifiable {
 struct MainWindowView: View {
     var model: AppModel
     var modelManager: ModelManager
-    @State private var section: MainSection? = .history
+    @Bindable private var uiState = AppComposition.uiState
 
     var body: some View {
         NavigationSplitView {
-            List(MainSection.allCases, selection: $section) { item in
+            List(MainSection.allCases, selection: $uiState.mainSection) { item in
                 Label(item.rawValue, systemImage: item.icon)
                     .tag(item)
             }
@@ -37,7 +37,7 @@ struct MainWindowView: View {
         } detail: {
             ZStack {
                 Theme.ink0.ignoresSafeArea()
-                switch section ?? .history {
+                switch uiState.mainSection {
                 case .history:
                     HistoryView(history: model.history)
                 case .settings:

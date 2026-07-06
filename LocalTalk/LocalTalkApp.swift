@@ -48,6 +48,7 @@ enum AppComposition {
     static let hud = HUDPanelController()
     static let modelManager = ModelManager()
     static let paste = PasteService()
+    static let uiState = UIState()
     static let whisperEngine = WhisperKitEngine()
     static var onboardingWindow: NSWindow?
 

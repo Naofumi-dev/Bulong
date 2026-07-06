@@ -7,8 +7,30 @@ final class PasteService {
 
     private(set) var targetApp: NSRunningApplication?
 
+    /// Most recent frontmost app other than Bulong. With the .window-style
+    /// popover, clicking a popover button can make Bulong itself frontmost,
+    /// so capture must fall back to the app the user was actually in.
+    private var lastExternalApp: NSRunningApplication?
+    private var activationObserver: NSObjectProtocol?
+
     var targetAppName: String {
         targetApp?.localizedName ?? "Unknown"
+    }
+
+    init() {
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard
+                let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                app.processIdentifier != ProcessInfo.processInfo.processIdentifier
+            else { return }
+            MainActor.assumeIsolated {
+                self?.lastExternalApp = app
+            }
+        }
     }
 
     static var isAccessibilityTrusted: Bool {
@@ -23,7 +45,12 @@ final class PasteService {
     }
 
     func captureTarget() {
-        targetApp = NSWorkspace.shared.frontmostApplication
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        if let frontmost, frontmost.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+            targetApp = frontmost
+        } else {
+            targetApp = lastExternalApp
+        }
     }
 
     func insert(_ text: String, alsoCopy: Bool) async -> InsertionResult {

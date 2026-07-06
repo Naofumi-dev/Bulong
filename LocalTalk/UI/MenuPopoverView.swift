@@ -5,6 +5,7 @@ struct MenuPopoverView: View {
     var model: AppModel
     @Environment(\.openWindow) private var openWindow
     @State private var copied = false
+    @State private var copyResetTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -27,11 +28,13 @@ struct MenuPopoverView: View {
             Circle()
                 .fill(isLive ? Theme.accent : Theme.textTertiary)
                 .frame(width: 7, height: 7)
+                .accessibilityHidden(true)
             Text("bulong").font(Theme.Fonts.mono(14, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             Spacer()
             Text(stateText).font(Theme.Fonts.caption)
                 .foregroundStyle(isFailed ? Theme.failure : Theme.textSecondary)
                 .lineLimit(1)
+                .help(stateText)
         }
     }
 
@@ -59,6 +62,7 @@ struct MenuPopoverView: View {
     private func recordingStrip(started: Date) -> some View {
         HStack(spacing: 8) {
             LevelBars(level: AppComposition.audio.level, active: true)
+                .accessibilityHidden(true)
             TimelineView(.periodic(from: started, by: 0.5)) { context in
                 Text(elapsed(from: started, now: context.date))
                     .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textSecondary)
@@ -74,7 +78,11 @@ struct MenuPopoverView: View {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(model.lastTranscript, forType: .string)
             copied = true
-            Task { try? await Task.sleep(for: .seconds(1.2)); copied = false }
+            copyResetTask?.cancel()
+            copyResetTask = Task {
+                try? await Task.sleep(for: .seconds(1.2))
+                if !Task.isCancelled { copied = false }
+            }
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text(model.lastTranscript)
@@ -95,16 +103,22 @@ struct MenuPopoverView: View {
 
     private var footer: some View {
         HStack(spacing: 2) {
-            Button("History") { openMain() }.buttonStyle(HoverButtonStyle())
-            Button("Settings") { openMain() }.buttonStyle(HoverButtonStyle())
+            Button("History") { openMain(.history) }.buttonStyle(HoverButtonStyle())
+            Button("Settings") { openMain(.settings) }.buttonStyle(HoverButtonStyle())
             Spacer()
-            Button("Quit") { NSApp.terminate(nil) }.buttonStyle(HoverButtonStyle())
+            Button("Quit") { NSApp.terminate(nil) }
+                .buttonStyle(HoverButtonStyle())
+                .keyboardShortcut("q")
         }
     }
 
-    private func openMain() {
+    private func openMain(_ section: MainSection) {
+        AppComposition.uiState.mainSection = section
         openWindow(id: "main")
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
+        if !NSApp.isActive {
+            NSRunningApplication.current.activate(options: .activateIgnoringOtherApps)
+        }
     }
 
     private var isRecording: Bool { if case .recording = model.state { true } else { false } }

@@ -28,3 +28,8 @@ Run before any release build. All items must pass.
 - [ ] Menu bar icon reflects idle, recording, transcribing, inserting, and failed states
 - [ ] Quit during recording leaves no orphan process (`pgrep LocalTalk` empty)
 - [ ] History survives relaunch; export writes a readable `.txt`; clear empties it
+
+## Popover
+
+- [ ] Popover: opening History/Settings lands on the right pane and popover dismisses
+- [ ] Start dictation from the popover → text pastes into the previously focused app

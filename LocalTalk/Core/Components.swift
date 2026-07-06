@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// Shared UI state that outlives individual scenes (e.g. which main-window
+/// pane is selected, so the popover can deep-link into History or Settings).
+@MainActor
+@Observable
+final class UIState {
+    var mainSection: MainSection = .history
+}
+
 /// Keycap-styled hotkey chip, mono type. The brand's rendering of a shortcut.
 struct HotkeyChip: View {
     let text: String
@@ -18,10 +26,21 @@ struct HotkeyChip: View {
                     .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
                         .stroke(pulsing && pulse ? Theme.accent : Theme.hairlineStrong, lineWidth: 1))
             )
-            .onAppear {
-                guard pulsing, !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 0.7).repeatForever()) { pulse = true }
+            .onAppear { startPulseIfNeeded() }
+            .onChange(of: pulsing) { _, isPulsing in
+                if isPulsing {
+                    startPulseIfNeeded()
+                } else {
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) { pulse = false }
+                }
             }
+    }
+
+    private func startPulseIfNeeded() {
+        guard pulsing, !reduceMotion else { return }
+        withAnimation(.easeInOut(duration: 0.7).repeatForever()) { pulse = true }
     }
 }
 
