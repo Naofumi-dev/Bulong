@@ -13,32 +13,14 @@ struct LocalTalkApp: App {
 
     var body: some Scene {
         MenuBarExtra("LocalTalk", systemImage: menuIcon) {
-            Text(statusLine)
-
-            if !appModel.lastPartial.isEmpty {
-                Text(appModel.lastPartial)
-                    .font(.caption)
-            }
-
-            Divider()
-
-            Button(buttonTitle) {
-                Task { await appModel.toggleDictation() }
-            }
-
-            Button("Copy Last Transcript") {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(appModel.lastTranscript, forType: .string)
-            }
-            .disabled(appModel.lastTranscript.isEmpty)
-
-            Divider()
-
-            Button("Quit LocalTalk") {
-                NSApp.terminate(nil)
-            }
-                .keyboardShortcut("q")
+            MenuBarView(model: appModel)
         }
+
+        Window("LocalTalk", id: "main") {
+            MainWindowView(model: appModel, modelManager: AppComposition.modelManager)
+        }
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 760, height: 500)
     }
 
     private var menuIcon: String {
@@ -54,27 +36,6 @@ struct LocalTalkApp: App {
         }
     }
 
-    private var statusLine: String {
-        switch appModel.state {
-        case .idle:
-            "Ready"
-        case .recording:
-            "Listening..."
-        case .transcribing:
-            "Transcribing..."
-        case .inserting:
-            "Inserting..."
-        case .failed(let message):
-            message
-        }
-    }
-
-    private var buttonTitle: String {
-        if case .recording = appModel.state {
-            return "Stop and Transcribe"
-        }
-        return "Start Dictation"
-    }
 }
 
 @MainActor
@@ -82,8 +43,13 @@ enum AppComposition {
     static let audio = AudioService()
     static let hotkey = HotkeyService()
     static let hud = HUDPanelController()
+    static let modelManager = ModelManager()
     static let paste = PasteService()
     static let whisperEngine = WhisperKitEngine()
+
+    static var hotkeyDisplay: String {
+        SettingsStore().hotkey.displayString
+    }
 
     static func makeAppModel() -> AppModel {
         let settings = SettingsStore()
