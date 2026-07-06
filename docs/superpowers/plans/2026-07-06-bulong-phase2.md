@@ -444,7 +444,7 @@ struct MenuPopoverView: View {
             HStack {
                 Image(systemName: isRecording ? "stop.fill" : "mic.fill").font(.system(size: 11))
                 Text(isRecording ? "Stop and transcribe" : "Start dictation")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(Theme.Fonts.bodyStrong)
                 Spacer()
                 if !isRecording { HotkeyChip(text: model.settings.hotkey.displayString) }
             }
@@ -692,7 +692,7 @@ private struct EmptyHistoryView: View {
                 Task { await model.toggleDictation() }
             } label: {
                 Text("Try it now")
-                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.ink0)
+                    .font(Theme.Fonts.action).foregroundStyle(Theme.ink0)
                     .padding(.horizontal, 14).padding(.vertical, 7)
                     .background(Capsule().fill(Theme.accent))
             }
@@ -1022,7 +1022,7 @@ struct OnboardingView: View {
                     if step == 2 { model.settings.hasCompletedOnboarding = true } else { step += 1 }
                 }
                 .buttonStyle(.plain)
-                .font(.system(size: 12, weight: .semibold))
+                .font(Theme.Fonts.action)
                 .foregroundStyle(continueEnabled ? Theme.ink0 : Theme.textTertiary)
                 .padding(.horizontal, 16).padding(.vertical, 7)
                 .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
@@ -1237,7 +1237,7 @@ struct HUDView: View {
             OrbView(level: level, state: state, reduceMotion: reduceMotion)
                 .frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary)
                 Text(detail).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
                     .lineLimit(1).truncationMode(.head)
             }

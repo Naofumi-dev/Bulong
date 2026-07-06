@@ -66,6 +66,7 @@ struct MainWindowView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Bulong")
                     .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text("Private input")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Theme.textSecondary)

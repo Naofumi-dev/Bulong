@@ -21,7 +21,7 @@ enum Theme {
     // Accent — three jobs only: live states, primary action, focus.
     static let accent = Color(red: 43/255, green: 222/255, blue: 177/255)
     static let accentText = Color(red: 176/255, green: 249/255, blue: 226/255)
-    static let accentDim = accent.opacity(0.42)
+    static let accentDim = accent.opacity(0.42)   // 42% alpha — composites over the surface behind it
     static let failure = Color(red: 255/255, green: 118/255, blue: 112/255)
 
     // HUD shell (previously hard-coded in HUDView)
@@ -35,6 +35,8 @@ enum Theme {
         static let display = Font.system(size: 22, weight: .semibold)   // pair with .tracking(-0.4)
         static let title = Font.system(size: 15, weight: .semibold)
         static let body = Font.system(size: 13)
+        static let bodyStrong = Font.system(size: 13, weight: .semibold)
+        static let action = Font.system(size: 12, weight: .semibold)
         static let caption = Font.system(size: 11)
         /// Brand voice: transcripts, timers, counts, hotkey chips, model names.
         static func mono(_ size: CGFloat = 13, weight: Font.Weight = .regular) -> Font {
