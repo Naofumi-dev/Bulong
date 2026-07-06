@@ -45,6 +45,19 @@ final class MigrationServiceTests: XCTestCase {
         XCTAssertEqual(newDefaults.string(forKey: "language"), "en") // marker set -> untouched
     }
 
+    func testPerKeyGuardProtectsNewValuesWhileCopyingOthers() {
+        newDefaults.set("en", forKey: "language")
+        oldDefaults.set("tl", forKey: "language")
+        oldDefaults.set("translate", forKey: "task")
+
+        MigrationService.migrateIfNeeded(from: oldDefaults, to: newDefaults,
+                                         oldSupportDir: oldDir, newSupportDir: newDir)
+
+        XCTAssertEqual(newDefaults.string(forKey: "language"), "en") // already set -> protected
+        XCTAssertEqual(newDefaults.string(forKey: "task"), "translate") // absent -> copied
+        XCTAssertTrue(newDefaults.bool(forKey: "didMigrateFromLocalTalk"))
+    }
+
     func testSilentWhenNothingToMigrate() {
         MigrationService.migrateIfNeeded(from: oldDefaults, to: newDefaults,
                                          oldSupportDir: oldDir, newSupportDir: newDir)
