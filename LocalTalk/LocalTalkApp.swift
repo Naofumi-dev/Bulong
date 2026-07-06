@@ -3,7 +3,13 @@ import SwiftUI
 
 @main
 struct LocalTalkApp: App {
-    @State private var appModel = AppComposition.makeAppModel()
+    @State private var appModel: AppModel
+
+    init() {
+        let model = AppComposition.makeAppModel()
+        _appModel = State(initialValue: model)
+        AppComposition.wireHotkey(to: model)
+    }
 
     var body: some Scene {
         MenuBarExtra("LocalTalk", systemImage: menuIcon) {
@@ -74,6 +80,7 @@ struct LocalTalkApp: App {
 @MainActor
 enum AppComposition {
     static let audio = AudioService()
+    static let hotkey = HotkeyService()
     static let whisperEngine = WhisperKitEngine()
 
     static func makeAppModel() -> AppModel {
@@ -106,5 +113,33 @@ enum AppComposition {
                 NSWorkspace.shared.frontmostApplication?.localizedName ?? "Unknown"
             }
         )
+    }
+
+    static func wireHotkey(to model: AppModel) {
+        hotkey.onPressed = { [weak model] in
+            guard let model else { return }
+            Task { @MainActor in
+                switch model.settings.hotkeyMode {
+                case .toggle:
+                    await model.toggleDictation()
+                case .pushToTalk:
+                    if case .idle = model.state {
+                        await model.toggleDictation()
+                    } else if case .failed = model.state {
+                        await model.toggleDictation()
+                    }
+                }
+            }
+        }
+        hotkey.onReleased = { [weak model] in
+            guard let model else { return }
+            Task { @MainActor in
+                guard model.settings.hotkeyMode == .pushToTalk else { return }
+                if case .recording = model.state {
+                    await model.toggleDictation()
+                }
+            }
+        }
+        hotkey.register(model.settings.hotkey)
     }
 }
