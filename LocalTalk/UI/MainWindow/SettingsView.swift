@@ -98,7 +98,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-        .background(Theme.root)
+        .background(Theme.ink0)
         .navigationTitle("Settings")
         .onAppear {
             modelManager.refresh()
@@ -114,7 +114,7 @@ struct SettingsView: View {
             switch state {
             case .ready:
                 Label("Ready", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Theme.accent)
             case .notDownloaded:
                 Button("Download", action: download)
             case .downloading(let progress):

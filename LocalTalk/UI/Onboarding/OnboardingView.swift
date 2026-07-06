@@ -55,7 +55,7 @@ struct OnboardingView: View {
         }
         .padding(32)
         .frame(width: 520, height: 380)
-        .background(Theme.root)
+        .background(Theme.ink0)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
         .onAppear {
@@ -98,7 +98,7 @@ struct OnboardingView: View {
         switch modelManager.parakeetV2 {
         case .ready:
             Label("English model ready", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(Theme.accent)
         case .downloading(let progress):
             ProgressView(value: progress) {
                 Text("Downloading the English model, about 600 MB")

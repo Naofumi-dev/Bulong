@@ -33,10 +33,10 @@ struct MainWindowView: View {
                 brandHeader
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.sidebar)
+            .background(Theme.ink0)
         } detail: {
             ZStack {
-                Theme.root.ignoresSafeArea()
+                Theme.ink0.ignoresSafeArea()
                 switch section ?? .history {
                 case .history:
                     HistoryView(history: model.history)
@@ -48,7 +48,7 @@ struct MainWindowView: View {
         .frame(minWidth: 680, minHeight: 460)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
-        .background(Theme.root)
+        .background(Theme.ink0)
     }
 
     private var brandHeader: some View {
@@ -60,7 +60,7 @@ struct MainWindowView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        .stroke(Theme.hairlineStrong, lineWidth: 1)
                 )
 
             VStack(alignment: .leading, spacing: 1) {
@@ -74,6 +74,6 @@ struct MainWindowView: View {
         }
         .padding(.horizontal, 13)
         .padding(.vertical, 12)
-        .background(Theme.sidebar)
+        .background(Theme.ink0)
     }
 }

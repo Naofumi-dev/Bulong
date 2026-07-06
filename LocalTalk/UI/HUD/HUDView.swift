@@ -25,7 +25,7 @@ struct HUDView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 Text(detail)
                     .font(.system(size: 10.5, weight: .medium))
@@ -85,8 +85,8 @@ struct HUDView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 10/255, green: 18/255, blue: 18/255),
-                    Color(red: 7/255, green: 9/255, blue: 11/255),
+                    Theme.hudShellTop,
+                    Theme.hudShellBottom,
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -103,7 +103,7 @@ struct HUDView: View {
     private var border: Color {
         isFailed
             ? Theme.failure.opacity(0.55)
-            : Color(red: 60/255, green: 104/255, blue: 96/255).opacity(0.95)
+            : Theme.hudRim
     }
 
     private var title: String {
@@ -181,7 +181,7 @@ struct WaveformBars: View {
     }
 
     private func fill(for index: Int) -> Color {
-        index >= 2 && index <= 4 ? accent : Color(red: 86/255, green: 102/255, blue: 116/255)
+        index >= 2 && index <= 4 ? accent : Theme.waveInactive
     }
 
     private func barHeight(_ index: Int, date: Date) -> CGFloat {

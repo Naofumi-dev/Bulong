@@ -23,7 +23,7 @@ struct HistoryView: View {
         }
         .listStyle(.inset)
         .scrollContentBackground(.hidden)
-        .background(Theme.root)
+        .background(Theme.ink0)
         .searchable(text: $query, prompt: "Search transcripts")
         .overlay {
             if results.isEmpty {
@@ -76,7 +76,7 @@ private struct HistoryRow: View {
         VStack(alignment: .leading, spacing: 7) {
             Text(entry.text)
                 .font(.system(size: 13, weight: .regular))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(3)
                 .textSelection(.enabled)
 
