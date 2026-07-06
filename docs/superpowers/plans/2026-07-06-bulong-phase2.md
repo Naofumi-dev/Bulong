@@ -1589,6 +1589,7 @@ git add -A && git commit -m "chore: phase 2 polish gate — stock-tell sweep, sm
 - PasteService `lastExternalApp` is nil until the first app switch after launch; seed it in `init` with `NSWorkspace.shared.frontmostApplication` when that isn't self.
 - `UIState` lives in Components.swift and references `MainSection` from MainWindowView.swift — works in-module, but consider co-locating with AppComposition someday.
 - HUDView still carries literal `cornerRadius: 20` / `easeOut(0.16)` duplicating tokens — self-heals in Task 7; check if Task 7 slips.
+- `AppComposition.hotkeyDisplay` (LocalTalkApp.swift) is now an orphan — its only consumer was the old HistoryView. Delete in Task 9's sweep.
 
 ## Self-review notes (for the executor)
 
