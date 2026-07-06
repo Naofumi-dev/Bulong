@@ -81,6 +81,7 @@ struct LocalTalkApp: App {
 enum AppComposition {
     static let audio = AudioService()
     static let hotkey = HotkeyService()
+    static let hud = HUDPanelController()
     static let paste = PasteService()
     static let whisperEngine = WhisperKitEngine()
 
@@ -118,6 +119,49 @@ enum AppComposition {
     }
 
     static func wireHotkey(to model: AppModel) {
+        model.onStateChange = { [weak model] state in
+            guard let model else { return }
+            switch state {
+            case .recording, .transcribing:
+                hotkey.registerEscape {
+                    Task { @MainActor [weak model] in
+                        await model?.cancelDictation()
+                    }
+                }
+                hud.show {
+                    HUDStateView(model: model)
+                }
+            case .inserting:
+                hotkey.unregisterEscape()
+                hud.show {
+                    HUDStateView(model: model)
+                }
+            case .failed:
+                hotkey.unregisterEscape()
+                hud.show {
+                    HUDStateView(model: model)
+                }
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    await MainActor.run {
+                        if case .failed = model.state {
+                            hud.hide()
+                        }
+                    }
+                }
+            case .idle:
+                hotkey.unregisterEscape()
+                Task {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    await MainActor.run {
+                        if case .idle = model.state {
+                            hud.hide()
+                        }
+                    }
+                }
+            }
+        }
+
         hotkey.onPressed = { [weak model] in
             guard let model else { return }
             Task { @MainActor in
@@ -143,5 +187,21 @@ enum AppComposition {
             }
         }
         hotkey.register(model.settings.hotkey)
+    }
+}
+
+struct HUDStateView: View {
+    var model: AppModel
+
+    var body: some View {
+        HUDView(
+            state: model.state,
+            level: AppComposition.audio.level,
+            partial: model.lastPartial,
+            language: model.settings.language,
+            onCancel: { Task { await model.cancelDictation() } },
+            onDragChanged: { AppComposition.hud.drag(to: $0) },
+            onDragEnded: { AppComposition.hud.finishDrag() }
+        )
     }
 }

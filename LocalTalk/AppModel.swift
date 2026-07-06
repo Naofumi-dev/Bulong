@@ -8,11 +8,14 @@ private struct UncheckedAudioStream: @unchecked Sendable {
 
 @MainActor @Observable
 final class AppModel {
-    private(set) var state: DictationState = .idle
+    private(set) var state: DictationState = .idle {
+        didSet { onStateChange?(state) }
+    }
     private(set) var lastPartial: String = ""
     private(set) var lastTranscript: String = ""
     private(set) var statusDetail: String = ""
     var onPartial: ((String) -> Void)?
+    var onStateChange: ((DictationState) -> Void)?
 
     let settings: SettingsStore
     let history: HistoryStore
@@ -28,6 +31,7 @@ final class AppModel {
 
     private var activeEngine: (any TranscriptionEngine)?
     private var dictationTask: Task<Void, Never>?
+    private var watchdogTask: Task<Void, Never>?
     private var recordingStarted: Date?
     private var targetAppName: String = ""
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
@@ -105,11 +109,14 @@ final class AppModel {
 
         state = .transcribing
         audioStop()
+        startWatchdog()
     }
 
     func cancelDictation(reason: String = "") async {
         audioStop()
         await activeEngine?.cancel()
+        watchdogTask?.cancel()
+        watchdogTask = nil
         dictationTask?.cancel()
         dictationTask = nil
         activeEngine = nil
@@ -123,11 +130,6 @@ final class AppModel {
         audio: AsyncStream<AVAudioPCMBuffer>,
         options: TranscriptionOptions
     ) async {
-        let watchdog = Task { [watchdogSeconds] in
-            try? await Task.sleep(for: .seconds(watchdogSeconds + 300))
-        }
-        defer { watchdog.cancel() }
-
         do {
             var finalText: String?
             let updates = engine.transcribe(audio: audio, options: options)
@@ -171,11 +173,27 @@ final class AppModel {
     }
 
     private func finish(_ newState: DictationState) {
+        watchdogTask?.cancel()
+        watchdogTask = nil
         state = newState
         lastPartial = ""
         activeEngine = nil
         dictationTask = nil
         resumeIdleWaiters()
+    }
+
+    private func startWatchdog() {
+        watchdogTask?.cancel()
+        watchdogTask = Task { [weak self, watchdogSeconds] in
+            try? await Task.sleep(for: .seconds(watchdogSeconds))
+            guard !Task.isCancelled else { return }
+            await self?.cancelIfStillTranscribing()
+        }
+    }
+
+    private func cancelIfStillTranscribing() async {
+        guard case .transcribing = state else { return }
+        await cancelDictation(reason: EngineError.timedOut.localizedDescription)
     }
 
     private func currentOptions() -> TranscriptionOptions {
