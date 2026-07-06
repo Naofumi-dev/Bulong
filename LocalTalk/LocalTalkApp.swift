@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 @preconcurrency import AVFoundation
 
@@ -46,6 +47,7 @@ enum AppComposition {
     static let modelManager = ModelManager()
     static let paste = PasteService()
     static let whisperEngine = WhisperKitEngine()
+    static var onboardingWindow: NSWindow?
 
     static var hotkeyDisplay: String {
         SettingsStore().hotkey.displayString
@@ -85,6 +87,8 @@ enum AppComposition {
     }
 
     static func wireHotkey(to model: AppModel) {
+        showOnboardingIfNeeded(for: model)
+
         model.onStateChange = { [weak model] state in
             guard let model else { return }
             switch state {
@@ -153,6 +157,27 @@ enum AppComposition {
             }
         }
         hotkey.register(model.settings.hotkey)
+    }
+
+    private static func showOnboardingIfNeeded(for model: AppModel) {
+        guard !model.settings.hasCompletedOnboarding else { return }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !model.settings.hasCompletedOnboarding, onboardingWindow == nil else { return }
+
+            let host = NSHostingController(
+                rootView: OnboardingWindowView(model: model, modelManager: modelManager)
+            )
+            let window = NSWindow(contentViewController: host)
+            window.title = "Welcome to LocalTalk"
+            window.styleMask = [.titled, .closable]
+            window.center()
+            window.isReleasedWhenClosed = false
+            onboardingWindow = window
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 }
 
