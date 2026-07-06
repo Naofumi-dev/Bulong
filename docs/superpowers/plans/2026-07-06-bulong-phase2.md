@@ -1583,6 +1583,13 @@ git add -A && git commit -m "chore: phase 2 polish gate — stock-tell sweep, sm
 
 ---
 
+## Follow-ups (optional, logged from reviews — fold into Task 9 or later)
+
+- HotkeyChip under Reduce Motion shows no recording affordance; a static accent border while `pulsing` would restore it (`stroke(pulsing && (pulse || reduceMotion) ? Theme.accent : ...)`).
+- PasteService `lastExternalApp` is nil until the first app switch after launch; seed it in `init` with `NSWorkspace.shared.frontmostApplication` when that isn't self.
+- `UIState` lives in Components.swift and references `MainSection` from MainWindowView.swift — works in-module, but consider co-locating with AppComposition someday.
+- HUDView still carries literal `cornerRadius: 20` / `easeOut(0.16)` duplicating tokens — self-heals in Task 7; check if Task 7 slips.
+
 ## Self-review notes (for the executor)
 
 - **Spec coverage:** rename+migration+legacy retirement (T1), tokens incl. HUD de-hard-coding + green ban (T2), popover (T3), History cards/empty state (T4), Settings cards/hints/keycap/HUD presets (T5), onboarding 3-step (T6), living HUD + presets wiring (T7), icon/wordmark (T8), verification + critique gate (T9). Spec's "sidebar hover" is explicitly time-boxed in T4 Step 2 per the spec's "where feasible" clause. Icon Composer `.icon` is explicitly deferred (manual, user-assisted) — the rendered iconset satisfies this phase.

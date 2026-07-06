@@ -117,7 +117,7 @@ struct MenuPopoverView: View {
         openWindow(id: "main")
         NSApp.activate()
         if !NSApp.isActive {
-            NSRunningApplication.current.activate(options: .activateIgnoringOtherApps)
+            NSRunningApplication.current.activate()
         }
     }
 
