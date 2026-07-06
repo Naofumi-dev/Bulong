@@ -1,6 +1,6 @@
-# LocalTalk
+# Bulong
 
-Private, on-device dictation for macOS. Press a hotkey in any app, speak, and the words appear. Nothing leaves your Mac.
+Bulong — Tagalog for "whisper." Private, on-device dictation for macOS: press a hotkey, speak, and the words appear. Your voice never leaves your Mac.
 
 - Apple Silicon, macOS 14+
 - Engines: NVIDIA Parakeet through FluidAudio for English and supported European languages; WhisperKit for everything else, including translate-to-English
@@ -13,7 +13,7 @@ Private, on-device dictation for macOS. Press a hotkey in any app, speak, and th
 ```bash
 brew install xcodegen
 ./script/dev_build.sh
-xcodebuild test -project LocalTalk.xcodeproj -scheme LocalTalk -destination 'platform=macOS,arch=arm64'
+xcodebuild test -project Bulong.xcodeproj -scheme Bulong -destination 'platform=macOS,arch=arm64'
 ```
 
 ## Release

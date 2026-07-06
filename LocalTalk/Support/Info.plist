@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>LocalTalk</string>
+	<string>Bulong</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,7 +25,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>LocalTalk records your microphone to transcribe speech entirely on this Mac. Audio never leaves your computer.</string>
+	<string>Bulong records your microphone to transcribe speech entirely on this Mac. Audio never leaves your computer.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

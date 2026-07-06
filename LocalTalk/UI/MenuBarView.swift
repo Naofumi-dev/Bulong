@@ -19,7 +19,7 @@ struct MenuBarView: View {
 
         Divider()
 
-        Button("Open LocalTalk") {
+        Button("Open Bulong") {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -33,7 +33,7 @@ struct MenuBarView: View {
 
         Divider()
 
-        Button("Quit LocalTalk") {
+        Button("Quit Bulong") {
             NSApp.terminate(nil)
         }
         .keyboardShortcut("q")

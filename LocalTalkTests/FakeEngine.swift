@@ -1,6 +1,6 @@
 import Foundation
 @preconcurrency import AVFoundation
-@testable import LocalTalk
+@testable import Bulong
 
 private struct UncheckedAudioStream: @unchecked Sendable {
     let stream: AsyncStream<AVAudioPCMBuffer>

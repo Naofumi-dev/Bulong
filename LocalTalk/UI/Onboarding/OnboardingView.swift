@@ -122,7 +122,7 @@ struct OnboardingView: View {
     }
 
     private let titles = [
-        "Welcome to LocalTalk",
+        "Welcome to Bulong",
         "Microphone",
         "Auto-paste",
         "Speech model",
@@ -131,8 +131,8 @@ struct OnboardingView: View {
 
     private let subtitles = [
         "Dictation that never leaves your Mac. Four quick steps and you are talking.",
-        "LocalTalk needs your microphone to hear you. Audio is processed on this Mac and never uploaded.",
-        "Accessibility permission lets LocalTalk type the result straight into whatever app you are using.",
+        "Bulong needs your microphone to hear you. Audio is processed on this Mac and never uploaded.",
+        "Accessibility permission lets Bulong type the result straight into whatever app you are using.",
         "The on-device English model is a one-time download. Other languages can be added later in Settings.",
         "Focus the field below, press your hotkey, say something, and press it again.",
     ]

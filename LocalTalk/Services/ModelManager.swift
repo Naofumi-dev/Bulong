@@ -20,7 +20,7 @@ final class ModelManager {
 
     nonisolated static var whisperDownloadBase: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("LocalTalk/Models/whisperkit", isDirectory: true)
+            .appendingPathComponent("Bulong/Models/whisperkit", isDirectory: true)
     }
 
     nonisolated static var whisperModelFolder: URL {

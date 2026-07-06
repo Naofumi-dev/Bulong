@@ -1,6 +1,6 @@
 import XCTest
 @preconcurrency import AVFoundation
-@testable import LocalTalk
+@testable import Bulong
 
 @MainActor
 final class AppModelTests: XCTestCase {

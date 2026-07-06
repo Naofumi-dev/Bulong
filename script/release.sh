@@ -8,8 +8,8 @@ cd "$(dirname "$0")/.."
 
 mkdir -p build
 xcodegen generate
-xcodebuild archive -project LocalTalk.xcodeproj -scheme LocalTalk \
-  -configuration Release -archivePath build/LocalTalk.xcarchive \
+xcodebuild archive -project Bulong.xcodeproj -scheme Bulong \
+  -configuration Release -archivePath build/Bulong.xcarchive \
   DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="Developer ID Application"
 
@@ -22,6 +22,6 @@ cat > build/export-options.plist <<EOF
 </dict></plist>
 EOF
 
-xcodebuild -exportArchive -archivePath build/LocalTalk.xcarchive \
+xcodebuild -exportArchive -archivePath build/Bulong.xcarchive \
   -exportOptionsPlist build/export-options.plist -exportPath build/export
-echo "Exported: build/export/LocalTalk.app"
+echo "Exported: build/export/Bulong.app"

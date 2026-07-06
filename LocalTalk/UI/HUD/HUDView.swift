@@ -117,7 +117,7 @@ struct HUDView: View {
         case .failed:
             "Needs attention"
         case .idle:
-            "LocalTalk"
+            "Bulong"
         }
     }
 

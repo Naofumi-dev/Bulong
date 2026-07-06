@@ -1,5 +1,5 @@
 import XCTest
-@testable import LocalTalk
+@testable import Bulong
 
 final class SmokeTests: XCTestCase {
     func testThemeAccentExists() {

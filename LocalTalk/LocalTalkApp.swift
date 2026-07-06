@@ -7,17 +7,18 @@ struct LocalTalkApp: App {
     @State private var appModel: AppModel
 
     init() {
+        MigrationService.migrateIfNeeded()
         let model = AppComposition.makeAppModel()
         _appModel = State(initialValue: model)
         AppComposition.wireHotkey(to: model)
     }
 
     var body: some Scene {
-        MenuBarExtra("LocalTalk", systemImage: menuIcon) {
+        MenuBarExtra("Bulong", systemImage: menuIcon) {
             MenuBarView(model: appModel)
         }
 
-        Window("LocalTalk", id: "main") {
+        Window("Bulong", id: "main") {
             MainWindowView(model: appModel, modelManager: AppComposition.modelManager)
         }
         .windowResizability(.contentMinSize)
@@ -170,7 +171,7 @@ enum AppComposition {
                 rootView: OnboardingWindowView(model: model, modelManager: modelManager)
             )
             let window = NSWindow(contentViewController: host)
-            window.title = "Welcome to LocalTalk"
+            window.title = "Welcome to Bulong"
             window.styleMask = [.titled, .closable]
             window.center()
             window.isReleasedWhenClosed = false

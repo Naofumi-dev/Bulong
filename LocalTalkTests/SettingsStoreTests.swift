@@ -1,5 +1,5 @@
 import XCTest
-@testable import LocalTalk
+@testable import Bulong
 
 final class SettingsStoreTests: XCTestCase {
     private var defaults: UserDefaults!

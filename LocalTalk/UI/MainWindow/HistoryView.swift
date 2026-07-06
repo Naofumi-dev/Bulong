@@ -62,7 +62,7 @@ struct HistoryView: View {
 
     private func export() {
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = "LocalTalk-transcripts.txt"
+        panel.nameFieldStringValue = "Bulong-transcripts.txt"
         if panel.runModal() == .OK, let url = panel.url {
             try? history.exportPlainText().write(to: url, atomically: true, encoding: .utf8)
         }

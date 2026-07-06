@@ -6,8 +6,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-APP="build/export/LocalTalk.app"
-ZIP="build/LocalTalk-notarize.zip"
+APP="build/export/Bulong.app"
+ZIP="build/Bulong-notarize.zip"
 
 ditto -c -k --keepParent "$APP" "$ZIP"
 xcrun notarytool submit "$ZIP" --keychain-profile localtalk-notary --wait

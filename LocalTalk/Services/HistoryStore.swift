@@ -14,7 +14,7 @@ final class HistoryStore {
 
     static var defaultFileURL: URL {
         let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("LocalTalk", isDirectory: true)
+            .appendingPathComponent("Bulong", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory.appendingPathComponent("history.jsonl")
     }
