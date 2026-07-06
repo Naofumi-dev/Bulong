@@ -3,6 +3,7 @@ import SwiftUI
 
 @MainActor
 final class HUDPanelController {
+    private let panelSize = NSSize(width: 392, height: 74)
     private var panel: NSPanel?
     private var dragStartOrigin: NSPoint?
 
@@ -12,13 +13,15 @@ final class HUDPanelController {
         panel.contentView = NSHostingView(rootView: content())
 
         if !wasVisible {
-            position(panel)
+            let targetOrigin = origin(for: panel)
             panel.alphaValue = 0
+            panel.setFrameOrigin(NSPoint(x: targetOrigin.x, y: targetOrigin.y - 10))
             panel.orderFrontRegardless()
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.16
+                context.duration = 0.2
                 context.timingFunction = CAMediaTimingFunction(name: .easeOut)
                 panel.animator().alphaValue = 1
+                panel.animator().setFrameOrigin(targetOrigin)
             }
         } else {
             panel.orderFrontRegardless()
@@ -27,15 +30,18 @@ final class HUDPanelController {
 
     func hide() {
         guard let panel, panel.isVisible else { return }
+        let startOrigin = panel.frame.origin
         persistPosition()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
+            context.duration = 0.16
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             panel.animator().alphaValue = 0
+            panel.animator().setFrameOrigin(NSPoint(x: startOrigin.x, y: startOrigin.y - 8))
         } completionHandler: {
             Task { @MainActor in
                 panel.orderOut(nil)
                 panel.alphaValue = 1
+                panel.setFrameOrigin(startOrigin)
             }
         }
     }
@@ -67,7 +73,7 @@ final class HUDPanelController {
 
     private func makePanel() -> NSPanel {
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 84),
+            contentRect: NSRect(origin: .zero, size: panelSize),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -84,23 +90,22 @@ final class HUDPanelController {
         return panel
     }
 
-    private func position(_ panel: NSPanel) {
+    private func origin(for panel: NSPanel) -> NSPoint {
         let screen = NSScreen.screens.first {
             NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
         } ?? NSScreen.main
-        guard let screen else { return }
+        guard let screen else { return panel.frame.origin }
 
         if let saved = UserDefaults.standard.string(forKey: originKey(for: screen)) {
             let origin = NSPointFromString(saved)
-            panel.setFrameOrigin(clamped(origin, for: panel, on: screen))
-            return
+            return clamped(origin, for: panel, on: screen)
         }
 
         let frame = screen.visibleFrame
-        panel.setFrameOrigin(NSPoint(
+        return NSPoint(
             x: frame.midX - panel.frame.width / 2,
             y: frame.minY + 24
-        ))
+        )
     }
 
     private func clamped(_ origin: NSPoint, for panel: NSPanel, on screen: NSScreen) -> NSPoint {

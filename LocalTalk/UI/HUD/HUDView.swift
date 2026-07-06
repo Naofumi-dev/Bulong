@@ -22,21 +22,21 @@ struct HUDView: View {
     var body: some View {
         HStack(spacing: 12) {
             brandMark
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Text(detail)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 10.5, weight: .medium))
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(1)
                     .truncationMode(.head)
             }
-            Spacer(minLength: 8)
+            Spacer(minLength: 6)
             WaveformBars(state: state, level: level, accent: accent)
-                .frame(width: 54)
-            badge("LOCAL")
+                .frame(width: 50)
+            badge("ON DEVICE")
             badge(language.uppercased())
             if case .transcribing = state {
                 Button(action: onCancel) {
@@ -49,15 +49,15 @@ struct HUDView: View {
                 .accessibilityLabel("Cancel")
             }
         }
-        .padding(.horizontal, 14)
-        .frame(width: 420, height: 84)
+        .padding(.horizontal, 12)
+        .frame(width: 392, height: 74)
         .background(background)
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(border, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: .black.opacity(0.32), radius: 24, y: 14)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.34), radius: 22, y: 12)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 2)
@@ -76,17 +76,17 @@ struct HUDView: View {
             Image("MenuIcon")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 24, height: 24)
+                .frame(width: 20, height: 20)
         }
-        .frame(width: 34, height: 34)
+        .frame(width: 31, height: 31)
     }
 
     private var background: some View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 12/255, green: 18/255, blue: 23/255),
-                    Color(red: 7/255, green: 9/255, blue: 12/255),
+                    Color(red: 10/255, green: 18/255, blue: 18/255),
+                    Color(red: 7/255, green: 9/255, blue: 11/255),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -103,7 +103,7 @@ struct HUDView: View {
     private var border: Color {
         isFailed
             ? Theme.failure.opacity(0.55)
-            : Color(red: 58/255, green: 94/255, blue: 116/255).opacity(0.95)
+            : Color(red: 60/255, green: 104/255, blue: 96/255).opacity(0.95)
     }
 
     private var title: String {
@@ -169,7 +169,7 @@ struct WaveformBars: View {
     private let heights: [CGFloat] = [0.34, 0.62, 1.0, 0.72, 0.48, 0.82, 0.38]
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.12)) { context in
+        TimelineView(.animation(minimumInterval: 0.08)) { context in
             HStack(alignment: .center, spacing: 4) {
                 ForEach(0..<heights.count, id: \.self) { index in
                     RoundedRectangle(cornerRadius: 2.5, style: .continuous)
