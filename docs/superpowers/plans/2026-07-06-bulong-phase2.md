@@ -1590,6 +1590,7 @@ git add -A && git commit -m "chore: phase 2 polish gate — stock-tell sweep, sm
 - `UIState` lives in Components.swift and references `MainSection` from MainWindowView.swift — works in-module, but consider co-locating with AppComposition someday.
 - HUDView still carries literal `cornerRadius: 20` / `easeOut(0.16)` duplicating tokens — self-heals in Task 7; check if Task 7 slips.
 - `AppComposition.hotkeyDisplay` (LocalTalkApp.swift) is now an orphan — its only consumer was the old HistoryView. Delete in Task 9's sweep.
+- Task 9: confirm the Reduce Motion posture app-wide — opacity/color micro-fades (card hover, section cross-fade) are the accepted substitute under Reduce Motion and may stay ungated; anything that MOVES (slides, springs, scaling, waveforms, pulses) must gate on `accessibilityReduceMotion`.
 
 ## Self-review notes (for the executor)
 
