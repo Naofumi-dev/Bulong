@@ -25,6 +25,7 @@ struct MainWindowView: View {
         NavigationSplitView {
             List(MainSection.allCases, selection: $uiState.mainSection) { item in
                 Label(item.rawValue, systemImage: item.icon)
+                    .foregroundStyle(uiState.mainSection == item ? Theme.textPrimary : Theme.textSecondary)
                     .tag(item)
             }
             .listStyle(.sidebar)
@@ -39,11 +40,14 @@ struct MainWindowView: View {
                 Theme.ink0.ignoresSafeArea()
                 switch uiState.mainSection {
                 case .history:
-                    HistoryView(history: model.history)
+                    HistoryView(model: model)
+                        .transition(.opacity)
                 case .settings:
                     SettingsView(model: model, modelManager: modelManager)
+                        .transition(.opacity)
                 }
             }
+            .animation(Theme.easeFast, value: uiState.mainSection)
         }
         .frame(minWidth: 680, minHeight: 460)
         .preferredColorScheme(.dark)
