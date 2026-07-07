@@ -123,6 +123,7 @@ final class AppModelTests: XCTestCase {
         let engine = FakeEngine()
         let audio = AudioStub()
         var insertions: [String] = []
+        var copies: [String] = []
         let model = AppModel(
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
@@ -133,6 +134,7 @@ final class AppModelTests: XCTestCase {
                 insertions.append(text)
                 return .insertedDirectly
             },
+            copyText: { copies.append($0) },
             frontmostAppName: { "TextEdit" },
             minimumDuration: 0,
             watchdogSeconds: 5
@@ -144,6 +146,7 @@ final class AppModelTests: XCTestCase {
         await model.waitForIdle()
 
         XCTAssertTrue(insertions.isEmpty, "clipboard-only run must not call insertText")
+        XCTAssertEqual(copies, ["hello world"], "clipboard-only run must write the clipboard exactly once")
         XCTAssertEqual(model.history.entries.first?.text, "hello world")
         XCTAssertEqual(model.state, .idle)
 
@@ -154,6 +157,7 @@ final class AppModelTests: XCTestCase {
         await model.waitForIdle()
 
         XCTAssertEqual(insertions, ["hello world"])
+        XCTAssertEqual(copies, ["hello world"], "normal insert path must not call copyText")
     }
 
     func testFailedStateClearsOnNextStart() async throws {

@@ -83,6 +83,10 @@ enum AppComposition {
             insertText: { text in
                 await paste.insert(text, alsoCopy: true)
             },
+            copyText: { text in
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(text, forType: .string)
+            },
             frontmostAppName: {
                 paste.targetAppName
             }

@@ -25,6 +25,7 @@ final class AppModel {
     private let audioStop: @MainActor () -> Void
     private let captureTarget: @MainActor () -> Void
     private let insertText: @MainActor (String) async -> InsertionResult
+    private let copyText: @MainActor (String) -> Void
     private let frontmostAppName: @MainActor () -> String
     private let minimumDuration: TimeInterval
     private let watchdogSeconds: TimeInterval
@@ -45,6 +46,7 @@ final class AppModel {
         audioStop: @escaping @MainActor () -> Void,
         captureTarget: @escaping @MainActor () -> Void = {},
         insertText: @escaping @MainActor (String) async -> InsertionResult,
+        copyText: @escaping @MainActor (String) -> Void = { _ in },
         frontmostAppName: @escaping @MainActor () -> String,
         minimumDuration: TimeInterval = 0.4,
         watchdogSeconds: TimeInterval = 60
@@ -56,6 +58,7 @@ final class AppModel {
         self.audioStop = audioStop
         self.captureTarget = captureTarget
         self.insertText = insertText
+        self.copyText = copyText
         self.frontmostAppName = frontmostAppName
         self.minimumDuration = minimumDuration
         self.watchdogSeconds = watchdogSeconds
@@ -153,11 +156,13 @@ final class AppModel {
             state = .inserting
             let result: InsertionResult
             if clipboardOnlyRun {
-                result = .clipboardOnly(reason: "Copied — this was a test run")
+                copyText(text)
+                result = .clipboardOnly(reason: "test run saved to History")
+            } else if settings.pasteAfterTranscription {
+                result = await insertText(text)
             } else {
-                result = settings.pasteAfterTranscription
-                    ? await insertText(text)
-                    : .clipboardOnly(reason: "Auto-paste is off")
+                copyText(text)
+                result = .clipboardOnly(reason: "Auto-paste is off")
             }
 
             lastTranscript = text
