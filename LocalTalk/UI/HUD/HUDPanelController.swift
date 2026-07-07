@@ -31,7 +31,6 @@ final class HUDPanelController {
     func hide() {
         guard let panel, panel.isVisible else { return }
         let startOrigin = panel.frame.origin
-        persistPosition()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.16
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -63,7 +62,9 @@ final class HUDPanelController {
         dragStartOrigin = nil
     }
 
-    func persistPosition() {
+    /// Persisting ONLY on drag end means a saved origin always reflects explicit
+    /// user intent — never an incidental re-save on hide.
+    private func persistPosition() {
         guard let panel, let screen = panel.screen else { return }
         UserDefaults.standard.set(
             NSStringFromPoint(panel.frame.origin),
@@ -110,10 +111,14 @@ final class HUDPanelController {
         }
 
         let frame = screen.visibleFrame
-        return NSPoint(
-            x: frame.midX - panel.frame.width / 2,
-            y: frame.minY + 24
-        )
+        switch AppComposition.settings.hudPosition {
+        case .bottomCenter:
+            return NSPoint(x: frame.midX - panelSize.width / 2, y: frame.minY + 24)
+        case .topRight:
+            return NSPoint(x: frame.maxX - panelSize.width - 24, y: frame.maxY - panelSize.height - 24)
+        case .nearNotch:
+            return NSPoint(x: frame.midX - panelSize.width / 2, y: frame.maxY - panelSize.height - 10)
+        }
     }
 
     private func clamped(_ origin: NSPoint, for panel: NSPanel, on screen: NSScreen) -> NSPoint {

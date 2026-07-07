@@ -48,17 +48,17 @@ enum AppComposition {
     static let hud = HUDPanelController()
     static let modelManager = ModelManager()
     static let paste = PasteService()
+    static let settings = SettingsStore()
     static let uiState = UIState()
     static let whisperEngine = WhisperKitEngine()
     static var onboardingWindow: NSWindow?
     private static var onboardingCloseObserver: NSObjectProtocol?
 
     static var hotkeyDisplay: String {
-        SettingsStore().hotkey.displayString
+        settings.hotkey.displayString
     }
 
     static func makeAppModel() -> AppModel {
-        let settings = SettingsStore()
         return AppModel(
             settings: settings,
             history: HistoryStore(),
