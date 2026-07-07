@@ -30,8 +30,10 @@ struct HUDView: View {
                 .frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary)
+                // Live partials keep the newest words visible (head-truncate);
+                // static hints must not lose their tail ("…Esc cancels" ≠ hint).
                 Text(detail).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
-                    .lineLimit(1).truncationMode(.head)
+                    .lineLimit(1).truncationMode(showsLivePartial ? .head : .tail)
             }
             Spacer(minLength: 8)
             SmoothedWaveform(level: level, state: state, smoother: smoother, reduceMotion: reduceMotion)
@@ -60,8 +62,10 @@ struct HUDView: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous))
         .shadow(color: .black.opacity(0.34), radius: 22, y: 12)
         .overlay(ActiveAlwaysHoverTracker { hovering = $0 })
-        .animation(Theme.easeFast, value: hovering)
-        .animation(Theme.easeFast, value: showCancel)
+        // Revealing the cancel button slides the waveform and badges left, so
+        // the whole reveal goes instant under Reduce Motion.
+        .animation(reduceMotion ? nil : Theme.easeFast, value: hovering)
+        .animation(reduceMotion ? nil : Theme.easeFast, value: showCancel)
         .gesture(DragGesture()
             .onChanged { onDragChanged($0.translation) }
             .onEnded { _ in onDragEnded() })
@@ -90,8 +94,13 @@ struct HUDView: View {
     private var detail: String {
         if case .failed(let m) = state { return m }
         if !partial.isEmpty { return partial }
-        if case .recording = state { return "Voice stays on this Mac — Esc to cancel" }
+        if case .recording = state { return "Esc to cancel" }
         return "On-device dictation"
+    }
+
+    private var showsLivePartial: Bool {
+        if case .failed = state { return false }
+        return !partial.isEmpty
     }
 
     private func badge(_ text: String) -> some View {
@@ -124,7 +133,9 @@ struct OrbView: View {
                         center: UnitPoint(x: 0.38, y: 0.35), startRadius: 0, endRadius: 11))
                     .frame(width: 16 + 5 * energy, height: 16 + 5 * energy)
             }
-            .animation(Theme.easeFast, value: energy)
+            // The orb scaling with the live level is motion; under Reduce
+            // Motion it still tracks the level but snaps instead of breathing.
+            .animation(reduceMotion ? nil : Theme.easeFast, value: energy)
         }
     }
 

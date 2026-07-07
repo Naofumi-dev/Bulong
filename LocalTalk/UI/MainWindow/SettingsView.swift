@@ -70,11 +70,13 @@ struct SettingsView: View {
                 SectionCard(title: "Dictation bar") {
                     HStack(spacing: 10) {
                         ForEach(HUDPosition.allCases, id: \.self) { pos in
-                            HUDPositionPreview(position: pos, selected: model.settings.hudPosition == pos)
-                                .onTapGesture {
-                                    model.settings.hudPosition = pos
-                                    AppComposition.hud.clearSavedPositions()
-                                }
+                            Button {
+                                model.settings.hudPosition = pos
+                                AppComposition.hud.clearSavedPositions()
+                            } label: {
+                                HUDPositionPreview(position: pos, selected: model.settings.hudPosition == pos)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-# LocalTalk manual smoke checklist
+# Bulong manual smoke checklist
 
 Run before any release build. All items must pass.
 
@@ -22,20 +22,28 @@ Run before any release build. All items must pass.
 
 ## Environment
 
-- [ ] Fresh user (`defaults delete com.armageddonvivas.LocalTalk`): onboarding flows to a successful test dictation
+- [ ] Fresh user (`defaults delete com.armageddonvivas.Bulong`): onboarding completes end-to-end to a successful test dictation
+- [ ] Old LocalTalk data (history + settings) migrated on first Bulong launch; onboarding does not reappear
 - [ ] Model download progress shows; killing network mid-download gives a readable failure and retry
 - [ ] Second display: HUD position persists per screen
 - [ ] Menu bar icon reflects idle, recording, transcribing, inserting, and failed states
-- [ ] Quit during recording leaves no orphan process (`pgrep LocalTalk` empty)
+- [ ] Quit during recording leaves no orphan process (`pgrep Bulong` empty)
 - [ ] History survives relaunch; export writes a readable `.txt`; clear empties it
 
 ## Popover
 
+- [ ] Popover opens/dismisses cleanly and every action works (start/stop, copy last transcript, History, Settings, Quit)
 - [ ] Popover: opening History/Settings lands on the right pane and popover dismisses
 - [ ] Start dictation from the popover → text pastes into the previously focused app
+
+## Main Window
+
+- [ ] History: hover lifts a card and reveals Copy; Copy shows "Copied ✓"; clearing shows the designed empty state
+- [ ] Settings: permission hints react live after granting mic/Accessibility (no relaunch)
 
 ## Living HUD (requires live mouse + app inactive)
 
 - [ ] Trigger dictation via hotkey from another app; hover the pill → cancel appears; click it → dictation cancels without activating Bulong
 - [ ] Drag the pill smoothly (no jitter/jumping), release; position persists; next dictation appears there
 - [ ] Push-to-talk: start drag, release the hotkey mid-drag → no jump on the next drag
+- [ ] HUD position presets (bottom center / top right / below the notch) apply on every connected display

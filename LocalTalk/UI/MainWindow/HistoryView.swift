@@ -5,6 +5,7 @@ struct HistoryView: View {
     var model: AppModel
     @State private var query = ""
     @State private var confirmClear = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let results = model.history.search(query)
@@ -20,7 +21,9 @@ struct HistoryView: View {
                         ForEach(results) { entry in HistoryCard(entry: entry) }
                     }
                     .padding(16)
-                    .animation(Theme.easeFast, value: results.map(\.id))
+                    // Filtering slides the surviving cards into place — a mover,
+                    // so it goes instant under Reduce Motion.
+                    .animation(reduceMotion ? nil : Theme.easeFast, value: results.map(\.id))
                 }
             }
         }

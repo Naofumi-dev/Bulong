@@ -24,7 +24,7 @@ struct HotkeyChip: View {
                 RoundedRectangle(cornerRadius: Theme.radiusControl)
                     .fill(Theme.ink2)
                     .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
-                        .stroke(pulsing && pulse ? Theme.accent : Theme.hairlineStrong, lineWidth: 1))
+                        .stroke(pulsing && (pulse || reduceMotion) ? Theme.accent : Theme.hairlineStrong, lineWidth: 1))
             )
             .onAppear { startPulseIfNeeded() }
             .onChange(of: pulsing) { _, isPulsing in
@@ -91,6 +91,7 @@ struct HoverButtonStyle: ButtonStyle {
 struct LevelBars: View {
     let level: Float
     let active: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let heights: [CGFloat] = [0.4, 0.75, 1.0, 0.65, 0.45]
 
     var body: some View {
@@ -101,7 +102,9 @@ struct LevelBars: View {
                     .frame(width: 3, height: max(3, heights[i] * 16 * (active ? CGFloat(0.3 + 0.7 * level) : 0.3)))
             }
         }
-        .animation(Theme.easeFast, value: level)
+        // Waveform motion: still tracks the level under Reduce Motion, but
+        // snaps instead of animating.
+        .animation(reduceMotion ? nil : Theme.easeFast, value: level)
     }
 }
 
@@ -109,6 +112,7 @@ struct LevelBars: View {
 struct StepDots: View {
     let count: Int
     let index: Int
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         HStack(spacing: 6) {
             ForEach(0..<count, id: \.self) { i in
@@ -117,6 +121,7 @@ struct StepDots: View {
                     .frame(width: i == index ? 18 : 6, height: 6)
             }
         }
-        .animation(Theme.spring, value: index)
+        // The active dot stretches and its neighbors shift — a spring mover.
+        .animation(reduceMotion ? nil : Theme.spring, value: index)
     }
 }

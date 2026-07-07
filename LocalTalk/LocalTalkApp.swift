@@ -54,10 +54,6 @@ enum AppComposition {
     static var onboardingWindow: NSWindow?
     private static var onboardingCloseObserver: NSObjectProtocol?
 
-    static var hotkeyDisplay: String {
-        settings.hotkey.displayString
-    }
-
     static func makeAppModel() -> AppModel {
         return AppModel(
             settings: settings,

@@ -23,6 +23,12 @@ final class PasteService {
     }
 
     init() {
+        // Seed with whatever app is frontmost at launch so a popover-triggered
+        // dictation before any app switch still has a paste target.
+        if let frontmost = NSWorkspace.shared.frontmostApplication,
+            frontmost.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+            lastExternalApp = frontmost
+        }
         activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
