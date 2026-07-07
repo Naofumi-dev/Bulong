@@ -33,4 +33,12 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(s2.hotkey.keyCode, 2)
         XCTAssertEqual(s2.engineOverride, .whisperKit)
     }
+
+    @MainActor func testHudPositionDefaultsToBottomCenterAndPersists() {
+        let s1 = SettingsStore(defaults: defaults)
+        XCTAssertEqual(s1.hudPosition, .bottomCenter)
+        s1.hudPosition = .topRight
+        let s2 = SettingsStore(defaults: defaults)
+        XCTAssertEqual(s2.hudPosition, .topRight)
+    }
 }

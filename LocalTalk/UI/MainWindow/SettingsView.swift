@@ -1,165 +1,207 @@
 import AppKit
-import FluidAudio
+import AVFoundation
 import SwiftUI
+import FluidAudio
 
 struct SettingsView: View {
     var model: AppModel
     var modelManager: ModelManager
     @State private var recordingHotkey = false
+    @State private var micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    @State private var axTrusted = PasteService.isAccessibilityTrusted
 
     private let languages: [(code: String, name: String)] = [
-        ("en", "English"),
-        ("tl", "Filipino (Tagalog)"),
-        ("es", "Spanish"),
-        ("fr", "French"),
-        ("de", "German"),
-        ("it", "Italian"),
-        ("pt", "Portuguese"),
-        ("ja", "Japanese"),
-        ("ko", "Korean"),
-        ("zh", "Chinese"),
+        ("en", "English"), ("tl", "Filipino (Tagalog)"), ("es", "Spanish"), ("fr", "French"),
+        ("de", "German"), ("it", "Italian"), ("pt", "Portuguese"), ("ja", "Japanese"),
+        ("ko", "Korean"), ("zh", "Chinese"),
     ]
 
     var body: some View {
-        Form {
-            Section("Dictation") {
-                Picker("Language", selection: languageBinding) {
-                    ForEach(languages, id: \.code) { language in
-                        Text(language.name).tag(language.code)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                SectionCard(title: "Dictation") {
+                    row("Language") {
+                        Picker("", selection: bind(\.language)) {
+                            ForEach(languages, id: \.code) { Text($0.name).tag($0.code) }
+                        }.labelsHidden().frame(width: 190)
                     }
+                    divider
+                    row("Mode") {
+                        Picker("", selection: bind(\.task)) {
+                            Text("Transcribe").tag(DictationTask.transcribe)
+                            Text("Translate to English").tag(DictationTask.translate)
+                        }.labelsHidden().frame(width: 190)
+                    }
+                    divider
+                    row("Paste into the focused app") { Toggle("", isOn: bind(\.pasteAfterTranscription)).labelsHidden() }
+                    divider
+                    row("Play sounds") { Toggle("", isOn: bind(\.playSounds)).labelsHidden() }
                 }
 
-                Picker("Mode", selection: taskBinding) {
-                    Text("Transcribe").tag(DictationTask.transcribe)
-                    Text("Translate to English").tag(DictationTask.translate)
-                }
-
-                Toggle("Paste into the focused app", isOn: pasteBinding)
-                Toggle("Play sounds", isOn: soundsBinding)
-            }
-
-            Section("Hotkey") {
-                LabeledContent("Shortcut") {
-                    Button(recordingHotkey ? "Press keys..." : model.settings.hotkey.displayString) {
-                        recordingHotkey = true
-                    }
-                    .background(
-                        HotkeyRecorder(isRecording: $recordingHotkey) { spec in
+                SectionCard(title: "Hotkey",
+                            footer: AppComposition.hotkey.registrationError) {
+                    row("Shortcut") {
+                        Button { recordingHotkey = true } label: {
+                            HotkeyChip(text: recordingHotkey ? "Press keys…" : model.settings.hotkey.displayString,
+                                       pulsing: recordingHotkey)
+                        }
+                        .buttonStyle(.plain)
+                        .background(HotkeyRecorder(isRecording: $recordingHotkey) { spec in
                             model.settings.hotkey = spec
                             AppComposition.hotkey.register(spec)
-                        }
-                    )
-                }
-
-                Picker("Behavior", selection: hotkeyModeBinding) {
-                    Text("Toggle: press to start, press to stop").tag(HotkeyMode.toggle)
-                    Text("Push to talk: hold while speaking").tag(HotkeyMode.pushToTalk)
-                }
-
-                if let error = AppComposition.hotkey.registrationError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(Theme.failure)
-                }
-            }
-
-            Section("Models") {
-                modelRow("Parakeet: fast English", state: modelManager.parakeetV2) {
-                    Task { await modelManager.downloadParakeet(.v2) }
-                }
-                modelRow("Parakeet: European languages", state: modelManager.parakeetV3) {
-                    Task { await modelManager.downloadParakeet(.v3) }
-                }
-                modelRow("Whisper: all languages and translate", state: modelManager.whisperLargeTurbo) {
-                    Task { await modelManager.downloadWhisper() }
-                }
-            }
-
-            Section("Permissions") {
-                LabeledContent("Microphone") {
-                    Button("Request") {
-                        Task { _ = await AudioService.requestMicPermission() }
+                        })
+                    }
+                    divider
+                    row("Behavior") {
+                        Picker("", selection: bind(\.hotkeyMode)) {
+                            Text("Toggle").tag(HotkeyMode.toggle)
+                            Text("Push to talk").tag(HotkeyMode.pushToTalk)
+                        }.pickerStyle(.segmented).labelsHidden().frame(width: 190)
                     }
                 }
 
-                LabeledContent("Accessibility for auto-paste") {
-                    Button(PasteService.isAccessibilityTrusted ? "Granted" : "Request") {
+                SectionCard(title: "Dictation bar") {
+                    HStack(spacing: 10) {
+                        ForEach(HUDPosition.allCases, id: \.self) { pos in
+                            HUDPositionPreview(position: pos, selected: model.settings.hudPosition == pos)
+                                .onTapGesture {
+                                    model.settings.hudPosition = pos
+                                    AppComposition.hud.clearSavedPositions()
+                                }
+                        }
+                    }
+                }
+
+                SectionCard(title: "Models") {
+                    modelRow("Parakeet — fast English", state: modelManager.parakeetV2) {
+                        Task { await modelManager.downloadParakeet(.v2) }
+                    }
+                    divider
+                    modelRow("Parakeet — European languages", state: modelManager.parakeetV3) {
+                        Task { await modelManager.downloadParakeet(.v3) }
+                    }
+                    divider
+                    modelRow("Whisper — all languages + translate", state: modelManager.whisperLargeTurbo) {
+                        Task { await modelManager.downloadWhisper() }
+                    }
+                }
+
+                SectionCard(title: "Permissions") {
+                    permissionRow("Microphone",
+                                  granted: micGranted,
+                                  grantedHint: "Connected ✓",
+                                  pendingHint: "Bulong needs your mic to hear you") {
+                        Task { micGranted = await AudioService.requestMicPermission() }
+                    }
+                    divider
+                    permissionRow("Accessibility",
+                                  granted: axTrusted,
+                                  grantedHint: "Granted ✓ — pastes into any app",
+                                  pendingHint: "Lets Bulong type the result where you're working") {
                         PasteService.requestAccessibility()
                     }
-                    .disabled(PasteService.isAccessibilityTrusted)
                 }
-            }
 
-            Section {
-                Text("Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0. Transcription runs entirely on this Mac; the only network use is downloading models above.")
-                    .font(.caption)
-                    .foregroundStyle(Theme.textSecondary)
+                Text("Bulong — Tagalog for “whisper.” Transcription runs entirely on this Mac; the only network use is downloading models above. Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0.")
+                    .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
+                    .padding(.horizontal, 4)
             }
+            .padding(20)
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
         .background(Theme.ink0)
-        .navigationTitle("Settings")
-        .onAppear {
-            modelManager.refresh()
+        .onAppear { modelManager.refresh() }
+        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
+            micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+            axTrusted = PasteService.isAccessibilityTrusted
         }
     }
 
-    private func modelRow(
-        _ title: String,
-        state: ModelManager.DownloadState,
-        download: @escaping () -> Void
-    ) -> some View {
-        LabeledContent(title) {
+    private var divider: some View {
+        Rectangle().fill(Theme.hairline).frame(height: 1).padding(.vertical, 8)
+    }
+
+    private func row(_ title: String, @ViewBuilder control: () -> some View) -> some View {
+        HStack {
+            Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary)
+            Spacer()
+            control()
+        }
+    }
+
+    private func modelRow(_ title: String, state: ModelManager.DownloadState,
+                          download: @escaping () -> Void) -> some View {
+        HStack {
+            Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary)
+            Spacer()
             switch state {
             case .ready:
                 Label("Ready", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(Theme.accent)
+                    .font(Theme.Fonts.caption).foregroundStyle(Theme.accent)
             case .notDownloaded:
-                Button("Download", action: download)
-            case .downloading(let progress):
-                ProgressView(value: progress)
-                    .frame(width: 120)
-            case .failed(let message):
-                Button("Retry: \(message)", action: download)
-                    .foregroundStyle(Theme.failure)
+                Button("Download", action: download).buttonStyle(HoverButtonStyle())
+            case .downloading(let p):
+                HStack(spacing: 8) {
+                    ProgressView(value: p).frame(width: 90)
+                    Text("\(Int(p * 100))%").font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
+                }
+            case .failed(let msg):
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(msg).font(Theme.Fonts.caption).foregroundStyle(Theme.failure).lineLimit(1)
+                    Button("Retry", action: download).buttonStyle(HoverButtonStyle())
+                }
             }
         }
     }
 
-    private var languageBinding: Binding<String> {
-        Binding(
-            get: { model.settings.language },
-            set: { model.settings.language = $0 }
-        )
+    private func permissionRow(_ title: String, granted: Bool, grantedHint: String,
+                               pendingHint: String, request: @escaping () -> Void) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary)
+                Text(granted ? grantedHint : pendingHint)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(granted ? Theme.accent : Theme.textTertiary)
+            }
+            Spacer()
+            if !granted { Button("Grant", action: request).buttonStyle(HoverButtonStyle()) }
+        }
     }
 
-    private var taskBinding: Binding<DictationTask> {
-        Binding(
-            get: { model.settings.task },
-            set: { model.settings.task = $0 }
-        )
+    private func bind<T>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, T>) -> Binding<T> {
+        Binding(get: { model.settings[keyPath: keyPath] }, set: { model.settings[keyPath: keyPath] = $0 })
+    }
+}
+
+/// Miniature screen showing where the HUD pill sits for a preset.
+struct HUDPositionPreview: View {
+    let position: HUDPosition
+    let selected: Bool
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack(alignment: alignment) {
+                RoundedRectangle(cornerRadius: 6).fill(Theme.ink2)
+                    .overlay(RoundedRectangle(cornerRadius: 6)
+                        .stroke(selected ? Theme.accent : Theme.hairlineStrong, lineWidth: selected ? 1.5 : 1))
+                Capsule().fill(selected ? Theme.accent : Theme.waveInactive)
+                    .frame(width: 26, height: 7)
+                    .padding(6)
+            }
+            .frame(width: 92, height: 58)
+            Text(position.label)
+                .font(Theme.Fonts.caption)
+                .foregroundStyle(selected ? Theme.textPrimary : Theme.textTertiary)
+        }
+        .contentShape(Rectangle())
+        .animation(Theme.easeFast, value: selected)
     }
 
-    private var pasteBinding: Binding<Bool> {
-        Binding(
-            get: { model.settings.pasteAfterTranscription },
-            set: { model.settings.pasteAfterTranscription = $0 }
-        )
-    }
-
-    private var soundsBinding: Binding<Bool> {
-        Binding(
-            get: { model.settings.playSounds },
-            set: { model.settings.playSounds = $0 }
-        )
-    }
-
-    private var hotkeyModeBinding: Binding<HotkeyMode> {
-        Binding(
-            get: { model.settings.hotkeyMode },
-            set: { model.settings.hotkeyMode = $0 }
-        )
+    private var alignment: Alignment {
+        switch position {
+        case .bottomCenter: .bottom
+        case .topRight: .topTrailing
+        case .nearNotch: .top
+        }
     }
 }
 

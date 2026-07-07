@@ -13,6 +13,7 @@ final class SettingsStore {
         self.pasteAfterTranscription = defaults.object(forKey: "pasteAfterTranscription") as? Bool ?? true
         self.playSounds = defaults.object(forKey: "playSounds") as? Bool ?? false
         self.hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
+        self.hudPosition = HUDPosition(rawValue: defaults.string(forKey: "hudPosition") ?? "") ?? .bottomCenter
         if let data = defaults.data(forKey: "hotkey"),
            let spec = try? JSONDecoder().decode(HotkeySpec.self, from: data) {
             self.hotkey = spec
@@ -56,5 +57,9 @@ final class SettingsStore {
 
     var hasCompletedOnboarding: Bool {
         didSet { defaults.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
+    }
+
+    var hudPosition: HUDPosition {
+        didSet { defaults.set(hudPosition.rawValue, forKey: "hudPosition") }
     }
 }

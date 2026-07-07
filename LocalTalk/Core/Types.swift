@@ -23,6 +23,17 @@ enum HotkeyMode: String, Codable, CaseIterable {
     case pushToTalk
 }
 
+enum HUDPosition: String, Codable, CaseIterable {
+    case bottomCenter, topRight, nearNotch
+    var label: String {
+        switch self {
+        case .bottomCenter: "Bottom center"
+        case .topRight: "Top right"
+        case .nearNotch: "Below the notch"
+        }
+    }
+}
+
 enum TranscriptionUpdate: Sendable, Equatable {
     case partial(String)
     case final(String)

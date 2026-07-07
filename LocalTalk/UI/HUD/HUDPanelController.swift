@@ -71,6 +71,14 @@ final class HUDPanelController {
         )
     }
 
+    /// Forgets user-dragged origins so a freshly picked position preset takes effect.
+    func clearSavedPositions() {
+        let defaults = UserDefaults.standard
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("hudOrigin-") {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     private func makePanel() -> NSPanel {
         let panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: panelSize),
