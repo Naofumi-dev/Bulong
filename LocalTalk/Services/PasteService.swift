@@ -7,6 +7,11 @@ final class PasteService {
 
     private(set) var targetApp: NSRunningApplication?
 
+    /// Probe injected by the composition root: true while the onboarding
+    /// window is up. Dictating there must land in Bulong's own test field,
+    /// not the previously-active app.
+    var isOnboardingActive: @MainActor () -> Bool = { false }
+
     /// Most recent frontmost app other than Bulong. With the .window-style
     /// popover, clicking a popover button can make Bulong itself frontmost,
     /// so capture must fall back to the app the user was actually in.
@@ -48,6 +53,11 @@ final class PasteService {
         let frontmost = NSWorkspace.shared.frontmostApplication
         if let frontmost, frontmost.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             targetApp = frontmost
+        } else if isOnboardingActive() {
+            // Bulong itself is frontmost with onboarding up: nil target means
+            // insert() skips app activation and lands in the focused element
+            // (the onboarding test field), not the last external app.
+            targetApp = nil
         } else {
             targetApp = lastExternalApp
         }

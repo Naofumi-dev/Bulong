@@ -1,3 +1,4 @@
+import AppKit
 import AVFoundation
 import FluidAudio
 import SwiftUI
@@ -7,9 +8,11 @@ struct OnboardingView: View {
     var modelManager: ModelManager
     @State private var step = 0
     @State private var micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    @State private var micDenied = AVCaptureDevice.authorizationStatus(for: .audio) == .denied
     @State private var axTrusted = PasteService.isAccessibilityTrusted
     @State private var testText = ""
     @State private var payoff = false
+    @State private var failureHint: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -40,6 +43,7 @@ struct OnboardingView: View {
                 .padding(.horizontal, 16).padding(.vertical, 7)
                 .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
                 .disabled(!continueEnabled)
+                .keyboardShortcut(.defaultAction)
             }
             .padding(20)
         }
@@ -51,12 +55,31 @@ struct OnboardingView: View {
         .task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1.5))
-                micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+                let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+                micGranted = micStatus == .authorized
+                micDenied = micStatus == .denied
                 axTrusted = PasteService.isAccessibilityTrusted
             }
         }
+        // Intentional: a hotkey dictation into another app while on the dictate
+        // step also proves the flow, so it counts as the payoff too.
         .onChange(of: model.lastTranscript) { _, new in
-            if step == 2, !new.isEmpty { payoff = true }
+            if step == 2, !new.isEmpty {
+                payoff = true
+                testText = new
+            }
+        }
+        .onChange(of: model.state) { _, new in
+            guard step == 2 else { return }
+            switch new {
+            case .failed(let message): failureHint = message
+            case .recording: failureHint = nil
+            default: break
+            }
+        }
+        .onChange(of: step) { _, _ in
+            payoff = false
+            failureHint = nil
         }
     }
 
@@ -98,19 +121,33 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Two permissions").font(Theme.Fonts.display).foregroundStyle(Theme.textPrimary)
             permissionCard(icon: "mic.fill", title: "Microphone", granted: micGranted, required: true,
-                           reason: "So Bulong can hear you. Audio is processed on this Mac and never uploaded.") {
-                Task { micGranted = await AudioService.requestMicPermission() }
+                           reason: "So Bulong can hear you. Audio is processed on this Mac and never uploaded.",
+                           deniedHint: micDenied
+                               ? "Microphone access was denied — enable it in System Settings, and this card will update."
+                               : nil,
+                           actionTitle: micDenied ? "Open System Settings" : "Grant") {
+                if micDenied {
+                    openMicPrivacySettings()
+                } else {
+                    Task {
+                        micGranted = await AudioService.requestMicPermission()
+                        micDenied = AVCaptureDevice.authorizationStatus(for: .audio) == .denied
+                    }
+                }
             }
             permissionCard(icon: "keyboard.fill", title: "Accessibility", granted: axTrusted, required: false,
                            reason: "Lets Bulong type the result into whatever app you're using. Optional — without it, transcripts go to your clipboard.") {
                 PasteService.requestAccessibility()
             }
         }
-        .padding(28)
+        .padding(.horizontal, 28)
+        .padding(.top, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func permissionCard(icon: String, title: String, granted: Bool, required: Bool,
-                                reason: String, request: @escaping () -> Void) -> some View {
+                                reason: String, deniedHint: String? = nil, actionTitle: String = "Grant",
+                                request: @escaping () -> Void) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon).font(Theme.Fonts.title)
                 .foregroundStyle(granted ? Theme.accent : Theme.textSecondary)
@@ -128,10 +165,16 @@ struct OnboardingView: View {
                     .font(Theme.Fonts.caption)
                     .foregroundStyle(granted ? Theme.accent : Theme.textSecondary)
                     .lineSpacing(2)
+                if !granted, let deniedHint {
+                    Text(deniedHint)
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.failure)
+                        .lineSpacing(2)
+                }
             }
             Spacer()
             if !granted {
-                Button("Grant", action: request).buttonStyle(HoverButtonStyle())
+                Button(actionTitle, action: request).buttonStyle(HoverButtonStyle())
             }
         }
         .padding(14)
@@ -139,6 +182,13 @@ struct OnboardingView: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard)
             .stroke(granted ? Theme.accentDim : Theme.hairline, lineWidth: 1))
         .animation(Theme.easeFast, value: granted)
+    }
+
+    private func openMicPrivacySettings() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+        ) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     // Step 2 — model + first dictation payoff
@@ -161,8 +211,16 @@ struct OnboardingView: View {
                     .background(RoundedRectangle(cornerRadius: Theme.radiusCard).fill(Theme.ink1))
                     .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard)
                         .stroke(payoff ? Theme.accent : Theme.hairlineStrong, lineWidth: 1))
+                if let failureHint {
+                    Text(failureHint)
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.failure)
+                }
                 if payoff {
-                    Label("It worked — that's Bulong. Same hotkey, any app.", systemImage: "checkmark.circle.fill")
+                    Label(axTrusted
+                        ? "It worked — that's Bulong. Same hotkey, any app."
+                        : "Copied to your clipboard — grant Accessibility and Bulong types it right where you're working.",
+                        systemImage: "checkmark.circle.fill")
                         .font(Theme.Fonts.body).foregroundStyle(Theme.accent)
                         .transition(.opacity)
                 }
@@ -176,8 +234,12 @@ struct OnboardingView: View {
                     }
                 }
             case .notDownloaded:
-                Button("Download the speech model") { Task { await modelManager.downloadParakeet(.v2) } }
-                    .buttonStyle(HoverButtonStyle())
+                VStack(alignment: .leading, spacing: 6) {
+                    Button("Download the speech model") { Task { await modelManager.downloadParakeet(.v2) } }
+                        .buttonStyle(HoverButtonStyle())
+                    Text("One-time download, ~600 MB — then everything runs offline.")
+                        .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
+                }
             case .failed(let msg):
                 VStack(alignment: .leading, spacing: 6) {
                     Text(msg).font(Theme.Fonts.caption).foregroundStyle(Theme.failure)
@@ -185,9 +247,10 @@ struct OnboardingView: View {
                         .buttonStyle(HoverButtonStyle())
                 }
             }
-            Spacer()
         }
-        .padding(28)
+        .padding(.horizontal, 28)
+        .padding(.top, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .animation(Theme.easeFast, value: payoff)
     }
 }
@@ -200,8 +263,9 @@ struct OnboardingWindowView: View {
         OnboardingView(model: model, modelManager: modelManager)
             .onChange(of: model.settings.hasCompletedOnboarding) { _, done in
                 if done {
+                    // The willCloseNotification observer in AppComposition
+                    // clears the window reference.
                     AppComposition.onboardingWindow?.close()
-                    AppComposition.onboardingWindow = nil
                 }
             }
     }

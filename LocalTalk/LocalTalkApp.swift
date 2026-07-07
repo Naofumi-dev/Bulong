@@ -51,6 +51,7 @@ enum AppComposition {
     static let uiState = UIState()
     static let whisperEngine = WhisperKitEngine()
     static var onboardingWindow: NSWindow?
+    private static var onboardingCloseObserver: NSObjectProtocol?
 
     static var hotkeyDisplay: String {
         SettingsStore().hotkey.displayString
@@ -94,6 +95,7 @@ enum AppComposition {
     }
 
     static func wireHotkey(to model: AppModel) {
+        paste.isOnboardingActive = { onboardingWindow?.isVisible == true }
         showOnboardingIfNeeded(for: model)
 
         model.onStateChange = { [weak model] state in
@@ -186,6 +188,22 @@ enum AppComposition {
             window.center()
             window.isReleasedWhenClosed = false
             onboardingWindow = window
+            // Any close path (Finish or the close button) releases the window
+            // reference here, which also tears down the hosting view and its
+            // 1.5s permission poll.
+            onboardingCloseObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: window,
+                queue: .main
+            ) { _ in
+                MainActor.assumeIsolated {
+                    onboardingWindow = nil
+                    if let token = onboardingCloseObserver {
+                        NotificationCenter.default.removeObserver(token)
+                        onboardingCloseObserver = nil
+                    }
+                }
+            }
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
