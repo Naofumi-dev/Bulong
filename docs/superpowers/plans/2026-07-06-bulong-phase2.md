@@ -1590,6 +1590,8 @@ git add -A && git commit -m "chore: phase 2 polish gate — stock-tell sweep, sm
 - `UIState` lives in Components.swift and references `MainSection` from MainWindowView.swift — works in-module, but consider co-locating with AppComposition someday.
 - HUDView still carries literal `cornerRadius: 20` / `easeOut(0.16)` duplicating tokens — self-heals in Task 7; check if Task 7 slips.
 - `AppComposition.hotkeyDisplay` (LocalTalkApp.swift) is now an orphan — its only consumer was the old HistoryView. Delete in Task 9's sweep.
+- Pre-existing (ticket, not this phase): `HistoryStore.clear()` empties `entries` in memory BEFORE the file write — a failed write resurrects "deleted" transcripts on relaunch. Reorder write-then-clear or surface the error.
+- Search-field polish (later phase): ⌘F focus via @FocusState + keyboardShortcut, Esc-to-clear via onExitCommand, clear button, results-count during search.
 - Task 9: confirm the Reduce Motion posture app-wide — opacity/color micro-fades (card hover, section cross-fade) are the accepted substitute under Reduce Motion and may stay ungated; anything that MOVES (slides, springs, scaling, waveforms, pulses) must gate on `accessibilityReduceMotion`.
 
 ## Self-review notes (for the executor)
