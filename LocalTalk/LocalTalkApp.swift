@@ -178,7 +178,11 @@ enum AppComposition {
             )
             let window = NSWindow(contentViewController: host)
             window.title = "Welcome to Bulong"
-            window.styleMask = [.titled, .closable]
+            window.styleMask = [.titled, .closable, .fullSizeContentView]
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.isMovableByWindowBackground = true
+            window.backgroundColor = NSColor(Theme.ink0)
             window.center()
             window.isReleasedWhenClosed = false
             onboardingWindow = window
