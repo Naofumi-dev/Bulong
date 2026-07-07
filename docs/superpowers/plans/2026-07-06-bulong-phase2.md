@@ -1411,13 +1411,13 @@ struct SmoothedWaveform: View {
 
 - [ ] **Step 2: Position presets in `HUDPanelController.swift`**
 
-Read the file first. In its default-position logic (the branch used when no saved per-screen origin exists — currently bottom-center +24pt), switch on `SettingsStore().hudPosition`:
+Read the file first. TWO design corrections from the Task 5 review are part of this step: (a) do NOT construct a fresh `SettingsStore()` — hoist the app's single instance to `AppComposition.settings` (use it in `makeAppModel` too) and read `AppComposition.settings.hudPosition` here; (b) move `persistPosition()` OUT of `hide()` — persist ONLY in `finishDrag()`, so a saved origin means explicit user intent (today `hide()` re-persists after every dictation, which is the only reason `clearSavedPositions()` has to exist and it can mask a freshly-picked preset if the HUD is visible when the user taps one). Then, in the default-position branch (no saved per-screen origin), switch on the preset:
 
 ```swift
         let frame = screen.visibleFrame
         let size = NSSize(width: 392, height: 74)
         let origin: NSPoint
-        switch SettingsStore().hudPosition {
+        switch AppComposition.settings.hudPosition {
         case .bottomCenter:
             origin = NSPoint(x: frame.midX - size.width / 2, y: frame.minY + 24)
         case .topRight:
@@ -1594,6 +1594,7 @@ git add -A && git commit -m "chore: phase 2 polish gate — stock-tell sweep, sm
 - Search-field polish (later phase): ⌘F focus via @FocusState + keyboardShortcut, Esc-to-clear via onExitCommand, clear button, results-count during search.
 - HistoryCard cosmetics (defer/ignore): `.allowsHitTesting(hovering)` on the invisible Copy button; reveal-on-focus for Full Keyboard Access; `.year()` in the timestamp format for >1-year-old entries.
 - Task 9 accessibility sweep: `HUDPositionPreview` uses `onTapGesture` — not keyboard/VoiceOver actionable; convert to Button with `.buttonStyle(.plain)` or add accessibility action.
+- Task 9 visual verify: segmented pickers ignore SwiftUI `.tint` on macOS (selected segment follows the system accent, likely blue amid the mint UI) and bare `Toggle`s outside a Form render as checkboxes — check both in the running app and decide whether custom controls are warranted.
 - Task 9: confirm the Reduce Motion posture app-wide — opacity/color micro-fades (card hover, section cross-fade) are the accepted substitute under Reduce Motion and may stay ungated; anything that MOVES (slides, springs, scaling, waveforms, pulses) must gate on `accessibilityReduceMotion`.
 
 ## Self-review notes (for the executor)
