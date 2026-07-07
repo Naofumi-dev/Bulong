@@ -6,9 +6,8 @@ struct HistoryView: View {
     @State private var query = ""
     @State private var confirmClear = false
 
-    private var results: [HistoryEntry] { model.history.search(query) }
-
     var body: some View {
+        let results = model.history.search(query)
         VStack(spacing: 0) {
             toolbar
             if results.isEmpty {
@@ -49,6 +48,7 @@ struct HistoryView: View {
                 .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textTertiary)
                 .fixedSize()
             Button("Export") { export() }.buttonStyle(HoverButtonStyle())
+                .disabled(model.history.entries.isEmpty)
             Button("Clear") { confirmClear = true }.buttonStyle(HoverButtonStyle())
                 .disabled(model.history.entries.isEmpty)
         }
@@ -86,25 +86,15 @@ private struct HistoryCard: View {
                 .textSelection(.enabled)
             HStack(spacing: 8) {
                 Text(entry.appName)
-                Text(entry.date, style: .time)
+                Text(entry.date, format: timestampFormat)
                 Text(entry.engine.rawValue).foregroundStyle(Theme.accentText)
                 Text(entry.language.uppercased())
                 Spacer()
-                if hovering {
-                    Button(copied ? "Copied ✓" : "Copy") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(entry.text, forType: .string)
-                        copied = true
-                        copyResetTask?.cancel()
-                        copyResetTask = Task {
-                            try? await Task.sleep(for: .seconds(1.2))
-                            if !Task.isCancelled { copied = false }
-                        }
-                    }
+                Button(copied ? "Copied ✓" : "Copy") { copyEntry() }
                     .buttonStyle(.plain)
                     .font(Theme.Fonts.caption)
                     .foregroundStyle(copied ? Theme.accent : Theme.textSecondary)
-                }
+                    .opacity(hovering ? 1 : 0)
             }
             .font(Theme.Fonts.mono(10.5))
             .foregroundStyle(Theme.textTertiary)
@@ -117,6 +107,25 @@ private struct HistoryCard: View {
         .onHover { hovering = $0 }
         .animation(Theme.easeFast, value: hovering)
         .animation(Theme.easeFast, value: copied)
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: "Copy") { copyEntry() }
+    }
+
+    private var timestampFormat: Date.FormatStyle {
+        Calendar.current.isDateInToday(entry.date)
+            ? .dateTime.hour().minute()
+            : .dateTime.day().month().hour().minute()
+    }
+
+    private func copyEntry() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(entry.text, forType: .string)
+        copied = true
+        copyResetTask?.cancel()
+        copyResetTask = Task {
+            try? await Task.sleep(for: .seconds(1.2))
+            if !Task.isCancelled { copied = false }
+        }
     }
 }
 
@@ -131,6 +140,7 @@ private struct EmptyHistoryView: View {
                         .frame(width: 3.5, height: [10, 18, 28, 22, 30, 16, 9][i])
                 }
             }
+            .accessibilityHidden(true)
             Text("Your dictations will appear here")
                 .font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
             HStack(spacing: 6) {
@@ -139,7 +149,7 @@ private struct EmptyHistoryView: View {
                 Text("in any app to dictate").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
             }
             Button {
-                Task { await model.toggleDictation() }
+                Task { await model.toggleDictation(clipboardOnly: true) }
             } label: {
                 Text("Try it now")
                     .font(Theme.Fonts.action).foregroundStyle(Theme.ink0)

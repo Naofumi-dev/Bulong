@@ -33,6 +33,7 @@ final class AppModel {
     private var dictationTask: Task<Void, Never>?
     private var watchdogTask: Task<Void, Never>?
     private var recordingStarted: Date?
+    private var clipboardOnlyRun = false
     private var targetAppName: String = ""
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
 
@@ -60,9 +61,10 @@ final class AppModel {
         self.watchdogSeconds = watchdogSeconds
     }
 
-    func toggleDictation() async {
+    func toggleDictation(clipboardOnly: Bool = false) async {
         switch state {
         case .idle, .failed:
+            clipboardOnlyRun = clipboardOnly
             await startDictation()
         case .recording:
             stopRecording()
@@ -149,9 +151,14 @@ final class AppModel {
             }
 
             state = .inserting
-            let result = settings.pasteAfterTranscription
-                ? await insertText(text)
-                : .clipboardOnly(reason: "Auto-paste is off")
+            let result: InsertionResult
+            if clipboardOnlyRun {
+                result = .clipboardOnly(reason: "Copied — this was a test run")
+            } else {
+                result = settings.pasteAfterTranscription
+                    ? await insertText(text)
+                    : .clipboardOnly(reason: "Auto-paste is off")
+            }
 
             lastTranscript = text
             statusDetail = Self.describe(result)

@@ -119,6 +119,43 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.history.entries.first?.appName, "Captured App")
     }
 
+    func testClipboardOnlyRunSkipsInsertionButAppendsHistory() async throws {
+        let engine = FakeEngine()
+        let audio = AudioStub()
+        var insertions: [String] = []
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in engine },
+            audioStart: { audio.start() },
+            audioStop: { audio.stop() },
+            insertText: { text in
+                insertions.append(text)
+                return .insertedDirectly
+            },
+            frontmostAppName: { "TextEdit" },
+            minimumDuration: 0,
+            watchdogSeconds: 5
+        )
+
+        await model.toggleDictation(clipboardOnly: true)
+        audio.emitSilence(buffers: 1)
+        await model.toggleDictation()
+        await model.waitForIdle()
+
+        XCTAssertTrue(insertions.isEmpty, "clipboard-only run must not call insertText")
+        XCTAssertEqual(model.history.entries.first?.text, "hello world")
+        XCTAssertEqual(model.state, .idle)
+
+        // The next normal run must insert again — the flag must not stick.
+        await model.toggleDictation()
+        audio.emitSilence(buffers: 1)
+        await model.toggleDictation()
+        await model.waitForIdle()
+
+        XCTAssertEqual(insertions, ["hello world"])
+    }
+
     func testFailedStateClearsOnNextStart() async throws {
         let engine = FakeEngine()
         engine.scriptedError = EngineError.engineFailure("boom")
