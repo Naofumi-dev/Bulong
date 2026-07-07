@@ -1594,6 +1594,7 @@ git add -A && git commit -m "chore: phase 2 polish gate — stock-tell sweep, sm
 - Search-field polish (later phase): ⌘F focus via @FocusState + keyboardShortcut, Esc-to-clear via onExitCommand, clear button, results-count during search.
 - HistoryCard cosmetics (defer/ignore): `.allowsHitTesting(hovering)` on the invisible Copy button; reveal-on-focus for Full Keyboard Access; `.year()` in the timestamp format for >1-year-old entries.
 - Task 9 accessibility sweep: `HUDPositionPreview` uses `onTapGesture` — not keyboard/VoiceOver actionable; convert to Button with `.buttonStyle(.plain)` or add accessibility action.
+- Cosmetic: onboarding self-dictations record appName "Unknown" in history (nil target). Could label "Bulong onboarding" someday.
 - Task 9 visual verify: segmented pickers ignore SwiftUI `.tint` on macOS (selected segment follows the system accent, likely blue amid the mint UI) and bare `Toggle`s outside a Form render as checkboxes — check both in the running app and decide whether custom controls are warranted.
 - Task 9: confirm the Reduce Motion posture app-wide — opacity/color micro-fades (card hover, section cross-fade) are the accepted substitute under Reduce Motion and may stay ungated; anything that MOVES (slides, springs, scaling, waveforms, pulses) must gate on `accessibilityReduceMotion`.
 
