@@ -33,3 +33,9 @@ Run before any release build. All items must pass.
 
 - [ ] Popover: opening History/Settings lands on the right pane and popover dismisses
 - [ ] Start dictation from the popover → text pastes into the previously focused app
+
+## Living HUD (requires live mouse + app inactive)
+
+- [ ] Trigger dictation via hotkey from another app; hover the pill → cancel appears; click it → dictation cancels without activating Bulong
+- [ ] Drag the pill smoothly (no jitter/jumping), release; position persists; next dictation appears there
+- [ ] Push-to-talk: start drag, release the hotkey mid-drag → no jump on the next drag

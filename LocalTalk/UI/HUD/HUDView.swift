@@ -1,6 +1,13 @@
+import AppKit
 import SwiftUI
 
 struct HUDView: View {
+    /// Single source of truth for the pill's size — the panel content must match exactly.
+    static let hudSize = NSSize(width: 392, height: 74)
+    /// Below this level the orb settles and the bars go flat. One constant so the
+    /// orb and the waveform can never disagree on what silence is.
+    static let silenceThreshold: Float = 0.06
+
     let state: DictationState
     let level: Float
     let partial: String
@@ -42,7 +49,7 @@ struct HUDView: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(width: 392, height: 74)
+        .frame(width: Self.hudSize.width, height: Self.hudSize.height)
         .background(
             LinearGradient(colors: [Theme.hudShellTop, Theme.hudShellBottom],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -52,12 +59,17 @@ struct HUDView: View {
             .stroke(isFailed ? Theme.failure.opacity(0.6) : Theme.hudRim, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous))
         .shadow(color: .black.opacity(0.34), radius: 22, y: 12)
-        .onHover { hovering = $0 }
+        .overlay(ActiveAlwaysHoverTracker { hovering = $0 })
         .animation(Theme.easeFast, value: hovering)
         .animation(Theme.easeFast, value: showCancel)
         .gesture(DragGesture()
             .onChanged { onDragChanged($0.translation) }
             .onEnded { _ in onDragEnded() })
+        .onChange(of: isRecording) { _, isNow in
+            // The hosting view lives across dictations now; drop hover state
+            // stranded by the panel ordering out mid-hover.
+            if isNow { hovering = false }
+        }
     }
 
     private var showCancel: Bool {
@@ -97,8 +109,6 @@ struct OrbView: View {
     let state: DictationState
     let reduceMotion: Bool
 
-    private static let silenceThreshold: Float = 0.06
-
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: paused)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
@@ -132,7 +142,7 @@ struct OrbView: View {
     private func energyValue(t: TimeInterval) -> CGFloat {
         switch state {
         case .recording:
-            let live = level < Self.silenceThreshold ? 0 : level
+            let live = level < HUDView.silenceThreshold ? 0 : level
             return CGFloat(0.25 + 0.75 * live)
         case .transcribing, .inserting:
             return reduceMotion ? 0.5 : 0.4 + 0.2 * CGFloat(abs(sin(t * 2.2)))
@@ -148,6 +158,12 @@ struct OrbView: View {
 /// the visual contract — per-bar lag, silence-flat — without touching view state.
 final class WaveSmoother {
     var values: [Float] = Array(repeating: 0, count: 7)
+
+    /// The hosting view is reused across dictations, so a new recording must
+    /// explicitly start from silence rather than inherit the last session's bars.
+    func reset() {
+        values = Array(repeating: 0, count: 7)
+    }
 }
 
 /// Seven bars with per-bar smoothing lag so movement reads organic, not uniform.
@@ -159,7 +175,6 @@ struct SmoothedWaveform: View {
 
     private let base: [CGFloat] = [0.35, 0.6, 1.0, 0.75, 0.5, 0.8, 0.4]
     private let lag: [Float] = [0.55, 0.4, 0.25, 0.35, 0.5, 0.3, 0.6]
-    private static let silenceThreshold: Float = 0.06
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 24.0, paused: reduceMotion || !isRecording)) { context in
@@ -170,6 +185,9 @@ struct SmoothedWaveform: View {
                         .frame(width: 4, height: height(i, t: context.date.timeIntervalSinceReferenceDate))
                 }
             }
+        }
+        .onChange(of: isRecording) { _, isNow in
+            if isNow { smoother.reset() }
         }
     }
 
@@ -183,7 +201,7 @@ struct SmoothedWaveform: View {
         let cap = base[i] * 22
         switch state {
         case .recording:
-            let target = level < Self.silenceThreshold ? 0 : level
+            let target = level < HUDView.silenceThreshold ? 0 : level
             smoother.values[i] += (target - smoother.values[i]) * lag[i]   // per-bar lag
             return max(4, cap * CGFloat(0.2 + 0.8 * smoother.values[i]))
         case .transcribing, .inserting:
@@ -191,5 +209,44 @@ struct SmoothedWaveform: View {
         case .failed: return 4
         case .idle: return cap * 0.3
         }
+    }
+}
+
+/// SwiftUI's `.onHover` only reports while the app is active, but the HUD lives
+/// on a non-activating panel and is almost always used while another app is
+/// frontmost. An NSTrackingArea with `.activeAlways` reports hover regardless of
+/// which app is active. The tracker never intercepts clicks (`hitTest` is nil),
+/// so the cancel button and the drag gesture behind it keep working.
+private struct ActiveAlwaysHoverTracker: NSViewRepresentable {
+    var onChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> TrackerView {
+        TrackerView(onChange: onChange)
+    }
+
+    func updateNSView(_ view: TrackerView, context: Context) {
+        view.onChange = onChange
+    }
+
+    final class TrackerView: NSView {
+        var onChange: (Bool) -> Void
+
+        init(onChange: @escaping (Bool) -> Void) {
+            self.onChange = onChange
+            super.init(frame: .zero)
+            addTrackingArea(NSTrackingArea(
+                rect: .zero,
+                options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                owner: self,
+                userInfo: nil
+            ))
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        override func mouseEntered(with event: NSEvent) { onChange(true) }
+        override func mouseExited(with event: NSEvent) { onChange(false) }
     }
 }

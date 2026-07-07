@@ -1,16 +1,39 @@
 import AppKit
 import SwiftUI
 
+/// The HUD is clicked while another app is frontmost (non-activating panel), so
+/// the first click must land on the cancel button instead of being swallowed as
+/// window activation.
+@MainActor
+private final class HUDHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
 @MainActor
 final class HUDPanelController {
-    private let panelSize = NSSize(width: 392, height: 74)
+    private let panelSize = HUDView.hudSize
     private var panel: NSPanel?
-    private var dragStartOrigin: NSPoint?
+    private var hostingView: NSView?
+    private var dragAnchor: (mouse: NSPoint, origin: NSPoint)?
+    /// Bumped by every show()/hide(); a hide fade's completion only orders the
+    /// panel out if its generation is still current, so a show() landing inside
+    /// the 0.16s fade can't be snuffed by the stale completion.
+    private var fadeGeneration = 0
 
     func show<Content: View>(@ViewBuilder content: () -> Content) {
         let panel = panel ?? makePanel()
+        // Build the hosting view ONCE. Replacing contentView on every state
+        // transition tears down @State (hover, wave smoothing) mid-display;
+        // the root view observes the model, so one view tracks all states.
+        // (NSPanel auto-creates a placeholder contentView, so we track our own.)
+        if hostingView == nil {
+            let host = HUDHostingView(rootView: content())
+            hostingView = host
+            panel.contentView = host
+        }
+        dragAnchor = nil
+        fadeGeneration += 1
         let wasVisible = panel.isVisible
-        panel.contentView = NSHostingView(rootView: content())
 
         if !wasVisible {
             let targetOrigin = origin(for: panel)
@@ -25,11 +48,23 @@ final class HUDPanelController {
             }
         } else {
             panel.orderFrontRegardless()
+            if panel.alphaValue < 1 {
+                // A hide fade is in flight; rescue the panel back to full presence.
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.16
+                    context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    panel.animator().alphaValue = 1
+                    panel.animator().setFrameOrigin(origin(for: panel))
+                }
+            }
         }
     }
 
     func hide() {
         guard let panel, panel.isVisible else { return }
+        dragAnchor = nil
+        fadeGeneration += 1
+        let generation = fadeGeneration
         let startOrigin = panel.frame.origin
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.16
@@ -37,7 +72,9 @@ final class HUDPanelController {
             panel.animator().alphaValue = 0
             panel.animator().setFrameOrigin(NSPoint(x: startOrigin.x, y: startOrigin.y - 8))
         } completionHandler: {
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                // A show() that landed during the fade owns the panel now.
+                guard let self, generation == self.fadeGeneration else { return }
                 panel.orderOut(nil)
                 panel.alphaValue = 1
                 panel.setFrameOrigin(startOrigin)
@@ -45,21 +82,24 @@ final class HUDPanelController {
         }
     }
 
-    func drag(to translation: CGSize) {
+    /// Screen-space drag: the SwiftUI gesture is only a begin/change/end signal.
+    /// Its translation is measured in a space anchored to the moving window (a
+    /// jitter feedback loop), so the real delta comes from `NSEvent.mouseLocation`
+    /// against an anchor captured at drag start.
+    func dragChanged() {
         guard let panel else { return }
-        if dragStartOrigin == nil {
-            dragStartOrigin = panel.frame.origin
-        }
-        guard let dragStartOrigin else { return }
+        let mouse = NSEvent.mouseLocation
+        let anchor = dragAnchor ?? (mouse: mouse, origin: panel.frame.origin)
+        dragAnchor = anchor
         panel.setFrameOrigin(NSPoint(
-            x: dragStartOrigin.x + translation.width,
-            y: dragStartOrigin.y - translation.height
+            x: anchor.origin.x + (mouse.x - anchor.mouse.x),
+            y: anchor.origin.y + (mouse.y - anchor.mouse.y)
         ))
     }
 
     func finishDrag() {
         persistPosition()
-        dragStartOrigin = nil
+        dragAnchor = nil
     }
 
     /// Persisting ONLY on drag end means a saved origin always reflects explicit

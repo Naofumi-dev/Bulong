@@ -220,7 +220,7 @@ struct HUDStateView: View {
             partial: model.lastPartial,
             language: model.settings.language,
             onCancel: { Task { await model.cancelDictation() } },
-            onDragChanged: { AppComposition.hud.drag(to: $0) },
+            onDragChanged: { _ in AppComposition.hud.dragChanged() },
             onDragEnded: { AppComposition.hud.finishDrag() }
         )
     }
