@@ -39,7 +39,8 @@ struct SettingsView: View {
                 }
 
                 SectionCard(title: "Hotkey",
-                            footer: AppComposition.hotkey.registrationError) {
+                            footer: AppComposition.hotkey.registrationError,
+                            footerIsError: AppComposition.hotkey.registrationError != nil) {
                     row("Shortcut") {
                         Button { recordingHotkey = true } label: {
                             HotkeyChip(text: recordingHotkey ? "Press keys…" : model.settings.hotkey.displayString,
@@ -50,6 +51,12 @@ struct SettingsView: View {
                             model.settings.hotkey = spec
                             AppComposition.hotkey.register(spec)
                         })
+                    }
+                    if recordingHotkey {
+                        Text("Use ⌘ ⌥ ⌃ ⇧ + a key · Esc cancels")
+                            .font(Theme.Fonts.caption)
+                            .foregroundStyle(Theme.textTertiary)
+                            .padding(.top, 4)
                     }
                     divider
                     row("Behavior") {
@@ -110,9 +117,12 @@ struct SettingsView: View {
         }
         .background(Theme.ink0)
         .onAppear { modelManager.refresh() }
-        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
-            micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
-            axTrusted = PasteService.isAccessibilityTrusted
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.5))
+                micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+                axTrusted = PasteService.isAccessibilityTrusted
+            }
         }
     }
 
@@ -124,14 +134,14 @@ struct SettingsView: View {
         HStack {
             Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary)
             Spacer()
-            control()
+            control().accessibilityLabel(title)
         }
     }
 
     private func modelRow(_ title: String, state: ModelManager.DownloadState,
                           download: @escaping () -> Void) -> some View {
         HStack {
-            Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary)
+            Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary).layoutPriority(1)
             Spacer()
             switch state {
             case .ready:
@@ -147,6 +157,7 @@ struct SettingsView: View {
             case .failed(let msg):
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(msg).font(Theme.Fonts.caption).foregroundStyle(Theme.failure).lineLimit(1)
+                        .help(msg)
                     Button("Retry", action: download).buttonStyle(HoverButtonStyle())
                 }
             }
@@ -248,6 +259,10 @@ struct HotkeyRecorder: NSViewRepresentable {
                 self.monitor = nil
             }
         }
+    }
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        coordinator.stop()
     }
 
     static func carbonFlags(from flags: NSEvent.ModifierFlags) -> UInt32 {

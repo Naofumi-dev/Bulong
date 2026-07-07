@@ -1,7 +1,8 @@
 import Carbon.HIToolbox
 import Foundation
+import Observation
 
-@MainActor
+@MainActor @Observable
 final class HotkeyService {
     var onPressed: (() -> Void)?
     var onReleased: (() -> Void)?

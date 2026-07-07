@@ -48,6 +48,7 @@ struct HotkeyChip: View {
 struct SectionCard<Content: View>: View {
     let title: String
     var footer: String? = nil
+    var footerIsError: Bool = false
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -62,7 +63,9 @@ struct SectionCard<Content: View>: View {
                 .background(RoundedRectangle(cornerRadius: Theme.radiusCard).fill(Theme.ink1))
                 .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard).stroke(Theme.hairline, lineWidth: 1))
             if let footer {
-                Text(footer).font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary).padding(.leading, 4)
+                Text(footer).font(Theme.Fonts.caption)
+                    .foregroundStyle(footerIsError ? Theme.failure : Theme.textTertiary)
+                    .padding(.leading, 4)
             }
         }
     }

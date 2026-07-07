@@ -30,11 +30,17 @@ final class ModelManager {
     }
 
     func refresh() {
-        parakeetV2 = Self.parakeetExists(.v2) ? .ready : .notDownloaded
-        parakeetV3 = Self.parakeetExists(.v3) ? .ready : .notDownloaded
-        whisperLargeTurbo = FileManager.default.fileExists(atPath: Self.whisperModelFolder.path)
-            ? .ready
-            : .notDownloaded
+        if case .downloading = parakeetV2 {} else {
+            parakeetV2 = Self.parakeetExists(.v2) ? .ready : .notDownloaded
+        }
+        if case .downloading = parakeetV3 {} else {
+            parakeetV3 = Self.parakeetExists(.v3) ? .ready : .notDownloaded
+        }
+        if case .downloading = whisperLargeTurbo {} else {
+            whisperLargeTurbo = FileManager.default.fileExists(atPath: Self.whisperModelFolder.path)
+                ? .ready
+                : .notDownloaded
+        }
     }
 
     nonisolated static func parakeetExists(_ version: AsrModelVersion) -> Bool {
