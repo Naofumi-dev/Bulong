@@ -47,17 +47,24 @@ struct HistoryView: View {
             .background(RoundedRectangle(cornerRadius: Theme.radiusControl + 2).fill(Theme.ink1))
             .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl + 2).stroke(Theme.hairline, lineWidth: 1))
 
-            Text("\(model.history.entries.count) clips")
-                .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textTertiary)
-                .fixedSize()
-            Button("Export") { export() }.buttonStyle(HoverButtonStyle())
-                .disabled(model.history.entries.isEmpty)
-            Button("Clear") { confirmClear = true }.buttonStyle(HoverButtonStyle())
-                .disabled(model.history.entries.isEmpty)
+            // Counter and actions only exist once there is something to count.
+            if !model.history.entries.isEmpty {
+                Text("\(model.history.entries.count) transcripts · \(totalWords) words")
+                    .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textTertiary)
+                    .fixedSize()
+                Button("Export") { export() }.buttonStyle(HoverButtonStyle())
+                Button("Clear") { confirmClear = true }.buttonStyle(HoverButtonStyle())
+            }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .background(Theme.ink0)
         .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .bottom)
+    }
+
+    private var totalWords: Int {
+        model.history.entries.reduce(0) {
+            $0 + $1.text.split(whereSeparator: \.isWhitespace).count
+        }
     }
 
     private var noMatches: some View {
@@ -90,7 +97,7 @@ private struct HistoryCard: View {
             HStack(spacing: 8) {
                 Text(entry.appName)
                 Text(entry.date, format: timestampFormat)
-                Text(entry.engine.rawValue).foregroundStyle(Theme.accentText)
+                Text(entry.engine.displayName).foregroundStyle(Theme.accentText)
                 Text(entry.language.uppercased())
                 Spacer()
                 Button(copied ? "Copied ✓" : "Copy") { copyEntry() }
@@ -144,7 +151,7 @@ private struct EmptyHistoryView: View {
                 }
             }
             .accessibilityHidden(true)
-            Text("Your dictations will appear here")
+            Text("Your transcripts will appear here")
                 .font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
             HStack(spacing: 6) {
                 Text("Press").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)

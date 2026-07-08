@@ -31,7 +31,7 @@ struct MenuPopoverView: View {
                 .accessibilityHidden(true)
             Text("bulong").font(Theme.Fonts.mono(14, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             Spacer()
-            Text(stateText).font(Theme.Fonts.caption)
+            Text(stateText).font(Theme.Fonts.mono(11))
                 .foregroundStyle(isFailed ? Theme.failure : Theme.textSecondary)
                 .lineLimit(1)
                 .help(stateText)
@@ -49,12 +49,14 @@ struct MenuPopoverView: View {
                 Spacer()
                 if !isRecording { HotkeyChip(text: model.settings.hotkey.displayString) }
             }
+            // Fixed content height: the chip is taller than bare text, and the
+            // primary button must not change size between states.
+            .frame(height: 22)
             .foregroundStyle(isRecording ? Theme.textPrimary : Theme.ink0)
-            .padding(.horizontal, 12).padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: Theme.radiusControl + 2)
-                .fill(isRecording ? Theme.ink2 : Theme.accent))
-            .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl + 2)
-                .stroke(isRecording ? Theme.accentDim : .clear, lineWidth: 1))
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            // Standalone primary CTA = capsule (see Theme shape grammar).
+            .background(Capsule().fill(isRecording ? Theme.ink2 : Theme.accent))
+            .overlay(Capsule().stroke(isRecording ? Theme.accentDim : .clear, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -68,9 +70,11 @@ struct MenuPopoverView: View {
                     .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textSecondary)
             }
             Spacer()
+            // No trailing inset: ends on the card's right rail with the
+            // header status text and Quit.
             Text("Esc to cancel").font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
         }
-        .padding(.horizontal, 4)
+        .padding(.leading, 4)
     }
 
     private var transcriptCard: some View {
@@ -110,6 +114,9 @@ struct MenuPopoverView: View {
                 .buttonStyle(HoverButtonStyle())
                 .keyboardShortcut("q")
         }
+        // Cancel the hover-pill insets so History's and Quit's *text* sit on
+        // the card rails; the pills overhang into the popover padding.
+        .padding(.horizontal, -8)
     }
 
     private func openMain(_ section: MainSection) {

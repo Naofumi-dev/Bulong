@@ -11,6 +11,14 @@ enum DictationState: Equatable {
 enum EngineID: String, Codable, CaseIterable {
     case parakeet
     case whisperKit
+
+    /// User-facing name — must match the model names shown in Settings.
+    var displayName: String {
+        switch self {
+        case .parakeet: "Parakeet"
+        case .whisperKit: "Whisper"
+        }
+    }
 }
 
 enum DictationTask: String, Codable {

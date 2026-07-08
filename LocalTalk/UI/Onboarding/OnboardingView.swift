@@ -15,6 +15,13 @@ struct OnboardingView: View {
     @State private var failureHint: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    // TEMP-RENDER-HARNESS: delete before commit
+    init(model: AppModel, modelManager: ModelManager, initialStep: Int = 0) {
+        self.model = model
+        self.modelManager = modelManager
+        _step = State(initialValue: initialStep)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
@@ -27,23 +34,26 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(reduceMotion ? nil : Theme.spring, value: step)
 
-            HStack {
-                if step > 0 {
-                    Button("Back") { step -= 1 }.buttonStyle(HoverButtonStyle())
-                }
-                Spacer()
+            // Dots are pinned to the true window center; the Back button's
+            // appearance must never nudge them.
+            ZStack {
                 StepDots(count: 3, index: step)
-                Spacer()
-                Button(step == 2 ? "Finish" : "Continue") {
-                    if step == 2 { model.settings.hasCompletedOnboarding = true } else { step += 1 }
+                HStack {
+                    if step > 0 {
+                        Button("Back") { step -= 1 }.buttonStyle(HoverButtonStyle())
+                    }
+                    Spacer()
+                    Button(step == 2 ? "Finish" : "Continue") {
+                        if step == 2 { model.settings.hasCompletedOnboarding = true } else { step += 1 }
+                    }
+                    .buttonStyle(.plain)
+                    .font(Theme.Fonts.action)
+                    .foregroundStyle(continueEnabled ? Theme.ink0 : Theme.textTertiary)
+                    .padding(.horizontal, 16).padding(.vertical, 7)
+                    .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
+                    .disabled(!continueEnabled)
+                    .keyboardShortcut(.defaultAction)
                 }
-                .buttonStyle(.plain)
-                .font(Theme.Fonts.action)
-                .foregroundStyle(continueEnabled ? Theme.ink0 : Theme.textTertiary)
-                .padding(.horizontal, 16).padding(.vertical, 7)
-                .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
-                .disabled(!continueEnabled)
-                .keyboardShortcut(.defaultAction)
             }
             .padding(20)
         }
@@ -112,6 +122,8 @@ struct OnboardingView: View {
             Text("Press a hotkey. Speak. The words appear —\nand your voice never leaves this Mac.")
                 .font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center).lineSpacing(3)
+            Text("Turn off Wi-Fi and try it — everything still works.")
+                .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
         }
         .padding(32)
     }
@@ -136,7 +148,7 @@ struct OnboardingView: View {
                 }
             }
             permissionCard(icon: "keyboard.fill", title: "Accessibility", granted: axTrusted, required: false,
-                           reason: "Lets Bulong type the result into whatever app you're using. Optional — without it, transcripts go to your clipboard.") {
+                           reason: "Lets Bulong type the result into whatever app you're using. Without it, transcripts go to your clipboard.") {
                 PasteService.requestAccessibility()
             }
         }
@@ -153,10 +165,10 @@ struct OnboardingView: View {
                 .foregroundStyle(granted ? Theme.accent : Theme.textSecondary)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(title).font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
                     if !required {
-                        Text("optional").font(Theme.Fonts.mono(9)).foregroundStyle(Theme.textTertiary)
+                        Text("Optional").font(Theme.Fonts.mono(9)).foregroundStyle(Theme.textTertiary)
                             .padding(.horizontal, 5).padding(.vertical, 1)
                             .background(Capsule().stroke(Theme.hairlineStrong, lineWidth: 1))
                     }
@@ -174,7 +186,8 @@ struct OnboardingView: View {
             }
             Spacer()
             if !granted {
-                Button(actionTitle, action: request).buttonStyle(HoverButtonStyle())
+                Button(actionTitle, action: request)
+                    .buttonStyle(BorderedActionButtonStyle(emphasized: true))
             }
         }
         .padding(14)
@@ -249,8 +262,10 @@ struct OnboardingView: View {
             }
         }
         .padding(.horizontal, 28)
-        .padding(.top, 40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // Vertically centered with a slight upward bias (~40% optical) so the
+        // block doesn't hug the title bar or the footer.
+        .padding(.bottom, 56)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .animation(Theme.easeFast, value: payoff)
     }
 }

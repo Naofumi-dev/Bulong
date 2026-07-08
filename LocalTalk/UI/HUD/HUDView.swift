@@ -22,7 +22,6 @@ struct HUDView: View {
 
     private var isFailed: Bool { if case .failed = state { true } else { false } }
     private var isRecording: Bool { if case .recording = state { true } else { false } }
-    private var accent: Color { isFailed ? Theme.failure : Theme.accent }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -30,25 +29,38 @@ struct HUDView: View {
                 .frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary)
-                // Live partials keep the newest words visible (head-truncate);
-                // static hints must not lose their tail ("…Esc cancels" ≠ hint).
+                // Live partials keep the newest words visible (head-truncate,
+                // pre-trimmed to a word boundary); static hints must not lose
+                // their tail ("…Esc cancels" ≠ hint). Failure messages get two
+                // lines and the width freed by the dropped chips — never
+                // mid-word-truncate what went wrong.
                 Text(detail).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
-                    .lineLimit(1).truncationMode(showsLivePartial ? .head : .tail)
+                    .lineLimit(isFailed ? 2 : 1)
+                    .truncationMode(showsLivePartial ? .head : .tail)
             }
             Spacer(minLength: 8)
             SmoothedWaveform(level: level, state: state, smoother: smoother, reduceMotion: reduceMotion)
-            badge("ON-DEVICE")
-            badge(language.uppercased())
-            if showCancel {
-                Button(action: onCancel) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(Theme.Fonts.bodyStrong)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                .buttonStyle(.plain)
-                .transition(.opacity)
-                .accessibilityLabel("Cancel dictation")
+            // Chips are metadata, not status — they drop out entirely in
+            // .failed so the message gets the width.
+            if !isFailed {
+                badge("ON-DEVICE")
+                badge(language.uppercased())
             }
+            // Space is always reserved so the chip cluster never slides;
+            // visibility is opacity-only. In .failed it doubles as dismiss.
+            Button(action: onCancel) {
+                Image(systemName: "xmark")
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 22, height: 22)
+                    .overlay(Circle().stroke(Theme.hairlineStrong, lineWidth: 1))
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .opacity(showCancel ? 1 : 0)
+            .allowsHitTesting(showCancel)
+            .accessibilityLabel(isFailed ? "Dismiss" : "Cancel dictation")
+            .accessibilityHidden(!showCancel)
         }
         .padding(.horizontal, 16)
         .frame(width: Self.hudSize.width, height: Self.hudSize.height)
@@ -62,10 +74,10 @@ struct HUDView: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous))
         .shadow(color: .black.opacity(0.34), radius: 22, y: 12)
         .overlay(ActiveAlwaysHoverTracker { hovering = $0 })
-        // Revealing the cancel button slides the waveform and badges left, so
-        // the whole reveal goes instant under Reduce Motion.
-        .animation(reduceMotion ? nil : Theme.easeFast, value: hovering)
-        .animation(reduceMotion ? nil : Theme.easeFast, value: showCancel)
+        // Cancel reveal is opacity-only (its space is reserved), so the fade
+        // may stay ungated under Reduce Motion.
+        .animation(Theme.easeFast, value: hovering)
+        .animation(Theme.easeFast, value: showCancel)
         .gesture(DragGesture()
             .onChanged { onDragChanged($0.translation) }
             .onEnded { _ in onDragEnded() })
@@ -78,6 +90,7 @@ struct HUDView: View {
 
     private var showCancel: Bool {
         if case .transcribing = state { return true }
+        if isFailed { return true }
         return isRecording && hovering
     }
 
@@ -93,7 +106,7 @@ struct HUDView: View {
 
     private var detail: String {
         if case .failed(let m) = state { return m }
-        if !partial.isEmpty { return partial }
+        if !partial.isEmpty { return Self.wordTrimmedTail(partial) }
         if case .recording = state { return "Esc to cancel" }
         return "On-device dictation"
     }
@@ -103,11 +116,24 @@ struct HUDView: View {
         return !partial.isEmpty
     }
 
+    /// Head-trims a live partial so the visible fragment starts on a word
+    /// boundary instead of mid-word (Text's .head truncation cuts anywhere).
+    static func wordTrimmedTail(_ text: String, maxChars: Int = 13) -> String {
+        guard text.count > maxChars else { return text }
+        var tail = text.suffix(maxChars)
+        if let space = tail.firstIndex(where: \.isWhitespace) {
+            tail = tail[tail.index(after: space)...]
+        }
+        return "…" + tail
+    }
+
+    /// Chips are quiet metadata in every state: tertiary text, hairline ring.
+    /// The orb and waveform own all the accent.
     private func badge(_ text: String) -> some View {
         Text(text).font(Theme.Fonts.mono(9, weight: .bold))
-            .foregroundStyle(isFailed ? Theme.failure : Theme.accentText)
+            .foregroundStyle(Theme.textTertiary)
             .padding(.horizontal, 6).padding(.vertical, 2)
-            .background(Capsule().stroke(accent.opacity(0.42), lineWidth: 1))
+            .background(Capsule().stroke(Theme.hairlineStrong, lineWidth: 1))
     }
 }
 
@@ -192,7 +218,7 @@ struct SmoothedWaveform: View {
             HStack(spacing: 4) {
                 ForEach(0..<7, id: \.self) { i in
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(i >= 2 && i <= 4 ? activeColor : Theme.waveInactive)
+                        .fill(barColor(i))
                         .frame(width: 4, height: height(i, t: context.date.timeIntervalSinceReferenceDate))
                 }
             }
@@ -203,9 +229,12 @@ struct SmoothedWaveform: View {
     }
 
     private var isRecording: Bool { if case .recording = state { true } else { false } }
-    private var activeColor: Color {
-        if case .failed = state { return Theme.failure }
-        return Theme.accent
+
+    /// Failure dims the whole strip — status color belongs to the orb and rim,
+    /// not to metadata decoration.
+    private func barColor(_ i: Int) -> Color {
+        if case .failed = state { return Theme.waveInactive.opacity(0.5) }
+        return i >= 2 && i <= 4 ? Theme.accent : Theme.waveInactive
     }
 
     private func height(_ i: Int, t: TimeInterval) -> CGFloat {

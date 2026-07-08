@@ -68,11 +68,13 @@ struct MainWindowView: View {
                 )
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Bulong")
-                    .font(.system(size: 16, weight: .bold))
+                // The wordmark is always lowercase mono; capitalized "Bulong"
+                // lives only in prose.
+                Text("bulong")
+                    .font(Theme.Fonts.mono(15, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
-                Text("Private input")
-                    .font(.system(size: 11, weight: .medium))
+                Text("Private, on-device dictation")
+                    .font(Theme.Fonts.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
