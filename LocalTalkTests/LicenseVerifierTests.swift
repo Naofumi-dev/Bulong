@@ -20,6 +20,33 @@ final class LicenseVerifierTests: XCTestCase {
         XCTAssertEqual(verifier().verify("not-a-token"), .failure(.malformed))
         XCTAssertEqual(verifier().verify("only.one.dot.too.many"), .failure(.malformed))
         XCTAssertEqual(verifier().verify(""), .failure(.malformed))
+        // Empty-half and part-count boundaries must reject as malformed, NOT badSignature.
+        XCTAssertEqual(verifier().verify("a."), .failure(.malformed))
+        XCTAssertEqual(verifier().verify(".b"), .failure(.malformed))
+        XCTAssertEqual(verifier().verify("a.b.c"), .failure(.malformed))     // exactly 3 parts
+        // Surrounding whitespace / tabs are not part of a valid token.
+        XCTAssertEqual(verifier().verify(" \(LicenseFixtures.validToken) "), .failure(.malformed))
+        XCTAssertEqual(verifier().verify("\t\(LicenseFixtures.validToken)"), .failure(.malformed))
+    }
+
+    func testUnreadablePayloadRejected() {
+        // A payload the test key legitimately signs but that is NOT a License:
+        // the signature verifies, yet JSON decoding into License must fail.
+        let priv = try! Curve25519.Signing.PrivateKey(
+            rawRepresentation: Data(base64Encoded: LicenseFixtures.testPrivateKeyB64)!)
+        func b64url(_ d: Data) -> String {
+            d.base64EncodedString().replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
+        }
+        func token(payload: Data) -> String {
+            let sig = try! priv.signature(for: payload)
+            return "\(b64url(payload)).\(b64url(sig))"
+        }
+        // (a) Valid JSON that isn't a License.
+        let notALicense = try! JSONSerialization.data(withJSONObject: ["foo": "bar"], options: [])
+        XCTAssertEqual(verifier().verify(token(payload: notALicense)), .failure(.unreadablePayload))
+        // (b) Non-JSON bytes.
+        XCTAssertEqual(verifier().verify(token(payload: Data("hello".utf8))), .failure(.unreadablePayload))
     }
 
     func testTamperedPayloadRejected() {
