@@ -142,14 +142,22 @@ struct SettingsView: View {
                     switch license.state {
                     case .licensed(let l):
                         row("Licensed to") {
-                            Text(l.name)
-                                .font(Theme.Fonts.mono(12))
-                                .foregroundStyle(Theme.textSecondary)
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(l.name)
+                                    .font(Theme.Fonts.mono(12))
+                                    .foregroundStyle(Theme.textSecondary)
+                                Text(l.order)
+                                    .font(Theme.Fonts.mono(10.5))
+                                    .foregroundStyle(Theme.textTertiary)
+                            }
                         }
                         divider
                         row("") {
-                            Button("Remove license") { license.removeLicense() }
-                                .buttonStyle(HoverButtonStyle())
+                            Button("Remove license") {
+                                license.removeLicense()
+                                licenseMessage = nil
+                            }
+                            .buttonStyle(HoverButtonStyle())
                         }
                     case .trial(let d):
                         row("Trial") {
@@ -246,7 +254,9 @@ struct SettingsView: View {
                 Button("Activate") {
                     switch license.activate(licenseKeyField.trimmingCharacters(in: .whitespacesAndNewlines)) {
                     case .success:
-                        licenseMessage = "Thanks — you're licensed."
+                        // The card flips to "Licensed to {name}" — that IS the
+                        // confirmation; no success line to leave behind.
+                        licenseMessage = nil
                         licenseKeyField = ""
                     case .failure(let e):
                         licenseMessage = Self.message(for: e)
@@ -254,10 +264,11 @@ struct SettingsView: View {
                 }
                 .buttonStyle(BorderedActionButtonStyle())
             }
+            // Only ever an error now (success flips the card), so always failure red.
             if let m = licenseMessage {
                 Text(m)
                     .font(Theme.Fonts.caption)
-                    .foregroundStyle(license.licenseeName != nil ? Theme.accent : Theme.failure)
+                    .foregroundStyle(Theme.failure)
             }
         }
     }

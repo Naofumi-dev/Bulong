@@ -22,6 +22,9 @@ struct MenuPopoverView: View {
         .background(Theme.ink0)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
+        // Re-derive so the "Trial ended" status line is accurate on open, not
+        // stale until the first hotkey press.
+        .onAppear { license.refresh() }
     }
 
     private var header: some View {

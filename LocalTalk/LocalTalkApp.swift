@@ -31,7 +31,9 @@ struct LocalTalkApp: App {
     private var menuIcon: String {
         switch appModel.state {
         case .idle:
-            "waveform"
+            // Trial expired: a lock reads "buy to unlock" — always-visible feedback
+            // right where a menu-bar app lives. Flips via @Observable on state change.
+            AppComposition.license.canDictate ? "waveform" : "lock.circle"
         case .recording:
             "mic.circle.fill"
         case .transcribing, .inserting:
