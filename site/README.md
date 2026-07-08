@@ -41,8 +41,9 @@ in later sub-projects). Search and replace when the real endpoints exist:
 
 | Placeholder | Where | Wire to |
 |---|---|---|
-| `#download` | nav, hero, pricing, final CTA (all "Download" CTAs) | the notarized DMG URL. Currently `#download` also serves as the final-CTA section id, so the buttons smooth-scroll there until the real URL is set. |
-| checkout | the "Download for macOS" buttons (same anchors) | the Lemon Squeezy checkout URL, if buy and download are split |
+| `#download` | pricing-card button + final-CTA button + footer "Download" | the notarized DMG URL. `#download` is the final-CTA section id, so these smooth-scroll there until the real URL is set. |
+| `#pricing` | nav + hero "Download" | interim: these scroll to the pricing card (something useful) instead of looping to themselves. Repoint to the DMG/checkout URL when wired. |
+| checkout | the "Download for macOS" buttons | the Lemon Squeezy checkout URL, if buy and download are split |
 | `hello@bulong.app` | footer Contact, privacy page Contact | the real support/privacy inbox |
 
 ## Regenerating the OG image
@@ -66,7 +67,7 @@ domain — DNS/purchase is not automated here; do that step yourself.
   colour or price change is one place.
 - Every comparison-table and feature claim is true of the shipping app today
   (on-device Parakeet + Whisper, any-app paste, push-to-talk/toggle, custom
-  hotkey, local searchable history, 25+ languages incl. Filipino, translate to
+  hotkey, local searchable history, 10 languages incl. Filipino, translate to
   English, clipboard preservation). No custom vocabulary, no cloud AI, no tiers.
 - The hero HUD is a CSS/HTML recreation (crisp + animatable); its orb/waveform
   animation stops under `prefers-reduced-motion: reduce`.
