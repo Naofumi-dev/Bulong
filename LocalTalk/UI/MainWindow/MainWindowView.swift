@@ -21,20 +21,41 @@ struct MainWindowView: View {
     var modelManager: ModelManager
     var license: LicenseService
     @Bindable private var uiState = AppComposition.uiState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationSplitView {
-            List(MainSection.allCases, selection: $uiState.mainSection) { item in
-                Label(item.rawValue, systemImage: item.icon)
-                    .foregroundStyle(uiState.mainSection == item ? Theme.textPrimary : Theme.textSecondary)
-                    .tag(item)
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(MainSection.allCases) { item in
+                    let selected = uiState.mainSection == item
+                    Button {
+                        uiState.mainSection = item
+                    } label: {
+                        HStack(spacing: 8) {
+                            Capsule()
+                                .fill(selected ? Theme.accent : .clear)
+                                .frame(width: 2, height: 16)
+                            Image(systemName: item.icon)
+                            Text(item.rawValue)
+                            Spacer()
+                        }
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(selected ? Theme.textPrimary : Theme.textSecondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: Theme.radiusControl)
+                            .fill(selected ? Theme.ink2 : .clear))
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
             }
-            .listStyle(.sidebar)
+            .padding(.horizontal, 8)
             .navigationSplitViewColumnWidth(min: 168, ideal: 188)
             .safeAreaInset(edge: .top) {
                 brandHeader
             }
-            .scrollContentBackground(.hidden)
             .background(Theme.ink0)
         } detail: {
             ZStack {
@@ -48,7 +69,8 @@ struct MainWindowView: View {
                         .transition(.opacity)
                 }
             }
-            .animation(Theme.easeFast, value: uiState.mainSection)
+            .animation(reduceMotion ? nil : Theme.easeFast, value: uiState.mainSection)
+            .navigationTitle(uiState.mainSection.rawValue)
         }
         .frame(minWidth: 680, minHeight: 460)
         .preferredColorScheme(.dark)

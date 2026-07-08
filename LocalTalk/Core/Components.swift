@@ -50,6 +50,7 @@ struct SectionCard<Content: View>: View {
     let title: String
     var footer: String? = nil
     var footerIsError: Bool = false
+    var accentStroke: Bool = false
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -57,13 +58,13 @@ struct SectionCard<Content: View>: View {
             // Caption sits on the card's inner label rail (= card padding).
             Text(title.uppercased())
                 .font(Theme.Fonts.mono(10, weight: .semibold))
-                .foregroundStyle(Theme.textTertiary)
+                .foregroundStyle(Theme.textSecondary)
                 .padding(.leading, 14)
             VStack(alignment: .leading, spacing: 0) { content }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: Theme.radiusCard).fill(Theme.ink1))
-                .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard).stroke(Theme.hairline, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard).stroke(accentStroke ? Theme.accent : Theme.hairline, lineWidth: 1))
             if let footer {
                 Text(footer).font(Theme.Fonts.caption)
                     .foregroundStyle(footerIsError ? Theme.failure : Theme.textTertiary)
@@ -178,18 +179,24 @@ struct MintToggleStyle: ToggleStyle {
         Button {
             configuration.isOn.toggle()
         } label: {
-            ZStack {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(configuration.isOn ? Theme.accent : .clear)
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(configuration.isOn ? Theme.accent : Theme.hairlineStrong, lineWidth: 1)
-                if configuration.isOn {
-                    Image(systemName: "checkmark")
-                        .font(Theme.Fonts.mono(9, weight: .bold))
-                        .foregroundStyle(Theme.ink0)
+            HStack {
+                configuration.label
+                    .font(Theme.Fonts.body)
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(configuration.isOn ? Theme.accent : .clear)
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(configuration.isOn ? Theme.accent : Theme.hairlineStrong, lineWidth: 1)
+                    if configuration.isOn {
+                        Image(systemName: "checkmark")
+                            .font(Theme.Fonts.mono(9, weight: .bold))
+                            .foregroundStyle(Theme.ink0)
+                    }
                 }
+                .frame(width: 16, height: 16)
             }
-            .frame(width: 16, height: 16)
             .contentShape(Rectangle())
         }
         .buttonStyle(TactilePressStyle())
@@ -239,17 +246,18 @@ struct BorderedActionButtonStyle: ButtonStyle {
     var emphasized = false
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.action)
-            .foregroundStyle(emphasized ? Theme.accentText : Theme.textPrimary)
+            .foregroundStyle(isEnabled ? (emphasized ? Theme.accentText : Theme.textPrimary) : Theme.textTertiary)
             .padding(.horizontal, 10).padding(.vertical, 4)
             .background(RoundedRectangle(cornerRadius: Theme.radiusControl)
-                .fill(hovering ? Theme.ink2 : .clear))
+                .fill(isEnabled && hovering ? Theme.ink2 : .clear))
             .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
                 .stroke(Theme.hairlineStrong, lineWidth: 1))
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .scaleEffect(isEnabled && configuration.isPressed && !reduceMotion ? 0.97 : 1)
             .onHover { hovering = $0 }
             .animation(Theme.easeFast, value: hovering)
     }
