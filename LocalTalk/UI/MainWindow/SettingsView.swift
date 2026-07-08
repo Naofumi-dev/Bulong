@@ -66,28 +66,48 @@ struct SettingsView: View {
                 SectionCard(title: "Hotkey",
                             footer: AppComposition.hotkey.registrationError,
                             footerIsError: AppComposition.hotkey.registrationError != nil) {
-                    row("Shortcut") {
-                        Button { recordingHotkey = true } label: {
-                            HotkeyChip(text: recordingHotkey ? "Press keys…" : model.settings.hotkey.displayString,
-                                       pulsing: recordingHotkey)
-                        }
-                        .buttonStyle(.plain)
-                        .background(HotkeyRecorder(isRecording: $recordingHotkey) { spec in
-                            model.settings.hotkey = spec
-                            AppComposition.hotkey.register(spec)
-                        })
-                    }
-                    if recordingHotkey {
-                        Text("Use ⌘ ⌥ ⌃ ⇧ + a key · Esc cancels")
-                            .font(Theme.Fonts.caption)
-                            .foregroundStyle(Theme.textTertiary)
-                            .padding(.top, 4)
+                    row("Trigger") {
+                        SegmentedChoice(options: [(label: "Key combo", value: TriggerKind.combo),
+                                                  (label: "Right Option", value: .rightOption)],
+                                        selection: triggerKindBinding)
                     }
                     divider
-                    row("Behavior") {
-                        SegmentedChoice(options: [(label: "Toggle", value: HotkeyMode.toggle),
-                                                  (label: "Push to talk", value: .pushToTalk)],
-                                        selection: bind(\.hotkeyMode))
+                    if model.settings.triggerKind == .combo {
+                        row("Shortcut") {
+                            Button { recordingHotkey = true } label: {
+                                HotkeyChip(text: recordingHotkey ? "Press keys…" : model.settings.hotkey.displayString,
+                                           pulsing: recordingHotkey)
+                            }
+                            .buttonStyle(.plain)
+                            .background(HotkeyRecorder(isRecording: $recordingHotkey) { spec in
+                                model.settings.hotkey = spec
+                                AppComposition.hotkey.register(spec)
+                            })
+                        }
+                        if recordingHotkey {
+                            Text("Use ⌘ ⌥ ⌃ ⇧ + a key · Esc cancels")
+                                .font(Theme.Fonts.caption)
+                                .foregroundStyle(Theme.textTertiary)
+                                .padding(.top, 4)
+                        }
+                        divider
+                        row("Behavior") {
+                            SegmentedChoice(options: [(label: "Toggle", value: HotkeyMode.toggle),
+                                                      (label: "Push to talk", value: .pushToTalk)],
+                                            selection: bind(\.hotkeyMode))
+                        }
+                    } else {
+                        Text("Tap Right ⌥ to toggle · hold to talk")
+                            .font(Theme.Fonts.caption)
+                            .foregroundStyle(Theme.textTertiary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if let singleKeyError = AppComposition.hotkey.singleKeyError {
+                            Text(singleKeyError)
+                                .font(Theme.Fonts.caption)
+                                .foregroundStyle(Theme.failure)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.top, 4)
+                        }
                     }
                 }
 
@@ -342,6 +362,18 @@ struct SettingsView: View {
 
     private func bind<T>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, T>) -> Binding<T> {
         Binding(get: { model.settings[keyPath: keyPath] }, set: { model.settings[keyPath: keyPath] = $0 })
+    }
+
+    /// Persists the choice, then re-applies the live trigger so combo↔single-key
+    /// swaps take effect immediately (no relaunch).
+    private var triggerKindBinding: Binding<TriggerKind> {
+        Binding(
+            get: { model.settings.triggerKind },
+            set: { newValue in
+                model.settings.triggerKind = newValue
+                AppComposition.applyTrigger(for: model)
+            }
+        )
     }
 }
 

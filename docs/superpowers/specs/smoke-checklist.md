@@ -47,3 +47,12 @@ Run before any release build. All items must pass.
 - [ ] Drag the pill smoothly (no jitter/jumping), release; position persists; next dictation appears there
 - [ ] Push-to-talk: start drag, release the hotkey mid-drag → no jump on the next drag
 - [ ] HUD position presets (bottom center / top right / below the notch) apply on every connected display
+
+## Single-key trigger (Right Option) (requires live keyboard)
+
+- [ ] Settings → Hotkey → Trigger → Right Option; with Accessibility granted the caption reads "Tap Right ⌥ to toggle · hold to talk" (no grant note)
+- [ ] Tap Right ⌥ in TextEdit → HUD appears and stays (toggle armed); tap again → transcribes + pastes
+- [ ] Hold Right ⌥ → records while held; release → transcribes (push-to-talk)
+- [ ] Left ⌥ does nothing; Right ⌥ used inside another shortcut doesn't trigger dictation and still reaches the other app
+- [ ] Switch Trigger back to Key combo → ⌃⌥Space works again, Right ⌥ inert
+- [ ] Start a toggle session, press Esc → cancels; next Right ⌥ tap starts fresh (reset worked)

@@ -1,3 +1,4 @@
+import AppKit
 import Carbon.HIToolbox
 import Foundation
 import Observation
@@ -13,6 +14,15 @@ final class HotkeyService {
     private var escapeHotKeyRef: EventHotKeyRef?
     private var handlerRef: EventHandlerRef?
     private static let signature: OSType = 0x4C544B31
+
+    // Single-key (Right Option) trigger
+    var onSingleKeyAction: ((SingleKeyTrigger.Action) -> Void)?
+    private(set) var singleKeyError: String?
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
+    private var trigger = SingleKeyTrigger()
+    private var wasRightOptionDown = false
+    private static let rightAlternateMask: UInt = 0x40   // NX_DEVICERALTKEYMASK (Left Option = 0x20)
 
     func register(_ spec: HotkeySpec) {
         unregisterPrimary()
@@ -64,10 +74,59 @@ final class HotkeyService {
     func unregister() {
         unregisterPrimary()
         unregisterEscape()
+        stopSingleKeyMonitor()
         if let handlerRef {
             RemoveEventHandler(handlerRef)
             self.handlerRef = nil
         }
+    }
+
+    /// Public wrapper so composition can unregister just the combo (id 1)
+    /// when switching to the single-key trigger, keeping Escape (id 2) live.
+    func unregisterPrimaryCombo() {
+        unregisterPrimary()
+    }
+
+    func startSingleKeyMonitor() {
+        stopSingleKeyMonitor()
+        guard AXIsProcessTrusted() else {
+            singleKeyError = "Right Option needs Accessibility — grant it above, then reopen Settings."
+            return
+        }
+        singleKeyError = nil
+        trigger.reset()
+        wasRightOptionDown = false
+        // NSEvent monitor handlers are delivered on the MAIN thread, so the
+        // @MainActor `handleFlags` is reached via `MainActor.assumeIsolated`
+        // (matching PasteService's activation observer) — no Task hop, so the
+        // hold/tap timing stays exact and we avoid the off-main crash class.
+        let handler: (NSEvent) -> Void = { [weak self] event in
+            MainActor.assumeIsolated { self?.handleFlags(event) }
+        }
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged], handler: handler)
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+            MainActor.assumeIsolated { self?.handleFlags(event) }
+            return event      // return the event so it isn't swallowed
+        }
+    }
+
+    func stopSingleKeyMonitor() {
+        if let g = globalMonitor { NSEvent.removeMonitor(g); globalMonitor = nil }
+        if let l = localMonitor { NSEvent.removeMonitor(l); localMonitor = nil }
+        wasRightOptionDown = false
+    }
+
+    func resetSingleKey() {
+        trigger.reset()
+        wasRightOptionDown = false
+    }
+
+    private func handleFlags(_ event: NSEvent) {
+        let down = (event.modifierFlags.rawValue & Self.rightAlternateMask) != 0
+        guard down != wasRightOptionDown else { return }   // only real right-option transitions
+        wasRightOptionDown = down
+        let action = down ? trigger.keyDown(at: Date()) : trigger.keyUp(at: Date())
+        if action != .none { onSingleKeyAction?(action) }
     }
 
     private func ensureHandlerInstalled() {

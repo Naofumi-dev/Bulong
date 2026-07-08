@@ -131,6 +131,7 @@ enum AppComposition {
                 }
             case .failed:
                 hotkey.unregisterEscape()
+                hotkey.resetSingleKey()   // resync the trigger after a failure/watchdog
                 hud.show {
                     HUDStateView(model: model)
                 }
@@ -144,6 +145,7 @@ enum AppComposition {
                 }
             case .idle:
                 hotkey.unregisterEscape()
+                hotkey.resetSingleKey()   // cancel/stop landed us idle — clear any half-open tap
                 Task {
                     try? await Task.sleep(for: .milliseconds(600))
                     await MainActor.run {
@@ -179,7 +181,35 @@ enum AppComposition {
                 }
             }
         }
-        hotkey.register(model.settings.hotkey)
+        applyTrigger(for: model)
+    }
+
+    /// Registers whichever trigger the user picked. Combo → the Carbon hotkey
+    /// (and the single-key monitor is stopped); Right Option → the combo is
+    /// unregistered and the NSEvent monitor drives dictation via a start/stop
+    /// pulse. Escape (registered per state change) stays live in both modes.
+    /// Re-run by the Settings picker when `triggerKind` changes.
+    static func applyTrigger(for model: AppModel) {
+        switch model.settings.triggerKind {
+        case .combo:
+            hotkey.stopSingleKeyMonitor()
+            hotkey.register(model.settings.hotkey)
+        case .rightOption:
+            hotkey.unregisterPrimaryCombo()
+            hotkey.onSingleKeyAction = { [weak model] action in
+                guard let model else { return }
+                Task { @MainActor in
+                    switch action {
+                    case .start, .stop:
+                        // start pulse: idle→record; stop pulse: record→stop
+                        await model.toggleDictation()
+                    case .none:
+                        break
+                    }
+                }
+            }
+            hotkey.startSingleKeyMonitor()
+        }
     }
 
     private static func showOnboardingIfNeeded(for model: AppModel) {
