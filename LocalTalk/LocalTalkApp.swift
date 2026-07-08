@@ -15,12 +15,14 @@ struct LocalTalkApp: App {
 
     var body: some Scene {
         MenuBarExtra("Bulong", systemImage: menuIcon) {
-            MenuPopoverView(model: appModel)
+            MenuPopoverView(model: appModel, license: AppComposition.license)
         }
         .menuBarExtraStyle(.window)
 
         Window("Bulong", id: "main") {
-            MainWindowView(model: appModel, modelManager: AppComposition.modelManager)
+            MainWindowView(model: appModel,
+                           modelManager: AppComposition.modelManager,
+                           license: AppComposition.license)
         }
         .windowResizability(.contentMinSize)
         .defaultSize(width: 760, height: 500)
@@ -46,6 +48,7 @@ enum AppComposition {
     static let audio = AudioService()
     static let hotkey = HotkeyService()
     static let hud = HUDPanelController()
+    static let license = LicenseService()
     static let modelManager = ModelManager()
     static let paste = PasteService()
     static let settings = SettingsStore()
@@ -86,6 +89,19 @@ enum AppComposition {
             },
             frontmostAppName: {
                 paste.targetAppName
+            },
+            canDictate: {
+                // Refresh first so a trial that expires mid-session gates live.
+                license.refresh()
+                return license.canDictate
+            },
+            onDictationBlocked: {
+                // Surface the License section. The global hotkey has no SwiftUI
+                // window/environment context to reach `openWindow`, so we set the
+                // section (the main window lands on License if/when it opens) and
+                // let the popover's "Trial ended" status line prompt the user —
+                // per the plan, no brittle AppKit window plumbing.
+                uiState.mainSection = .settings
             }
         )
     }

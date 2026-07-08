@@ -7,7 +7,10 @@ import FluidAudio
 struct SettingsView: View {
     var model: AppModel
     var modelManager: ModelManager
+    var license: LicenseService
     @State private var recordingHotkey = false
+    @State private var licenseKeyField = ""
+    @State private var licenseMessage: String?
     @State private var micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     @State private var axTrusted = PasteService.isAccessibilityTrusted
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -135,6 +138,43 @@ struct SettingsView: View {
                     }
                 }
 
+                SectionCard(title: "License") {
+                    switch license.state {
+                    case .licensed(let l):
+                        row("Licensed to") {
+                            Text(l.name)
+                                .font(Theme.Fonts.mono(12))
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        divider
+                        row("") {
+                            Button("Remove license") { license.removeLicense() }
+                                .buttonStyle(HoverButtonStyle())
+                        }
+                    case .trial(let d):
+                        row("Trial") {
+                            Text("\(d) days left")
+                                .font(Theme.Fonts.mono(12))
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        divider
+                        buyRow
+                        divider
+                        activateRow
+                    case .trialExpired:
+                        HStack {
+                            Text("Your 14-day trial has ended")
+                                .font(Theme.Fonts.body)
+                                .foregroundStyle(Theme.failure)
+                            Spacer()
+                        }
+                        divider
+                        buyRow
+                        divider
+                        activateRow
+                    }
+                }
+
                 Text("Bulong — Tagalog for “whisper”. Transcription runs entirely on this Mac; the only network use is downloading models above. Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0.")
                     .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
                     .padding(.horizontal, 4)
@@ -180,6 +220,54 @@ struct SettingsView: View {
 
     private var divider: some View {
         Rectangle().fill(Theme.hairline).frame(height: 1).padding(.vertical, 8)
+    }
+
+    private var buyRow: some View {
+        row("Buy Bulong") {
+            Button("Buy — $29") {
+                if let url = URL(string: "https://bulong.app/#pricing") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            .buttonStyle(BorderedActionButtonStyle(emphasized: true))
+        }
+    }
+
+    private var activateRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                TextField("Paste your license key", text: $licenseKeyField)
+                    .textFieldStyle(.plain)
+                    .font(Theme.Fonts.mono(11))
+                    .foregroundStyle(Theme.textPrimary)
+                    .padding(8)
+                    .background(RoundedRectangle(cornerRadius: Theme.radiusControl).fill(Theme.ink1))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl).stroke(Theme.hairline, lineWidth: 1))
+                Button("Activate") {
+                    switch license.activate(licenseKeyField.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                    case .success:
+                        licenseMessage = "Thanks — you're licensed."
+                        licenseKeyField = ""
+                    case .failure(let e):
+                        licenseMessage = Self.message(for: e)
+                    }
+                }
+                .buttonStyle(BorderedActionButtonStyle())
+            }
+            if let m = licenseMessage {
+                Text(m)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(license.licenseeName != nil ? Theme.accent : Theme.failure)
+            }
+        }
+    }
+
+    private static func message(for e: LicenseError) -> String {
+        switch e {
+        case .malformed: return "That key looks malformed. Copy the whole key from your email."
+        case .badSignature: return "That key didn't verify — check for a copy/paste slip."
+        case .unreadablePayload: return "That key isn't for Bulong."
+        }
     }
 
     private func row(_ title: String, @ViewBuilder control: () -> some View) -> some View {

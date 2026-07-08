@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MenuPopoverView: View {
     var model: AppModel
+    var license: LicenseService
     @Environment(\.openWindow) private var openWindow
     @State private var copied = false
     @State private var copyResetTask: Task<Void, Never>?
@@ -32,7 +33,7 @@ struct MenuPopoverView: View {
             Text("bulong").font(Theme.Fonts.mono(14, weight: .semibold)).foregroundStyle(Theme.textPrimary)
             Spacer()
             Text(stateText).font(Theme.Fonts.mono(11))
-                .foregroundStyle(isFailed ? Theme.failure : Theme.textSecondary)
+                .foregroundStyle(isFailed || trialEnded ? Theme.failure : Theme.textSecondary)
                 .lineLimit(1)
                 .help(stateText)
         }
@@ -130,12 +131,17 @@ struct MenuPopoverView: View {
 
     private var isRecording: Bool { if case .recording = model.state { true } else { false } }
     private var isFailed: Bool { if case .failed = model.state { true } else { false } }
+    /// Idle + gated: the trial has ended. Status line only — Buy lives in Settings.
+    private var trialEnded: Bool {
+        if case .idle = model.state { return !license.canDictate }
+        return false
+    }
     private var isLive: Bool {
         switch model.state { case .recording, .transcribing, .inserting: true; default: false }
     }
     private var stateText: String {
         switch model.state {
-        case .idle: "\(model.settings.language.uppercased()) · on-device"
+        case .idle: trialEnded ? "Trial ended — buy to continue" : "\(model.settings.language.uppercased()) · on-device"
         case .recording: "Listening"
         case .transcribing: "Transcribing…"
         case .inserting: "Inserting…"

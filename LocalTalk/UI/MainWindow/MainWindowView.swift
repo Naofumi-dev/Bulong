@@ -19,6 +19,7 @@ enum MainSection: String, CaseIterable, Identifiable {
 struct MainWindowView: View {
     var model: AppModel
     var modelManager: ModelManager
+    var license: LicenseService
     @Bindable private var uiState = AppComposition.uiState
 
     var body: some View {
@@ -43,7 +44,7 @@ struct MainWindowView: View {
                     HistoryView(model: model)
                         .transition(.opacity)
                 case .settings:
-                    SettingsView(model: model, modelManager: modelManager)
+                    SettingsView(model: model, modelManager: modelManager, license: license)
                         .transition(.opacity)
                 }
             }
