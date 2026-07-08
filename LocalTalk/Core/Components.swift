@@ -76,6 +76,7 @@ struct SectionCard<Content: View>: View {
 /// Quiet text button that gains an ink2 pill on hover.
 struct HoverButtonStyle: ButtonStyle {
     @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Theme.Fonts.body)
@@ -83,9 +84,22 @@ struct HoverButtonStyle: ButtonStyle {
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(RoundedRectangle(cornerRadius: Theme.radiusControl)
                 .fill(hovering ? Theme.ink2 : .clear))
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
             .onHover { hovering = $0 }
             .animation(Theme.easeFast, value: hovering)
+    }
+}
+
+/// Tactile press feedback for buttons that draw their own label/background
+/// (the primary CTAs and custom controls that otherwise use `.plain`). A press
+/// scale is the highest-value micro-interaction — it acknowledges every tap.
+/// Gated on Reduce Motion to keep the app's motion posture airtight.
+struct TactilePressStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .animation(Theme.easeFast, value: configuration.isPressed)
     }
 }
 
@@ -148,7 +162,7 @@ struct SegmentedChoice<Value: Hashable>: View {
                         .background(Capsule().fill(selected ? Theme.ink2 : .clear))
                         .contentShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactilePressStyle())
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
             }
         }
@@ -178,7 +192,7 @@ struct MintToggleStyle: ToggleStyle {
             .frame(width: 16, height: 16)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TactilePressStyle())
     }
 }
 
@@ -224,6 +238,7 @@ struct MenuPicker<Value: Hashable>: View {
 struct BorderedActionButtonStyle: ButtonStyle {
     var emphasized = false
     @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -234,7 +249,7 @@ struct BorderedActionButtonStyle: ButtonStyle {
                 .fill(hovering ? Theme.ink2 : .clear))
             .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
                 .stroke(Theme.hairlineStrong, lineWidth: 1))
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
             .onHover { hovering = $0 }
             .animation(Theme.easeFast, value: hovering)
     }

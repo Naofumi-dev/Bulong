@@ -56,7 +56,7 @@ struct HUDView: View {
                     .overlay(Circle().stroke(Theme.hairlineStrong, lineWidth: 1))
                     .contentShape(Circle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TactilePressStyle())
             .opacity(showCancel ? 1 : 0)
             .allowsHitTesting(showCancel)
             .accessibilityLabel(isFailed ? "Dismiss" : "Cancel dictation")

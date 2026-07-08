@@ -58,7 +58,7 @@ struct MenuPopoverView: View {
             .background(Capsule().fill(isRecording ? Theme.ink2 : Theme.accent))
             .overlay(Capsule().stroke(isRecording ? Theme.accentDim : .clear, lineWidth: 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TactilePressStyle())
     }
 
     private func recordingStrip(started: Date) -> some View {

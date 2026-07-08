@@ -166,7 +166,7 @@ private struct EmptyHistoryView: View {
                     .padding(.horizontal, 14).padding(.vertical, 7)
                     .background(Capsule().fill(Theme.accent))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TactilePressStyle())
         }
     }
 }

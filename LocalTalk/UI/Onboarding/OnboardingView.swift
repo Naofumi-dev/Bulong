@@ -43,14 +43,16 @@ struct OnboardingView: View {
                         Button("Back") { step -= 1 }.buttonStyle(HoverButtonStyle())
                     }
                     Spacer()
-                    Button(step == 2 ? "Finish" : "Continue") {
+                    Button {
                         if step == 2 { model.settings.hasCompletedOnboarding = true } else { step += 1 }
+                    } label: {
+                        Text(step == 2 ? "Finish" : "Continue")
+                            .font(Theme.Fonts.action)
+                            .foregroundStyle(continueEnabled ? Theme.ink0 : Theme.textTertiary)
+                            .padding(.horizontal, 16).padding(.vertical, 7)
+                            .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
                     }
-                    .buttonStyle(.plain)
-                    .font(Theme.Fonts.action)
-                    .foregroundStyle(continueEnabled ? Theme.ink0 : Theme.textTertiary)
-                    .padding(.horizontal, 16).padding(.vertical, 7)
-                    .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
+                    .buttonStyle(TactilePressStyle())
                     .disabled(!continueEnabled)
                     .keyboardShortcut(.defaultAction)
                 }
