@@ -41,4 +41,12 @@ final class SettingsStoreTests: XCTestCase {
         let s2 = SettingsStore(defaults: defaults)
         XCTAssertEqual(s2.hudPosition, .topRight)
     }
+
+    @MainActor func testTriggerKindDefaultsComboAndPersists() {
+        let s1 = SettingsStore(defaults: defaults)
+        XCTAssertEqual(s1.triggerKind, .combo)
+        s1.triggerKind = .rightOption
+        let s2 = SettingsStore(defaults: defaults)
+        XCTAssertEqual(s2.triggerKind, .rightOption)
+    }
 }

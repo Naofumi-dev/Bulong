@@ -31,6 +31,11 @@ enum HotkeyMode: String, Codable, CaseIterable {
     case pushToTalk
 }
 
+enum TriggerKind: String, Codable, CaseIterable {
+    case combo          // the Carbon hotkey (⌃⌥Space etc.)
+    case rightOption    // single Right Option key, hold-or-tap
+}
+
 enum HUDPosition: String, Codable, CaseIterable {
     case bottomCenter, topRight, nearNotch
     var label: String {
