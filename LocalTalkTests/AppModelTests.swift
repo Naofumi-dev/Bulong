@@ -179,14 +179,55 @@ final class AppModelTests: XCTestCase {
 
         await model.cancelDictation()
     }
+
+    func testBlockedWhenCannotDictate() async {
+        var blockedCalls = 0
+        let engine = FakeEngine()
+        let audio = AudioStub()
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in engine },
+            audioStart: { audio.start() },
+            audioStop: { audio.stop() },
+            insertText: { _ in .insertedDirectly },
+            frontmostAppName: { "TextEdit" },
+            canDictate: { false },
+            onDictationBlocked: { blockedCalls += 1 }
+        )
+        await model.toggleDictation()
+        XCTAssertEqual(model.state, .idle)          // never entered recording
+        XCTAssertEqual(blockedCalls, 1)
+        XCTAssertEqual(audio.startCount, 0)         // no audio captured
+    }
+
+    func testAllowedWhenCanDictate() async {
+        let engine = FakeEngine()
+        let audio = AudioStub()
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in engine },
+            audioStart: { audio.start() },
+            audioStop: { audio.stop() },
+            insertText: { _ in .insertedDirectly },
+            frontmostAppName: { "TextEdit" },
+            canDictate: { true }
+        )
+        await model.toggleDictation()
+        guard case .recording = model.state else { return XCTFail("expected recording") }
+        await model.cancelDictation()
+    }
 }
 
 @MainActor
 final class AudioStub {
     private var continuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
+    private(set) var startCount = 0
 
     func start() -> AsyncStream<AVAudioPCMBuffer> {
-        AsyncStream { self.continuation = $0 }
+        startCount += 1
+        return AsyncStream { self.continuation = $0 }
     }
 
     func stop() {

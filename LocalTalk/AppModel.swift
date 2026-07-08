@@ -27,6 +27,8 @@ final class AppModel {
     private let insertText: @MainActor (String) async -> InsertionResult
     private let copyText: @MainActor (String) -> Void
     private let frontmostAppName: @MainActor () -> String
+    private let canDictate: @MainActor () -> Bool
+    private let onDictationBlocked: @MainActor () -> Void
     private let minimumDuration: TimeInterval
     private let watchdogSeconds: TimeInterval
 
@@ -48,6 +50,8 @@ final class AppModel {
         insertText: @escaping @MainActor (String) async -> InsertionResult,
         copyText: @escaping @MainActor (String) -> Void = { _ in },
         frontmostAppName: @escaping @MainActor () -> String,
+        canDictate: @escaping @MainActor () -> Bool = { true },
+        onDictationBlocked: @escaping @MainActor () -> Void = {},
         minimumDuration: TimeInterval = 0.4,
         watchdogSeconds: TimeInterval = 60
     ) {
@@ -60,6 +64,8 @@ final class AppModel {
         self.insertText = insertText
         self.copyText = copyText
         self.frontmostAppName = frontmostAppName
+        self.canDictate = canDictate
+        self.onDictationBlocked = onDictationBlocked
         self.minimumDuration = minimumDuration
         self.watchdogSeconds = watchdogSeconds
     }
@@ -77,6 +83,11 @@ final class AppModel {
     }
 
     private func startDictation() async {
+        guard canDictate() else {
+            onDictationBlocked()
+            return
+        }
+
         captureTarget()
 
         let route = EngineSelector.route(
