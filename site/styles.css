@@ -75,3 +75,47 @@ p{text-wrap:pretty;color:var(--text-2)}
   .footer-inner{grid-template-columns:1fr;gap:28px}
   .footer-legal{justify-self:start;text-align:left}
 }
+
+/* ---- Hero ---- */
+.hero{padding-block:clamp(64px,11vw,120px) clamp(8px,3vw,24px);text-align:center}
+.hero-inner{display:flex;flex-direction:column;align-items:center}
+.btn-icon{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 15px;border:0.5px solid var(--hairline-strong);border-radius:var(--pill);font-size:12.5px;color:var(--text-2);background:var(--ink1)}
+.badge-dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--mint);box-shadow:0 0 10px rgba(43,222,177,.9)}
+.hero h1{margin-top:26px;max-width:15ch}
+.hero-sub{margin-top:20px;max-width:52ch;font-size:clamp(16px,2vw,18px)}
+.hero-cta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:18px;margin-top:34px}
+.price{font-size:14px;color:var(--text-2)}
+.req{margin-top:16px;font-size:12px;color:var(--text-3);letter-spacing:.03em}
+
+/* ---- Hero HUD (CSS recreation of the app's dictation bar) ---- */
+.hud{width:100%;max-width:640px;margin-top:clamp(48px,7vw,76px)}
+.hud-inner{display:flex;align-items:center;gap:20px;padding:20px 24px;border-radius:20px;background:linear-gradient(145deg,#181b1e 0%,#0a0c0e 100%);border:1px solid rgba(60,104,96,.55);box-shadow:0 34px 64px -26px rgba(0,0,0,.85),inset 0 0.5px 0 rgba(255,255,255,.04)}
+.orb{width:44px;height:44px;flex:none;border-radius:50%;background:radial-gradient(circle at 38% 34%,#a6ffe4 0%,#2BDEB1 42%,#0f5f4b 100%);box-shadow:0 0 22px rgba(43,222,177,.45)}
+.hud-text{display:flex;flex-direction:column;gap:2px;text-align:left;margin-right:auto;min-width:0}
+.hud-title{font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
+.hud-partial{font-size:14px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.waveform{display:flex;align-items:center;gap:4px;height:34px;flex:none}
+.waveform i{display:block;width:4px;border-radius:2px;background:var(--mint);transform-origin:center}
+.waveform i:nth-child(1){height:14px;background:var(--mint-dim)}
+.waveform i:nth-child(2){height:26px}
+.waveform i:nth-child(3){height:34px}
+.waveform i:nth-child(4){height:22px}
+.waveform i:nth-child(5){height:12px;background:var(--mint-dim)}
+.hud-pills{display:flex;align-items:center;gap:8px;flex:none}
+.hud-pill{font-size:11px;letter-spacing:.08em;padding:5px 10px;border:0.5px solid var(--mint-dim);border-radius:var(--pill);color:var(--mint-text);white-space:nowrap}
+.hud-pill--dim{border-color:var(--hairline-strong);color:var(--text-3)}
+@media (max-width:560px){
+  .hud-inner{gap:14px;padding:16px 18px}
+  .hud-pills{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  .hud .orb{animation:breathe 2.6s ease-in-out infinite}
+  .hud .waveform i{animation:wave 1.1s ease-in-out infinite}
+  .hud .waveform i:nth-child(2){animation-delay:.15s}
+  .hud .waveform i:nth-child(3){animation-delay:.3s}
+  .hud .waveform i:nth-child(4){animation-delay:.45s}
+  .hud .waveform i:nth-child(5){animation-delay:.6s}
+}
+@keyframes breathe{0%,100%{box-shadow:0 0 18px rgba(43,222,177,.35);transform:scale(1)}50%{box-shadow:0 0 30px rgba(43,222,177,.6);transform:scale(1.06)}}
+@keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
