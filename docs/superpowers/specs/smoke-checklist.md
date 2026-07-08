@@ -48,11 +48,12 @@ Run before any release build. All items must pass.
 - [ ] Push-to-talk: start drag, release the hotkey mid-drag → no jump on the next drag
 - [ ] HUD position presets (bottom center / top right / below the notch) apply on every connected display
 
-## Single-key trigger (Right Option) (requires live keyboard)
+## Single-key trigger (configurable key) (requires live keyboard)
 
-- [ ] Settings → Hotkey → Trigger → Right Option; with Accessibility granted the caption reads "Tap Right ⌥ to toggle · hold to talk" (no grant note)
+- [ ] Settings → Hotkey → Trigger → Single key; with Accessibility granted the caption reads "Tap Right Option (⌥) to toggle · hold to talk" (no grant note)
 - [ ] Tap Right ⌥ in TextEdit → HUD appears and stays (toggle armed); tap again → transcribes + pastes
 - [ ] Hold Right ⌥ → records while held; release → transcribes (push-to-talk)
 - [ ] Left ⌥ does nothing; Right ⌥ used inside another shortcut doesn't trigger dictation and still reaches the other app
 - [ ] Switch Trigger back to Key combo → ⌃⌥Space works again, Right ⌥ inert
 - [ ] Start a toggle session, press Esc → cancels; next Right ⌥ tap starts fresh (reset worked)
+- [ ] Key picker: verify each of the four choices detects its key by hand — Right Option (⌥), Right Command (⌘), Right Shift (⇧), Fn / Globe. Selecting a key re-arms live (no relaunch); the left-hand twin of each modifier must NOT trigger. For Fn, confirm macOS doesn't double-trigger (System Settings → Keyboard)

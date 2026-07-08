@@ -45,8 +45,24 @@ final class SettingsStoreTests: XCTestCase {
     @MainActor func testTriggerKindDefaultsComboAndPersists() {
         let s1 = SettingsStore(defaults: defaults)
         XCTAssertEqual(s1.triggerKind, .combo)
-        s1.triggerKind = .rightOption
+        s1.triggerKind = .singleKey
         let s2 = SettingsStore(defaults: defaults)
-        XCTAssertEqual(s2.triggerKind, .rightOption)
+        XCTAssertEqual(s2.triggerKind, .singleKey)
+    }
+
+    @MainActor func testSingleKeyChoiceDefaultsRightOptionAndPersists() {
+        let s1 = SettingsStore(defaults: defaults)
+        XCTAssertEqual(s1.singleKeyChoice, .rightOption)
+        s1.singleKeyChoice = .rightCommand
+        let s2 = SettingsStore(defaults: defaults)
+        XCTAssertEqual(s2.singleKeyChoice, .rightCommand)
+    }
+
+    func testSingleKeyChoiceDeviceMasks() {
+        // Pins the device-dependent modifier bits — a wrong mask detects the wrong key.
+        XCTAssertEqual(SingleKeyChoice.rightShift.deviceMask, 0x04)
+        XCTAssertEqual(SingleKeyChoice.rightCommand.deviceMask, 0x10)
+        XCTAssertEqual(SingleKeyChoice.rightOption.deviceMask, 0x40)
+        XCTAssertEqual(SingleKeyChoice.fn.deviceMask, 0x800000)
     }
 }

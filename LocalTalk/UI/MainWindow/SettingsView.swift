@@ -68,7 +68,7 @@ struct SettingsView: View {
                             footerIsError: AppComposition.hotkey.registrationError != nil) {
                     row("Trigger") {
                         SegmentedChoice(options: [(label: "Key combo", value: TriggerKind.combo),
-                                                  (label: "Right Option", value: .rightOption)],
+                                                  (label: "Single key", value: .singleKey)],
                                         selection: triggerKindBinding)
                     }
                     divider
@@ -97,10 +97,23 @@ struct SettingsView: View {
                                             selection: bind(\.hotkeyMode))
                         }
                     } else {
-                        Text("Tap Right ⌥ to toggle · hold to talk")
+                        row("Key") {
+                            MenuPicker(options: SingleKeyChoice.allCases.map { (label: $0.displayName, value: $0) },
+                                       selection: singleKeyChoiceBinding)
+                                .frame(width: 190)
+                        }
+                        divider
+                        Text("Tap \(model.settings.singleKeyChoice.displayName) to toggle · hold to talk")
                             .font(Theme.Fonts.caption)
                             .foregroundStyle(Theme.textTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        if model.settings.singleKeyChoice == .fn {
+                            Text("macOS may also act on the Fn key — check System Settings → Keyboard if it double-triggers.")
+                                .font(Theme.Fonts.caption)
+                                .foregroundStyle(Theme.textTertiary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.top, 4)
+                        }
                         if let singleKeyError = AppComposition.hotkey.singleKeyError {
                             Text(singleKeyError)
                                 .font(Theme.Fonts.caption)
@@ -217,10 +230,10 @@ struct SettingsView: View {
                 micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
                 axTrusted = PasteService.isAccessibilityTrusted
                 launchAtLogin = SMAppService.mainApp.status == .enabled
-                // Self-arm the Right Option monitor once Accessibility is granted
+                // Self-arm the single-key monitor once Accessibility is granted
                 // while it's the active trigger (no need to re-toggle the picker).
                 if axTrusted,
-                   model.settings.triggerKind == .rightOption,
+                   model.settings.triggerKind == .singleKey,
                    AppComposition.hotkey.singleKeyError != nil {
                     AppComposition.applyTrigger(for: model)
                 }
@@ -378,6 +391,17 @@ struct SettingsView: View {
             get: { model.settings.triggerKind },
             set: { newValue in
                 model.settings.triggerKind = newValue
+                AppComposition.applyTrigger(for: model)
+            }
+        )
+    }
+
+    /// Persists the chosen key, then re-arms the monitor on the new device mask.
+    private var singleKeyChoiceBinding: Binding<SingleKeyChoice> {
+        Binding(
+            get: { model.settings.singleKeyChoice },
+            set: { newValue in
+                model.settings.singleKeyChoice = newValue
                 AppComposition.applyTrigger(for: model)
             }
         )

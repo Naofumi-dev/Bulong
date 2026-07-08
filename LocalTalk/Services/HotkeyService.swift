@@ -15,14 +15,17 @@ final class HotkeyService {
     private var handlerRef: EventHandlerRef?
     private static let signature: OSType = 0x4C544B31
 
-    // Single-key (Right Option) trigger
+    // Single-key trigger (user picks which key; composition sets the mask)
     var onSingleKeyAction: ((SingleKeyTrigger.Action) -> Void)?
     private(set) var singleKeyError: String?
+    /// Device-dependent modifier bit to watch. Set by AppComposition.applyTrigger
+    /// from the user's `SingleKeyChoice` before `startSingleKeyMonitor()`.
+    /// Defaults to Right Option (0x40).
+    var singleKeyMask: UInt = 0x40
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var trigger = SingleKeyTrigger()
-    private var wasRightOptionDown = false
-    private static let rightAlternateMask: UInt = 0x40   // NX_DEVICERALTKEYMASK (Left Option = 0x20)
+    private var wasSingleKeyDown = false
 
     func register(_ spec: HotkeySpec) {
         unregisterPrimary()
@@ -90,12 +93,12 @@ final class HotkeyService {
     func startSingleKeyMonitor() {
         stopSingleKeyMonitor()
         guard AXIsProcessTrusted() else {
-            singleKeyError = "Right Option needs Accessibility — grant it in Permissions below; it arms automatically."
+            singleKeyError = "This trigger key needs Accessibility — grant it in Permissions below; it arms automatically."
             return
         }
         singleKeyError = nil
         trigger.reset()
-        wasRightOptionDown = false
+        wasSingleKeyDown = false
         // NSEvent monitor handlers are delivered on the MAIN thread, so the
         // @MainActor `handleFlags` is reached via `MainActor.assumeIsolated`
         // (matching PasteService's activation observer) — no Task hop, so the
@@ -113,18 +116,18 @@ final class HotkeyService {
     func stopSingleKeyMonitor() {
         if let g = globalMonitor { NSEvent.removeMonitor(g); globalMonitor = nil }
         if let l = localMonitor { NSEvent.removeMonitor(l); localMonitor = nil }
-        wasRightOptionDown = false
+        wasSingleKeyDown = false
     }
 
     func resetSingleKey() {
         trigger.reset()
-        wasRightOptionDown = false
+        wasSingleKeyDown = false
     }
 
     private func handleFlags(_ event: NSEvent) {
-        let down = (event.modifierFlags.rawValue & Self.rightAlternateMask) != 0
-        guard down != wasRightOptionDown else { return }   // only real right-option transitions
-        wasRightOptionDown = down
+        let down = (event.modifierFlags.rawValue & singleKeyMask) != 0
+        guard down != wasSingleKeyDown else { return }   // only real transitions of the chosen key
+        wasSingleKeyDown = down
         let action = down ? trigger.keyDown(at: Date()) : trigger.keyUp(at: Date())
         if action != .none { onSingleKeyAction?(action) }
     }

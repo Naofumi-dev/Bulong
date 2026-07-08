@@ -185,17 +185,19 @@ enum AppComposition {
     }
 
     /// Registers whichever trigger the user picked. Combo → the Carbon hotkey
-    /// (and the single-key monitor is stopped); Right Option → the combo is
+    /// (and the single-key monitor is stopped); Single key → the combo is
     /// unregistered and the NSEvent monitor drives dictation via a start/stop
-    /// pulse. Escape (registered per state change) stays live in both modes.
-    /// Re-run by the Settings picker when `triggerKind` changes.
+    /// pulse, watching the device-mask for the user's chosen key. Escape
+    /// (registered per state change) stays live in both modes. Re-run by the
+    /// Settings pickers when `triggerKind` or `singleKeyChoice` changes.
     static func applyTrigger(for model: AppModel) {
         switch model.settings.triggerKind {
         case .combo:
             hotkey.stopSingleKeyMonitor()
             hotkey.register(model.settings.hotkey)
-        case .rightOption:
+        case .singleKey:
             hotkey.unregisterPrimaryCombo()
+            hotkey.singleKeyMask = model.settings.singleKeyChoice.deviceMask
             hotkey.onSingleKeyAction = { [weak model] action in
                 guard let model else { return }
                 Task { @MainActor in

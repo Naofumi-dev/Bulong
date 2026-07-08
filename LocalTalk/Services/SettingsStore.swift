@@ -11,6 +11,7 @@ final class SettingsStore {
         self.task = DictationTask(rawValue: defaults.string(forKey: "task") ?? "") ?? .transcribe
         self.hotkeyMode = HotkeyMode(rawValue: defaults.string(forKey: "hotkeyMode") ?? "") ?? .toggle
         self.triggerKind = TriggerKind(rawValue: defaults.string(forKey: "triggerKind") ?? "") ?? .combo
+        self.singleKeyChoice = SingleKeyChoice(rawValue: defaults.string(forKey: "singleKeyChoice") ?? "") ?? .rightOption
         self.pasteAfterTranscription = defaults.object(forKey: "pasteAfterTranscription") as? Bool ?? true
         self.playSounds = defaults.object(forKey: "playSounds") as? Bool ?? false
         self.hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
@@ -42,6 +43,10 @@ final class SettingsStore {
 
     var triggerKind: TriggerKind {
         didSet { defaults.set(triggerKind.rawValue, forKey: "triggerKind") }
+    }
+
+    var singleKeyChoice: SingleKeyChoice {
+        didSet { defaults.set(singleKeyChoice.rawValue, forKey: "singleKeyChoice") }
     }
 
     var hotkey: HotkeySpec {

@@ -33,7 +33,30 @@ enum HotkeyMode: String, Codable, CaseIterable {
 
 enum TriggerKind: String, Codable, CaseIterable {
     case combo          // the Carbon hotkey (⌃⌥Space etc.)
-    case rightOption    // single Right Option key, hold-or-tap
+    case singleKey      // a single modifier key (user's choice), hold-or-tap
+}
+
+enum SingleKeyChoice: String, Codable, CaseIterable {
+    case rightOption, rightCommand, rightShift, fn
+
+    var displayName: String {
+        switch self {
+        case .rightOption: "Right Option (⌥)"
+        case .rightCommand: "Right Command (⌘)"
+        case .rightShift: "Right Shift (⇧)"
+        case .fn: "Fn / Globe"
+        }
+    }
+
+    /// Device-dependent modifier bit in NSEvent.modifierFlags.rawValue.
+    var deviceMask: UInt {
+        switch self {
+        case .rightShift: 0x04     // NX_DEVICERSHIFTKEYMASK
+        case .rightCommand: 0x10   // NX_DEVICERCMDKEYMASK
+        case .rightOption: 0x40    // NX_DEVICERALTKEYMASK
+        case .fn: 0x800000         // NSEvent.ModifierFlags.function
+        }
+    }
 }
 
 enum HUDPosition: String, Codable, CaseIterable {
