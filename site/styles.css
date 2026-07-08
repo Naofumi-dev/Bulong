@@ -119,3 +119,29 @@ p{text-wrap:pretty;color:var(--text-2)}
 }
 @keyframes breathe{0%,100%{box-shadow:0 0 18px rgba(43,222,177,.35);transform:scale(1)}50%{box-shadow:0 0 30px rgba(43,222,177,.6);transform:scale(1.06)}}
 @keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+
+/* ---- Section header + cards ---- */
+.section-head{max-width:640px;margin-inline:auto;text-align:center;margin-bottom:clamp(32px,5vw,52px)}
+.section-head .eyebrow{display:block;margin-bottom:12px}
+.section-head p{margin-top:14px;font-size:16px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.pcard{padding:24px}
+.pcard h3{color:var(--text)}
+.pcard p{margin-top:9px;font-size:15px}
+@media (hover:hover){
+  .lift{transition:transform .18s ease-out,border-color .18s ease-out}
+  .lift:hover{transform:translateY(-2px);border-color:var(--hairline-strong)}
+}
+
+/* ---- Provable-privacy callout ---- */
+.callout{margin-top:24px;padding:clamp(24px,4vw,34px);background:var(--ink1);border:1px solid var(--mint-dim);border-radius:var(--radius-card);text-align:center}
+.callout p{font-size:clamp(18px,2.6vw,23px);color:var(--text);font-weight:500;line-height:1.35;text-wrap:balance}
+.callout a{display:inline-block;margin-top:16px;color:var(--mint);font-size:15px;transition:color .15s ease-out}
+.callout a:hover{color:var(--mint-text)}
+
+/* ---- How it works steps ---- */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;list-style:none}
+.step{padding:26px 24px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius-ctrl);background:rgba(43,222,177,.11);color:var(--mint);font-size:15px;font-weight:600;margin-bottom:18px}
+.step h3{color:var(--text)}
+.step p{margin-top:9px;font-size:15px}
