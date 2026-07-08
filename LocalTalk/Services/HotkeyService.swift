@@ -90,7 +90,7 @@ final class HotkeyService {
     func startSingleKeyMonitor() {
         stopSingleKeyMonitor()
         guard AXIsProcessTrusted() else {
-            singleKeyError = "Right Option needs Accessibility — grant it above, then reopen Settings."
+            singleKeyError = "Right Option needs Accessibility — grant it in Permissions below; it arms automatically."
             return
         }
         singleKeyError = nil

@@ -217,6 +217,13 @@ struct SettingsView: View {
                 micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
                 axTrusted = PasteService.isAccessibilityTrusted
                 launchAtLogin = SMAppService.mainApp.status == .enabled
+                // Self-arm the Right Option monitor once Accessibility is granted
+                // while it's the active trigger (no need to re-toggle the picker).
+                if axTrusted,
+                   model.settings.triggerKind == .rightOption,
+                   AppComposition.hotkey.singleKeyError != nil {
+                    AppComposition.applyTrigger(for: model)
+                }
             }
         }
     }
