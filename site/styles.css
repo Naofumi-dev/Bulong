@@ -1,0 +1,35 @@
+:root {
+  --ink0:#07090B; --ink1:#101214; --ink2:#16181A;
+  --mint:#2BDEB1; --mint-text:#B0F9E2; --mint-dim:rgba(43,222,177,.42);
+  --hairline:rgba(255,255,255,.08); --hairline-strong:rgba(255,255,255,.12);
+  --text:#F0F2F2; --text-2:rgba(255,255,255,.62); --text-3:rgba(255,255,255,.52);
+  --coral:#FF7670;
+  --radius-card:12px; --radius-ctrl:8px; --pill:999px;
+  --maxw:1080px; --gutter:24px;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Monaco,"Cascadia Code",monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ink0);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.6;text-rendering:optimizeLegibility}
+img{max-width:100%;display:block;outline:1px solid var(--hairline);outline-offset:-1px;border-radius:var(--radius-card)}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{font-weight:500;letter-spacing:-.4px;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(32px,5vw,46px)} h2{font-size:clamp(24px,3.4vw,32px)} h3{font-size:18px}
+p{text-wrap:pretty;color:var(--text-2)}
+.mono{font-family:var(--font-mono)}
+.mint{color:var(--mint)}
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gutter)}
+.section{padding-block:clamp(56px,9vw,104px)}
+.eyebrow{font-family:var(--font-mono);font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:500;padding:12px 22px;border-radius:var(--pill);border:0.5px solid transparent;transition:transform .15s ease-out,background-color .15s ease-out,box-shadow .15s ease-out;cursor:pointer}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--mint);color:#06231B}
+.btn-primary:hover{box-shadow:0 8px 28px rgba(43,222,177,.28)}
+.btn-ghost{border-color:var(--hairline-strong);color:var(--text)}
+.btn-ghost:hover{background:var(--ink2)}
+.card{background:var(--ink1);border:0.5px solid var(--hairline);border-radius:var(--radius-card)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.tabular{font-variant-numeric:tabular-nums}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:var(--ink2);padding:8px 12px;border-radius:var(--radius-ctrl);z-index:100}
