@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var axTrusted = PasteService.isAccessibilityTrusted
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @FocusState private var keyFieldFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private enum SettingsTab: Hashable { case setup, advanced }
     @State private var tab: SettingsTab = .setup
@@ -70,8 +71,16 @@ struct SettingsView: View {
 
     // MARK: - Set up hero
 
+    private var recommendedModel: RecommendedModel {
+        ModelRecommendation.model(forLanguage: model.settings.language)
+    }
+
+    private var currentLanguageName: String {
+        languages.first(where: { $0.code == model.settings.language })?.name ?? "your language"
+    }
+
     private var recommendedReady: Bool {
-        switch ModelRecommendation.model(forLanguage: model.settings.language) {
+        switch recommendedModel {
         case .parakeetV2: return modelManager.parakeetV2 == .ready
         case .parakeetV3: return modelManager.parakeetV3 == .ready
         case .whisper:    return modelManager.whisperLargeTurbo == .ready
@@ -79,6 +88,12 @@ struct SettingsView: View {
     }
 
     private var setupComplete: Bool { micGranted && axTrusted && recommendedReady }
+
+    /// Prerequisites still missing before dictation can work — mic, Accessibility,
+    /// and the model for the chosen language (dictation hard-fails without it).
+    private var remainingSteps: Int {
+        [micGranted, axTrusted, recommendedReady].filter { !$0 }.count
+    }
 
     private var setupHero: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -102,15 +117,15 @@ struct SettingsView: View {
                         .foregroundStyle(Theme.textSecondary)
                 }
             } else {
-                Text("Two quick steps to start:")
+                Text(remainingSteps == 1 ? "One step left to start dictating:"
+                                         : "\(remainingSteps) steps to start dictating:")
                     .font(Theme.Fonts.bodyStrong)
                     .foregroundStyle(Theme.textPrimary)
-                heroStep(done: micGranted, label: "Allow microphone") {
-                    Task { micGranted = await AudioService.requestMicPermission() }
-                }
-                heroStep(done: axTrusted, label: "Grant Accessibility") {
-                    PasteService.requestAccessibility()
-                }
+                heroStep(done: micGranted, label: "Microphone", hint: "grant it below")
+                heroStep(done: axTrusted, label: "Accessibility", hint: "grant it below")
+                heroStep(done: recommendedReady,
+                         label: "Speech model for \(currentLanguageName)",
+                         hint: "download it in Speech models below")
             }
         }
         .padding(14)
@@ -119,19 +134,23 @@ struct SettingsView: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard).stroke(Theme.hairline, lineWidth: 1))
     }
 
-    private func heroStep(done: Bool, label: String, action: @escaping () -> Void) -> some View {
-        HStack(spacing: 10) {
+    /// One prerequisite line in the setup hero. Status only — the actual Grant /
+    /// Download control lives in the card directly below, so each action has a
+    /// single home (no duplicate buttons on the same tab).
+    private func heroStep(done: Bool, label: String, hint: String) -> some View {
+        HStack(spacing: 8) {
             Image(systemName: done ? "checkmark.circle.fill" : "circle")
                 .font(Theme.Fonts.body)
                 .foregroundStyle(done ? Theme.accent : Theme.textTertiary)
             Text(label)
                 .font(Theme.Fonts.body)
-                .foregroundStyle(Theme.textPrimary)
-            Spacer()
+                .foregroundStyle(done ? Theme.textSecondary : Theme.textPrimary)
             if !done {
-                Button("Grant", action: action)
-                    .buttonStyle(BorderedActionButtonStyle(emphasized: true))
+                Text("— \(hint)")
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textTertiary)
             }
+            Spacer()
         }
     }
 
@@ -265,19 +284,19 @@ struct SettingsView: View {
                     footer: "English is ready — download another only if you dictate in other languages.") {
             modelRow("English — fast", descriptor: "Parakeet", size: "~600 MB",
                      state: modelManager.parakeetV2,
-                     recommended: ModelRecommendation.model(forLanguage: model.settings.language) == .parakeetV2) {
+                     recommended: recommendedModel == .parakeetV2) {
                 Task { await modelManager.downloadParakeet(.v2) }
             }
             divider
             modelRow("European languages", descriptor: "Parakeet", size: "~1 GB",
                      state: modelManager.parakeetV3,
-                     recommended: ModelRecommendation.model(forLanguage: model.settings.language) == .parakeetV3) {
+                     recommended: recommendedModel == .parakeetV3) {
                 Task { await modelManager.downloadParakeet(.v3) }
             }
             divider
             modelRow("All languages + translate", descriptor: "Whisper", size: "~600 MB",
                      state: modelManager.whisperLargeTurbo,
-                     recommended: ModelRecommendation.model(forLanguage: model.settings.language) == .whisper) {
+                     recommended: recommendedModel == .whisper) {
                 Task { await modelManager.downloadWhisper() }
             }
         }
@@ -410,7 +429,7 @@ struct SettingsView: View {
                     .background(RoundedRectangle(cornerRadius: Theme.radiusControl).fill(Theme.ink1))
                     .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
                         .stroke(keyFieldFocused ? Theme.accent : Theme.hairline, lineWidth: 1))
-                    .animation(Theme.easeFast, value: keyFieldFocused)
+                    .animation(reduceMotion ? nil : Theme.easeFast, value: keyFieldFocused)
                 Button("Activate") {
                     switch license.activate(licenseKeyField.trimmingCharacters(in: .whitespacesAndNewlines)) {
                     case .success:

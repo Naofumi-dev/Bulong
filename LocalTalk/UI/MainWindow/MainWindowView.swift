@@ -48,6 +48,7 @@ struct MainWindowView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? [.isSelected] : [])
                 }
                 Spacer()
             }
