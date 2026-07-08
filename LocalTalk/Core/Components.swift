@@ -18,6 +18,7 @@ struct HotkeyChip: View {
     var body: some View {
         Text(text)
             .font(Theme.Fonts.mono(11, weight: .medium))
+            .tracking(0.5)
             .foregroundStyle(Theme.accentText)
             .padding(.horizontal, 7).padding(.vertical, 3)
             .background(
@@ -53,10 +54,11 @@ struct SectionCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Caption sits on the card's inner label rail (= card padding).
             Text(title.uppercased())
                 .font(Theme.Fonts.mono(10, weight: .semibold))
                 .foregroundStyle(Theme.textTertiary)
-                .padding(.leading, 4)
+                .padding(.leading, 14)
             VStack(alignment: .leading, spacing: 0) { content }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -65,7 +67,7 @@ struct SectionCard<Content: View>: View {
             if let footer {
                 Text(footer).font(Theme.Fonts.caption)
                     .foregroundStyle(footerIsError ? Theme.failure : Theme.textTertiary)
-                    .padding(.leading, 4)
+                    .padding(.leading, 14)
             }
         }
     }
@@ -123,5 +125,117 @@ struct StepDots: View {
         }
         // The active dot stretches and its neighbors shift — a spring mover.
         .animation(reduceMotion ? nil : Theme.spring, value: index)
+    }
+}
+
+/// Segmented choice as text buttons in a hairline capsule — replaces the stock
+/// NSSegmentedControl, which ignores tint and reads system-gray amid the ink UI.
+struct SegmentedChoice<Value: Hashable>: View {
+    let options: [(label: String, value: Value)]
+    @Binding var selection: Value
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options, id: \.value) { option in
+                let selected = option.value == selection
+                Button {
+                    selection = option.value
+                } label: {
+                    Text(option.label)
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(selected ? Theme.textPrimary : Theme.textTertiary)
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Capsule().fill(selected ? Theme.ink2 : .clear))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? [.isSelected] : [])
+            }
+        }
+        .padding(2)
+        .background(Capsule().stroke(Theme.hairlineStrong, lineWidth: 1))
+    }
+}
+
+/// Checkbox toggle on brand: mint fill + ink0 checkmark when on,
+/// hairlineStrong ring when off. Replaces the accent-colored system checkbox.
+struct MintToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(configuration.isOn ? Theme.accent : .clear)
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(configuration.isOn ? Theme.accent : Theme.hairlineStrong, lineWidth: 1)
+                if configuration.isOn {
+                    Image(systemName: "checkmark")
+                        .font(Theme.Fonts.mono(9, weight: .bold))
+                        .foregroundStyle(Theme.ink0)
+                }
+            }
+            .frame(width: 16, height: 16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Pop-up picker with a designed collapsed label (current value + chevrons in a
+/// hairline control). The opened menu is intentionally the stock system menu.
+struct MenuPicker<Value: Hashable>: View {
+    let options: [(label: String, value: Value)]
+    @Binding var selection: Value
+
+    private var currentLabel: String {
+        options.first(where: { $0.value == selection })?.label ?? ""
+    }
+
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.value) { option in
+                Button(option.label) { selection = option.value }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(currentLabel)
+                    .font(Theme.Fonts.body)
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(Theme.Fonts.mono(9, weight: .medium))
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: Theme.radiusControl).fill(Theme.ink1))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
+                .stroke(Theme.hairline, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+    }
+}
+
+/// Minimal bordered affordance for card actions (Grant/Download/Retry).
+/// Quiet text buttons (Export/Clear) stay HoverButtonStyle.
+struct BorderedActionButtonStyle: ButtonStyle {
+    var emphasized = false
+    @State private var hovering = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Fonts.action)
+            .foregroundStyle(emphasized ? Theme.accentText : Theme.textPrimary)
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .background(RoundedRectangle(cornerRadius: Theme.radiusControl)
+                .fill(hovering ? Theme.ink2 : .clear))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
+                .stroke(Theme.hairlineStrong, lineWidth: 1))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .onHover { hovering = $0 }
+            .animation(Theme.easeFast, value: hovering)
     }
 }

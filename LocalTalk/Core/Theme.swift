@@ -44,7 +44,9 @@ enum Theme {
         }
     }
 
-    // Radii — concentric rule: inner = outer − padding
+    // Radii — concentric rule: inner = outer − padding.
+    // Shape grammar: standalone primary CTAs are capsules; cards and inline
+    // card controls use radiusCard/radiusControl.
     static let radiusCard: CGFloat = 10
     static let radiusControl: CGFloat = 6
     static let radiusHUD: CGFloat = 20

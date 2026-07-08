@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import ServiceManagement
 import SwiftUI
 import FluidAudio
 
@@ -9,6 +10,7 @@ struct SettingsView: View {
     @State private var recordingHotkey = false
     @State private var micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     @State private var axTrusted = PasteService.isAccessibilityTrusted
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     private let languages: [(code: String, name: String)] = [
         ("en", "English"), ("tl", "Filipino (Tagalog)"), ("es", "Spanish"), ("fr", "French"),
@@ -19,23 +21,43 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                SectionCard(title: "General") {
+                    row("Launch at login") {
+                        Toggle("", isOn: launchAtLoginBinding)
+                            .toggleStyle(MintToggleStyle())
+                            .labelsHidden()
+                    }
+                    divider
+                    row("Version") {
+                        Text(appVersion)
+                            .font(Theme.Fonts.mono(11))
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+
                 SectionCard(title: "Dictation") {
                     row("Language") {
-                        Picker("", selection: bind(\.language)) {
-                            ForEach(languages, id: \.code) { Text($0.name).tag($0.code) }
-                        }.labelsHidden().frame(width: 190)
+                        MenuPicker(options: languages.map { (label: $0.name, value: $0.code) },
+                                   selection: bind(\.language))
+                            .frame(width: 190)
                     }
                     divider
                     row("Mode") {
-                        Picker("", selection: bind(\.task)) {
-                            Text("Transcribe").tag(DictationTask.transcribe)
-                            Text("Translate to English").tag(DictationTask.translate)
-                        }.labelsHidden().frame(width: 190)
+                        MenuPicker(options: [(label: "Transcribe", value: DictationTask.transcribe),
+                                             (label: "Translate to English", value: .translate)],
+                                   selection: bind(\.task))
+                            .frame(width: 190)
                     }
                     divider
-                    row("Paste into the focused app") { Toggle("", isOn: bind(\.pasteAfterTranscription)).labelsHidden() }
+                    row("Paste into the focused app") {
+                        Toggle("", isOn: bind(\.pasteAfterTranscription))
+                            .toggleStyle(MintToggleStyle()).labelsHidden()
+                    }
                     divider
-                    row("Play sounds") { Toggle("", isOn: bind(\.playSounds)).labelsHidden() }
+                    row("Play sounds") {
+                        Toggle("", isOn: bind(\.playSounds))
+                            .toggleStyle(MintToggleStyle()).labelsHidden()
+                    }
                 }
 
                 SectionCard(title: "Hotkey",
@@ -60,10 +82,9 @@ struct SettingsView: View {
                     }
                     divider
                     row("Behavior") {
-                        Picker("", selection: bind(\.hotkeyMode)) {
-                            Text("Toggle").tag(HotkeyMode.toggle)
-                            Text("Push to talk").tag(HotkeyMode.pushToTalk)
-                        }.pickerStyle(.segmented).labelsHidden().frame(width: 190)
+                        SegmentedChoice(options: [(label: "Toggle", value: HotkeyMode.toggle),
+                                                  (label: "Push to talk", value: .pushToTalk)],
+                                        selection: bind(\.hotkeyMode))
                     }
                 }
 
@@ -82,15 +103,18 @@ struct SettingsView: View {
                 }
 
                 SectionCard(title: "Models") {
-                    modelRow("Parakeet — fast English", state: modelManager.parakeetV2) {
+                    modelRow("Parakeet", descriptor: "Fast English", size: "~600 MB",
+                             state: modelManager.parakeetV2) {
                         Task { await modelManager.downloadParakeet(.v2) }
                     }
                     divider
-                    modelRow("Parakeet — European languages", state: modelManager.parakeetV3) {
+                    modelRow("Parakeet", descriptor: "European languages", size: "~1 GB",
+                             state: modelManager.parakeetV3) {
                         Task { await modelManager.downloadParakeet(.v3) }
                     }
                     divider
-                    modelRow("Whisper — all languages + translate", state: modelManager.whisperLargeTurbo) {
+                    modelRow("Whisper", descriptor: "All languages + translate", size: "~600 MB",
+                             state: modelManager.whisperLargeTurbo) {
                         Task { await modelManager.downloadWhisper() }
                     }
                 }
@@ -111,7 +135,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Text("Bulong — Tagalog for “whisper.” Transcription runs entirely on this Mac; the only network use is downloading models above. Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0.")
+                Text("Bulong — Tagalog for “whisper”. Transcription runs entirely on this Mac; the only network use is downloading models above. Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0.")
                     .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
                     .padding(.horizontal, 4)
             }
@@ -124,8 +148,34 @@ struct SettingsView: View {
                 try? await Task.sleep(for: .seconds(1.5))
                 micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
                 axTrusted = PasteService.isAccessibilityTrusted
+                launchAtLogin = SMAppService.mainApp.status == .enabled
             }
         }
+    }
+
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        return "Version \(version ?? "—")"
+    }
+
+    /// Registers/unregisters with SMAppService and reflects the real status
+    /// (System Settings can flip it behind our back; the 1.5 s poll re-syncs).
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLogin },
+            set: { enable in
+                do {
+                    if enable {
+                        try SMAppService.mainApp.register()
+                    } else {
+                        try SMAppService.mainApp.unregister()
+                    }
+                } catch {
+                    // Fall through to reading the real status below.
+                }
+                launchAtLogin = SMAppService.mainApp.status == .enabled
+            }
+        )
     }
 
     private var divider: some View {
@@ -140,27 +190,35 @@ struct SettingsView: View {
         }
     }
 
-    private func modelRow(_ title: String, state: ModelManager.DownloadState,
+    private func modelRow(_ name: String, descriptor: String, size: String,
+                          state: ModelManager.DownloadState,
                           download: @escaping () -> Void) -> some View {
         HStack {
-            Text(title).font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary).layoutPriority(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(Theme.Fonts.mono()).foregroundStyle(Theme.textPrimary)
+                Text(descriptor).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary)
+            }
+            .layoutPriority(1)
             Spacer()
             switch state {
             case .ready:
                 Label("Ready", systemImage: "checkmark.circle.fill")
                     .font(Theme.Fonts.caption).foregroundStyle(Theme.accent)
             case .notDownloaded:
-                Button("Download", action: download).buttonStyle(HoverButtonStyle())
+                HStack(spacing: 8) {
+                    Text(size).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textTertiary)
+                    Button("Download", action: download).buttonStyle(BorderedActionButtonStyle())
+                }
             case .downloading(let p):
                 HStack(spacing: 8) {
                     ProgressView(value: p).frame(width: 90)
                     Text("\(Int(p * 100))%").font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
                 }
             case .failed(let msg):
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: 4) {
                     Text(msg).font(Theme.Fonts.caption).foregroundStyle(Theme.failure).lineLimit(1)
                         .help(msg)
-                    Button("Retry", action: download).buttonStyle(HoverButtonStyle())
+                    Button("Retry", action: download).buttonStyle(BorderedActionButtonStyle())
                 }
             }
         }
@@ -176,7 +234,10 @@ struct SettingsView: View {
                     .foregroundStyle(granted ? Theme.accent : Theme.textTertiary)
             }
             Spacer()
-            if !granted { Button("Grant", action: request).buttonStyle(HoverButtonStyle()) }
+            if !granted {
+                Button("Grant", action: request)
+                    .buttonStyle(BorderedActionButtonStyle(emphasized: true))
+            }
         }
     }
 
