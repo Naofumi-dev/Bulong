@@ -14,6 +14,10 @@ struct SettingsView: View {
     @State private var micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     @State private var axTrusted = PasteService.isAccessibilityTrusted
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @FocusState private var keyFieldFocused: Bool
+
+    private enum SettingsTab: Hashable { case setup, advanced }
+    @State private var tab: SettingsTab = .setup
 
     private let languages: [(code: String, name: String)] = [
         ("en", "English"), ("tl", "Filipino (Tagalog)"), ("es", "Spanish"), ("fr", "French"),
@@ -24,202 +28,25 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                SectionCard(title: "General") {
-                    row("Launch at login") {
-                        Toggle("", isOn: launchAtLoginBinding)
-                            .toggleStyle(MintToggleStyle())
-                            .labelsHidden()
-                    }
-                    divider
-                    row("Version") {
-                        Text(appVersion)
-                            .font(Theme.Fonts.mono(11))
-                            .foregroundStyle(Theme.textTertiary)
-                    }
+                SegmentedChoice(options: [(label: "Set up", value: SettingsTab.setup),
+                                          (label: "Advanced", value: .advanced)],
+                                selection: $tab)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                if tab == .setup {
+                    setupHero
+                    permissionsCard
+                    hotkeyCard
+                    modelsCard
+                } else {
+                    dictationCard
+                    recordingPillCard
+                    generalCard
+                    licenseCard
                 }
-
-                SectionCard(title: "Dictation") {
-                    row("Language") {
-                        MenuPicker(options: languages.map { (label: $0.name, value: $0.code) },
-                                   selection: bind(\.language))
-                            .frame(width: 190)
-                    }
-                    divider
-                    row("Mode") {
-                        MenuPicker(options: [(label: "Transcribe", value: DictationTask.transcribe),
-                                             (label: "Translate to English", value: .translate)],
-                                   selection: bind(\.task))
-                            .frame(width: 190)
-                    }
-                    divider
-                    row("Paste into the focused app") {
-                        Toggle("", isOn: bind(\.pasteAfterTranscription))
-                            .toggleStyle(MintToggleStyle()).labelsHidden()
-                    }
-                    divider
-                    row("Play sounds") {
-                        Toggle("", isOn: bind(\.playSounds))
-                            .toggleStyle(MintToggleStyle()).labelsHidden()
-                    }
-                }
-
-                SectionCard(title: "Hotkey",
-                            footer: AppComposition.hotkey.registrationError,
-                            footerIsError: AppComposition.hotkey.registrationError != nil) {
-                    row("Trigger") {
-                        SegmentedChoice(options: [(label: "Key combo", value: TriggerKind.combo),
-                                                  (label: "Single key", value: .singleKey)],
-                                        selection: triggerKindBinding)
-                    }
-                    divider
-                    if model.settings.triggerKind == .combo {
-                        row("Shortcut") {
-                            Button { recordingHotkey = true } label: {
-                                HotkeyChip(text: recordingHotkey ? "Press keys…" : model.settings.hotkey.displayString,
-                                           pulsing: recordingHotkey)
-                            }
-                            .buttonStyle(.plain)
-                            .background(HotkeyRecorder(isRecording: $recordingHotkey) { spec in
-                                model.settings.hotkey = spec
-                                AppComposition.hotkey.register(spec)
-                            })
-                        }
-                        if recordingHotkey {
-                            Text("Use ⌘ ⌥ ⌃ ⇧ + a key · Esc cancels")
-                                .font(Theme.Fonts.caption)
-                                .foregroundStyle(Theme.textTertiary)
-                                .padding(.top, 4)
-                        }
-                        divider
-                        row("Behavior") {
-                            SegmentedChoice(options: [(label: "Toggle", value: HotkeyMode.toggle),
-                                                      (label: "Push to talk", value: .pushToTalk)],
-                                            selection: bind(\.hotkeyMode))
-                        }
-                    } else {
-                        row("Key") {
-                            MenuPicker(options: SingleKeyChoice.allCases.map { (label: $0.displayName, value: $0) },
-                                       selection: singleKeyChoiceBinding)
-                                .frame(width: 190)
-                        }
-                        divider
-                        Text("Tap \(model.settings.singleKeyChoice.displayName) to toggle · hold to talk")
-                            .font(Theme.Fonts.caption)
-                            .foregroundStyle(Theme.textTertiary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        if model.settings.singleKeyChoice == .fn {
-                            Text("macOS may also act on the Fn key — check System Settings → Keyboard if it double-triggers.")
-                                .font(Theme.Fonts.caption)
-                                .foregroundStyle(Theme.textTertiary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.top, 4)
-                        }
-                        if let singleKeyError = AppComposition.hotkey.singleKeyError {
-                            Text(singleKeyError)
-                                .font(Theme.Fonts.caption)
-                                .foregroundStyle(Theme.failure)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.top, 4)
-                        }
-                    }
-                }
-
-                SectionCard(title: "Dictation bar") {
-                    HStack(spacing: 10) {
-                        ForEach(HUDPosition.allCases, id: \.self) { pos in
-                            Button {
-                                model.settings.hudPosition = pos
-                                AppComposition.hud.clearSavedPositions()
-                            } label: {
-                                HUDPositionPreview(position: pos, selected: model.settings.hudPosition == pos)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-
-                SectionCard(title: "Models") {
-                    modelRow("Parakeet", descriptor: "Fast English", size: "~600 MB",
-                             state: modelManager.parakeetV2) {
-                        Task { await modelManager.downloadParakeet(.v2) }
-                    }
-                    divider
-                    modelRow("Parakeet", descriptor: "European languages", size: "~1 GB",
-                             state: modelManager.parakeetV3) {
-                        Task { await modelManager.downloadParakeet(.v3) }
-                    }
-                    divider
-                    modelRow("Whisper", descriptor: "All languages + translate", size: "~600 MB",
-                             state: modelManager.whisperLargeTurbo) {
-                        Task { await modelManager.downloadWhisper() }
-                    }
-                }
-
-                SectionCard(title: "Permissions") {
-                    permissionRow("Microphone",
-                                  granted: micGranted,
-                                  grantedHint: "Connected ✓",
-                                  pendingHint: "Bulong needs your mic to hear you") {
-                        Task { micGranted = await AudioService.requestMicPermission() }
-                    }
-                    divider
-                    permissionRow("Accessibility",
-                                  granted: axTrusted,
-                                  grantedHint: "Granted ✓ — pastes into any app",
-                                  pendingHint: "Lets Bulong type the result where you're working") {
-                        PasteService.requestAccessibility()
-                    }
-                }
-
-                SectionCard(title: "License") {
-                    switch license.state {
-                    case .licensed(let l):
-                        row("Licensed to") {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(l.name)
-                                    .font(Theme.Fonts.mono(12))
-                                    .foregroundStyle(Theme.textSecondary)
-                                Text(l.order)
-                                    .font(Theme.Fonts.mono(10.5))
-                                    .foregroundStyle(Theme.textTertiary)
-                            }
-                        }
-                        divider
-                        row("") {
-                            Button("Remove license") {
-                                license.removeLicense()
-                                licenseMessage = nil
-                            }
-                            .buttonStyle(HoverButtonStyle())
-                        }
-                    case .trial(let d):
-                        row("Trial") {
-                            Text("\(d) days left")
-                                .font(Theme.Fonts.mono(12))
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        divider
-                        buyRow
-                        divider
-                        activateRow
-                    case .trialExpired:
-                        HStack {
-                            Text("Your 14-day trial has ended")
-                                .font(Theme.Fonts.body)
-                                .foregroundStyle(Theme.failure)
-                            Spacer()
-                        }
-                        divider
-                        buyRow
-                        divider
-                        activateRow
-                    }
-                }
-
-                Text("Bulong — Tagalog for “whisper”. Transcription runs entirely on this Mac; the only network use is downloading models above. Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0.")
-                    .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
-                    .padding(.horizontal, 4)
+                footerNote
             }
+            .frame(maxWidth: 600)
+            .frame(maxWidth: .infinity, alignment: .center)
             .padding(20)
         }
         .background(Theme.ink0)
@@ -239,6 +66,296 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Set up hero
+
+    private var recommendedReady: Bool {
+        switch ModelRecommendation.model(forLanguage: model.settings.language) {
+        case .parakeetV2: return modelManager.parakeetV2 == .ready
+        case .parakeetV3: return modelManager.parakeetV3 == .ready
+        case .whisper:    return modelManager.whisperLargeTurbo == .ready
+        }
+    }
+
+    private var setupComplete: Bool { micGranted && axTrusted && recommendedReady }
+
+    private var setupHero: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if setupComplete {
+                Label("You're ready", systemImage: "checkmark.circle.fill")
+                    .font(Theme.Fonts.title)
+                    .foregroundStyle(Theme.accent)
+                HStack(spacing: 6) {
+                    Text("Press")
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(Theme.textSecondary)
+                    if model.settings.triggerKind == .combo {
+                        HotkeyChip(text: model.settings.hotkey.displayString)
+                    } else {
+                        Text("tap \(model.settings.singleKeyChoice.displayName)")
+                            .font(Theme.Fonts.mono(11))
+                            .foregroundStyle(Theme.accentText)
+                    }
+                    Text("anywhere to dictate")
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            } else {
+                Text("Two quick steps to start:")
+                    .font(Theme.Fonts.bodyStrong)
+                    .foregroundStyle(Theme.textPrimary)
+                heroStep(done: micGranted, label: "Allow microphone") {
+                    Task { micGranted = await AudioService.requestMicPermission() }
+                }
+                heroStep(done: axTrusted, label: "Grant Accessibility") {
+                    PasteService.requestAccessibility()
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Theme.radiusCard).fill(Theme.ink1))
+        .overlay(RoundedRectangle(cornerRadius: Theme.radiusCard).stroke(Theme.hairline, lineWidth: 1))
+    }
+
+    private func heroStep(done: Bool, label: String, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                .font(Theme.Fonts.body)
+                .foregroundStyle(done ? Theme.accent : Theme.textTertiary)
+            Text(label)
+                .font(Theme.Fonts.body)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            if !done {
+                Button("Grant", action: action)
+                    .buttonStyle(BorderedActionButtonStyle(emphasized: true))
+            }
+        }
+    }
+
+    // MARK: - Section cards
+
+    private var generalCard: some View {
+        SectionCard(title: "General") {
+            Toggle("Launch at login", isOn: launchAtLoginBinding)
+                .toggleStyle(MintToggleStyle())
+            divider
+            row("Version") {
+                Text(appVersion)
+                    .font(Theme.Fonts.mono(11))
+                    .foregroundStyle(Theme.textTertiary)
+            }
+        }
+    }
+
+    private var dictationCard: some View {
+        SectionCard(title: "Dictation") {
+            row("Language") {
+                MenuPicker(options: languages.map { (label: $0.name, value: $0.code) },
+                           selection: bind(\.language))
+                    .frame(width: 190)
+            }
+            divider
+            row("Mode") {
+                MenuPicker(options: [(label: "Transcribe", value: DictationTask.transcribe),
+                                     (label: "Translate to English", value: .translate)],
+                           selection: bind(\.task))
+                    .frame(width: 190)
+            }
+            divider
+            Toggle("Paste into the focused app", isOn: bind(\.pasteAfterTranscription))
+                .toggleStyle(MintToggleStyle())
+            if !axTrusted && model.settings.pasteAfterTranscription {
+                Text("Needs Accessibility — grant it in Set up")
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.accent)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
+            }
+            divider
+            Toggle("Play sounds", isOn: bind(\.playSounds))
+                .toggleStyle(MintToggleStyle())
+        }
+    }
+
+    private var hotkeyCard: some View {
+        SectionCard(title: "Hotkey",
+                    footer: AppComposition.hotkey.registrationError,
+                    footerIsError: AppComposition.hotkey.registrationError != nil) {
+            row("Trigger") {
+                SegmentedChoice(options: [(label: "Key combo", value: TriggerKind.combo),
+                                          (label: "Single key", value: .singleKey)],
+                                selection: triggerKindBinding)
+            }
+            divider
+            if model.settings.triggerKind == .combo {
+                row("Shortcut") {
+                    Button { recordingHotkey = true } label: {
+                        HotkeyChip(text: recordingHotkey ? "Press keys…" : model.settings.hotkey.displayString,
+                                   pulsing: recordingHotkey)
+                    }
+                    .buttonStyle(.plain)
+                    .background(HotkeyRecorder(isRecording: $recordingHotkey) { spec in
+                        model.settings.hotkey = spec
+                        AppComposition.hotkey.register(spec)
+                    })
+                }
+                if recordingHotkey {
+                    Text("Use ⌘ ⌥ ⌃ ⇧ + a key · Esc cancels")
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(.top, 4)
+                }
+                divider
+                row("Behavior") {
+                    SegmentedChoice(options: [(label: "Toggle", value: HotkeyMode.toggle),
+                                              (label: "Push to talk", value: .pushToTalk)],
+                                    selection: bind(\.hotkeyMode))
+                }
+            } else {
+                row("Key") {
+                    MenuPicker(options: SingleKeyChoice.allCases.map { (label: $0.displayName, value: $0) },
+                               selection: singleKeyChoiceBinding)
+                        .frame(width: 190)
+                }
+                divider
+                Text("Tap \(model.settings.singleKeyChoice.displayName) to toggle · hold to talk")
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if model.settings.singleKeyChoice == .fn {
+                    Text("macOS may also act on the Fn key — check System Settings → Keyboard if it double-triggers.")
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 4)
+                }
+                if let singleKeyError = AppComposition.hotkey.singleKeyError {
+                    Text(singleKeyError)
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.failure)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 4)
+                }
+            }
+        }
+    }
+
+    private var recordingPillCard: some View {
+        SectionCard(title: "Recording pill",
+                    footer: "The small pill shown while you talk — choose where it sits.") {
+            HStack(spacing: 10) {
+                ForEach(HUDPosition.allCases, id: \.self) { pos in
+                    Button {
+                        model.settings.hudPosition = pos
+                        AppComposition.hud.clearSavedPositions()
+                    } label: {
+                        HUDPositionPreview(position: pos, selected: model.settings.hudPosition == pos)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var modelsCard: some View {
+        SectionCard(title: "Speech models",
+                    footer: "English is ready — download another only if you dictate in other languages.") {
+            modelRow("English — fast", descriptor: "Parakeet", size: "~600 MB",
+                     state: modelManager.parakeetV2,
+                     recommended: ModelRecommendation.model(forLanguage: model.settings.language) == .parakeetV2) {
+                Task { await modelManager.downloadParakeet(.v2) }
+            }
+            divider
+            modelRow("European languages", descriptor: "Parakeet", size: "~1 GB",
+                     state: modelManager.parakeetV3,
+                     recommended: ModelRecommendation.model(forLanguage: model.settings.language) == .parakeetV3) {
+                Task { await modelManager.downloadParakeet(.v3) }
+            }
+            divider
+            modelRow("All languages + translate", descriptor: "Whisper", size: "~600 MB",
+                     state: modelManager.whisperLargeTurbo,
+                     recommended: ModelRecommendation.model(forLanguage: model.settings.language) == .whisper) {
+                Task { await modelManager.downloadWhisper() }
+            }
+        }
+    }
+
+    private var permissionsCard: some View {
+        SectionCard(title: "Permissions", accentStroke: !(micGranted && axTrusted)) {
+            permissionRow("Microphone",
+                          granted: micGranted,
+                          grantedHint: "Granted ✓ — Bulong can hear you",
+                          pendingHint: "Bulong needs your mic to hear you") {
+                Task { micGranted = await AudioService.requestMicPermission() }
+            }
+            divider
+            permissionRow("Accessibility",
+                          granted: axTrusted,
+                          grantedHint: "Granted ✓ — pastes into any app",
+                          pendingHint: "Lets Bulong type the result where you're working") {
+                PasteService.requestAccessibility()
+            }
+        }
+    }
+
+    private var licenseCard: some View {
+        SectionCard(title: "License") {
+            switch license.state {
+            case .licensed(let l):
+                row("Licensed to") {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(l.name)
+                            .font(Theme.Fonts.mono(12))
+                            .foregroundStyle(Theme.textSecondary)
+                        Text(l.order)
+                            .font(Theme.Fonts.mono(10.5))
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                divider
+                row("") {
+                    Button("Remove license") {
+                        license.removeLicense()
+                        licenseMessage = nil
+                    }
+                    .buttonStyle(HoverButtonStyle())
+                }
+            case .trial(let d):
+                row("Trial") {
+                    Text(d == 1 ? "1 day left" : "\(d) days left")
+                        .font(Theme.Fonts.mono(12))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                divider
+                buyRow
+                divider
+                activateRow
+            case .trialExpired:
+                HStack {
+                    Text("Your 14-day trial has ended")
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(Theme.failure)
+                    Spacer()
+                }
+                divider
+                buyRow
+                divider
+                activateRow
+            }
+        }
+    }
+
+    private var footerNote: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Everything runs on this Mac. The only network use is downloading models above.")
+                .font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary)
+            Text("Bulong is Tagalog for a soft whisper. Includes NVIDIA Parakeet — © NVIDIA, CC-BY-4.0.")
+                .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
+        }
+        .padding(.horizontal, 4)
     }
 
     private var appVersion: String {
@@ -271,7 +388,7 @@ struct SettingsView: View {
     }
 
     private var buyRow: some View {
-        row("Buy Bulong") {
+        row("Full version") {
             Button("Buy — $29") {
                 if let url = URL(string: "https://bulong.app/#pricing") {
                     NSWorkspace.shared.open(url)
@@ -288,9 +405,12 @@ struct SettingsView: View {
                     .textFieldStyle(.plain)
                     .font(Theme.Fonts.mono(11))
                     .foregroundStyle(Theme.textPrimary)
+                    .focused($keyFieldFocused)
                     .padding(8)
                     .background(RoundedRectangle(cornerRadius: Theme.radiusControl).fill(Theme.ink1))
-                    .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl).stroke(Theme.hairline, lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.radiusControl)
+                        .stroke(keyFieldFocused ? Theme.accent : Theme.hairline, lineWidth: 1))
+                    .animation(Theme.easeFast, value: keyFieldFocused)
                 Button("Activate") {
                     switch license.activate(licenseKeyField.trimmingCharacters(in: .whitespacesAndNewlines)) {
                     case .success:
@@ -303,6 +423,7 @@ struct SettingsView: View {
                     }
                 }
                 .buttonStyle(BorderedActionButtonStyle())
+                .disabled(licenseKeyField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             // Only ever an error now (success flips the card), so always failure red.
             if let m = licenseMessage {
@@ -331,10 +452,18 @@ struct SettingsView: View {
 
     private func modelRow(_ name: String, descriptor: String, size: String,
                           state: ModelManager.DownloadState,
+                          recommended: Bool,
                           download: @escaping () -> Void) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(name).font(Theme.Fonts.mono()).foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 6) {
+                    Text(name).font(Theme.Fonts.mono()).foregroundStyle(Theme.textPrimary)
+                    if recommended {
+                        Text("Recommended")
+                            .font(Theme.Fonts.caption)
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
                 Text(descriptor).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary)
             }
             .layoutPriority(1)
@@ -412,6 +541,7 @@ struct SettingsView: View {
 struct HUDPositionPreview: View {
     let position: HUDPosition
     let selected: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 6) {
@@ -429,7 +559,7 @@ struct HUDPositionPreview: View {
                 .foregroundStyle(selected ? Theme.textPrimary : Theme.textTertiary)
         }
         .contentShape(Rectangle())
-        .animation(Theme.easeFast, value: selected)
+        .animation(reduceMotion ? nil : Theme.easeFast, value: selected)
     }
 
     private var alignment: Alignment {
