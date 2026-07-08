@@ -48,7 +48,13 @@ final class AudioService {
         )
         self.continuation = continuation
 
-        input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
+        // The tap block runs on a real-time AUDIO thread, not the main actor.
+        // It MUST be `@Sendable` / non-isolated: a MainActor-isolated closure
+        // here traps at runtime (swift_task_isCurrentExecutor / dispatch_assert_queue)
+        // the instant AVFoundation invokes it off the main actor. The `@Sendable`
+        // annotation is compiler-enforced, so it's also the regression guard.
+        // Touch `self` only inside the MainActor hop for the UI level update.
+        let tap: @Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void = { buffer, _ in
             continuation.yield(buffer)
             let rms = Self.rms(of: buffer)
             Task { @MainActor [weak self] in
@@ -56,6 +62,7 @@ final class AudioService {
                 self.level = max(rms, self.level * 0.7)
             }
         }
+        input.installTap(onBus: 0, bufferSize: 4096, format: format, block: tap)
 
         engine.prepare()
         do {
