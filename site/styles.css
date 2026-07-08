@@ -164,3 +164,57 @@ p{text-wrap:pretty;color:var(--text-2)}
 .feature p{margin-top:8px;font-size:14px}
 @media (max-width:900px){.features{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.features{grid-template-columns:1fr}}
+
+/* ---- Utilities ---- */
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.check{display:inline-block;width:16px;height:16px;flex:none;vertical-align:-3px;margin-right:8px;fill:none;stroke:var(--mint);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- Comparison table ---- */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:0.5px solid var(--hairline);border-radius:var(--radius-card)}
+.compare-table{width:100%;border-collapse:collapse;min-width:640px;font-size:15px;background:var(--ink1)}
+.compare-table th,.compare-table td{padding:15px 20px;text-align:left;border-bottom:0.5px solid var(--hairline);vertical-align:middle}
+.compare-table thead th{font-weight:600;color:var(--text);font-size:14px}
+.compare-table tbody th[scope="row"]{font-weight:500;color:var(--text-2);font-size:14px}
+.compare-table tbody td{color:var(--text-2)}
+.compare-table td.yes{color:var(--text)}
+.compare-table thead th:nth-child(2),.compare-table tbody td:nth-child(2){background:rgba(43,222,177,.06)}
+.compare-table thead th:nth-child(2){color:var(--mint-text)}
+.compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{border-bottom:0}
+
+/* ---- Pricing ---- */
+.price-card{max-width:420px;margin-inline:auto;padding:clamp(28px,4vw,40px);text-align:center}
+.price-amount{display:flex;align-items:baseline;justify-content:center;gap:10px}
+.price-num{font-size:clamp(44px,7vw,60px);font-weight:600;letter-spacing:-1.5px;color:var(--text)}
+.price-once{font-size:16px;color:var(--text-3)}
+.price-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin:26px 0;text-align:left}
+.price-list li{display:flex;align-items:center;font-size:15px;color:var(--text-2)}
+.price-cta{width:100%}
+.price-note{margin-top:16px;font-size:13px;color:var(--text-3)}
+
+/* ---- FAQ ---- */
+.faq-wrap{max-width:760px}
+.faq-item{border-bottom:0.5px solid var(--hairline)}
+.faq-item:first-child{border-top:0.5px solid var(--hairline)}
+.faq-item summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;cursor:pointer;padding:19px 4px;font-size:16px;font-weight:500;color:var(--text)}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:"";width:9px;height:9px;flex:none;border-right:1.6px solid var(--text-3);border-bottom:1.6px solid var(--text-3);transform:rotate(45deg) translateY(-2px);transition:transform .2s ease}
+.faq-item[open] summary::after{transform:rotate(-135deg) translateY(2px)}
+.faq-item summary:hover{color:var(--mint-text)}
+.faq-body{padding:0 4px}
+.faq-body > div{padding-bottom:19px}
+.faq-body p{font-size:15px;color:var(--text-2);max-width:64ch}
+@media (prefers-reduced-motion:no-preference){
+  .faq-item[open] .faq-body{animation:faqOpen .25s ease-out}
+}
+@keyframes faqOpen{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+
+/* ---- Final CTA ---- */
+.cta-final{text-align:center;scroll-margin-top:80px}
+.cta-final-inner{display:flex;flex-direction:column;align-items:center;padding-block:clamp(28px,5vw,44px);border-top:0.5px solid var(--hairline);border-bottom:0.5px solid var(--hairline);background:radial-gradient(120% 140% at 50% 0%,rgba(43,222,177,.06) 0%,transparent 55%)}
+.cta-final h2{max-width:18ch}
+.cta-final .hero-cta{margin-top:26px}
+
+/* ---- Reduced-motion safety net ---- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
