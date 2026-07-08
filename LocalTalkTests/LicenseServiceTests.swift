@@ -75,4 +75,32 @@ final class LicenseServiceTests: XCTestCase {
         _ = s.activate(LicenseFixtures.validToken)
         XCTAssertTrue(s.canDictate)                 // license overrides expired trial
     }
+    func testRefreshCatchesMidSessionExpiry() {
+        // Long-running menu-bar app: trial expires while it stays open. A mutable
+        // `now` (captured in the injected closure) lets the test advance the clock.
+        var currentNow = Date()
+        let s = LicenseService(verifier: verifier(),
+                               clock: TrialClock(defaults: defaults, fileURL: trialFile, trialDays: 14),
+                               defaults: defaults, now: { currentNow })
+        guard case .trial(let d) = s.state else { return XCTFail("expected trial") }
+        XCTAssertEqual(d, 14)
+        XCTAssertTrue(s.canDictate)
+        currentNow = currentNow.addingTimeInterval(20 * day)   // trial elapses in-session
+        s.refresh()
+        XCTAssertEqual(s.state, .trialExpired)
+        XCTAssertFalse(s.canDictate)
+    }
+    func testCorruptStoredTokenDegradesToTrial() {
+        defaults.set("garbage", forKey: "licenseKey")
+        let s = service()
+        XCTAssertEqual(s.state, .trial(daysLeft: 14))   // not a crash, not licensed
+    }
+    func testRemoveLicenseWhenTrialExpiredReturnsExpired() {
+        defaults.set(ISO8601DateFormatter().string(from: Date().addingTimeInterval(-20 * day)),
+                     forKey: "trialStartedAt")
+        let s = service()
+        _ = s.activate(LicenseFixtures.validToken)
+        s.removeLicense()
+        XCTAssertEqual(s.state, .trialExpired)          // re-derive, not a hard-set to trial
+    }
 }

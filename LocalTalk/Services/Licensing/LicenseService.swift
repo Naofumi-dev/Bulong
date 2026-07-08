@@ -45,6 +45,12 @@ final class LicenseService {
         state = Self.derive(verifier: verifier, clock: clock, defaults: defaults, now: now)
     }
 
+    /// Re-derive state so a trial that expires while the (long-running menu-bar)
+    /// app stays open re-gates without a relaunch. Licensed stays licensed.
+    func refresh() {
+        state = Self.derive(verifier: verifier, clock: clock, defaults: defaults, now: now)
+    }
+
     private static func derive(verifier: LicenseVerifier, clock: TrialClock,
                                defaults: UserDefaults, now: () -> Date) -> LicenseState {
         if let token = defaults.string(forKey: tokenKey),
