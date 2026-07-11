@@ -171,12 +171,6 @@ struct SettingsView: View {
 
     private var dictationCard: some View {
         SectionCard(title: "Dictation") {
-            row("Language") {
-                MenuPicker(options: languages.map { (label: $0.name, value: $0.code) },
-                           selection: bind(\.language))
-                    .frame(width: 190)
-            }
-            divider
             row("Mode") {
                 MenuPicker(options: [(label: "Transcribe", value: DictationTask.transcribe),
                                      (label: "Translate to English", value: .translate)],
@@ -282,6 +276,12 @@ struct SettingsView: View {
     private var modelsCard: some View {
         SectionCard(title: "Speech models",
                     footer: "English is ready — download another only if you dictate in other languages.") {
+            row("Language") {
+                MenuPicker(options: languages.map { (label: $0.name, value: $0.code) },
+                           selection: bind(\.language))
+                    .frame(width: 190)
+            }
+            divider
             modelRow("English — fast", descriptor: "Parakeet", size: "~600 MB",
                      state: modelManager.parakeetV2,
                      recommended: recommendedModel == .parakeetV2) {
