@@ -82,7 +82,7 @@ p{text-wrap:pretty;color:var(--text-2)}
 .btn-icon{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .badge{display:inline-block;padding:7px 15px;border:0.5px solid var(--hairline-strong);border-radius:var(--pill);font-size:12.5px;line-height:1.45;color:var(--text-2);background:var(--ink1);text-align:center}
 .badge-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px rgba(43,222,177,.9);vertical-align:middle;margin-right:8px;position:relative;top:-1px}
-.hero h1{margin-top:26px;max-width:15ch}
+.hero h1{margin-top:26px;max-width:22ch}
 .hero-sub{margin-top:20px;max-width:50ch;font-size:clamp(16px,2vw,18px);text-wrap:balance}
 .hero-cta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:18px;margin-top:34px}
 .price{font-size:14px;color:var(--text-2)}
@@ -123,6 +123,22 @@ p{text-wrap:pretty;color:var(--text-2)}
 }
 @keyframes breathe{0%,100%{box-shadow:0 0 18px rgba(43,222,177,.35);transform:scale(1)}50%{box-shadow:0 0 30px rgba(43,222,177,.6);transform:scale(1.06)}}
 @keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+
+/* ---- Taglish receipts ---- */
+.receipts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+.receipt{display:flex;flex-direction:column;gap:16px;padding:22px 24px;text-align:left}
+.receipt-tag{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.receipt-said{font-size:15px;color:var(--text-2)}
+.receipt-out{background:var(--ink0);border:0.5px solid var(--hairline);border-radius:var(--radius-ctrl);padding:12px 14px}
+.receipt-out .receipt-tag{color:rgba(43,222,177,.78)}
+.receipt-typed{font-family:var(--font-mono);font-size:13.5px;line-height:1.6;color:var(--mint-text)}
+.receipt-miss{color:var(--coral)}
+.receipt-verdict{margin-top:auto;padding-top:14px;border-top:0.5px solid var(--hairline);font-size:12px;color:var(--text-3)}
+.receipts-foot{margin-top:28px;text-align:center}
+.receipts-foot p{font-size:14px;color:var(--text-3);max-width:64ch;margin-inline:auto;text-wrap:balance}
+.receipts-foot p+p{margin-top:10px}
+.receipts-foot em{font-style:normal;color:var(--text-2)}
+@media (max-width:900px){.receipts .receipt:last-child{grid-column:1/-1}}
 
 /* ---- Section header + cards ---- */
 .section-head{max-width:640px;margin-inline:auto;text-align:center;margin-bottom:clamp(32px,5vw,52px)}
@@ -185,6 +201,7 @@ p{text-wrap:pretty;color:var(--text-2)}
 .compare-table thead th:nth-child(2),.compare-table tbody td:nth-child(2){background:rgba(43,222,177,.06)}
 .compare-table thead th:nth-child(2){color:var(--mint-text)}
 .compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{border-bottom:0}
+.compare-foot{margin-top:14px;font-size:13px;color:var(--text-3);text-align:center}
 
 /* ---- Pricing ---- */
 .price-card{max-width:420px;margin-inline:auto;padding:clamp(28px,4vw,40px);text-align:center}

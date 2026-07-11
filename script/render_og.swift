@@ -82,12 +82,16 @@ let wordSize = word.size()
 let wordY = blockMidY + 6   // baseline block: wordmark sits just above center
 draw(word, at: CGPoint(x: textX, y: wordY))
 
-// Tagline: "Your voice never leaves your Mac." with Mac in mint
+// Tagline: "Dictation that speaks Filipino — and never leaves your Mac." with Filipino in mint
 let tagFont = NSFont.systemFont(ofSize: 34, weight: .regular)
-let tag = NSMutableAttributedString(string: "Your voice never leaves your ",
+let tag1 = NSMutableAttributedString(string: "Dictation that speaks ",
     attributes: [.font: tagFont, .foregroundColor: text2NS])
-tag.append(NSAttributedString(string: "Mac.", attributes: [.font: NSFont.systemFont(ofSize: 34, weight: .medium), .foregroundColor: mintNS]))
-draw(tag, at: CGPoint(x: textX, y: wordY - 58))
+tag1.append(NSAttributedString(string: "Filipino", attributes: [.font: NSFont.systemFont(ofSize: 34, weight: .medium), .foregroundColor: mintNS]))
+tag1.append(NSAttributedString(string: " —", attributes: [.font: tagFont, .foregroundColor: text2NS]))
+draw(tag1, at: CGPoint(x: textX, y: wordY - 58))
+let tag2 = NSAttributedString(string: "and never leaves your Mac.",
+    attributes: [.font: tagFont, .foregroundColor: text2NS])
+draw(tag2, at: CGPoint(x: textX, y: wordY - 106))
 
 // Bottom mono line
 let footFont = NSFont.monospacedSystemFont(ofSize: 22, weight: .regular)
