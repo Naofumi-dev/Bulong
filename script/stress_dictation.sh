@@ -21,8 +21,10 @@ FAILED=0
 main_thread_ok() {
   # First thread block of a 1s sample = main thread. Healthy means it's
   # parked in the run-loop's mach_msg trap, not stuck in app code.
+  # NOTE: no `grep -q` here — under pipefail its early exit SIGPIPEs awk
+  # (status 141) and turns every healthy sample into a false failure.
   local file="$1"
-  awk '/Call graph/{f=1} f&&/Thread_/{c++} c==1&&f' "$file" | grep -q "mach_msg2_trap"
+  awk '/Call graph/{f=1} f&&/Thread_/{c++} c==1&&f' "$file" | grep "mach_msg2_trap" > /dev/null
 }
 
 sample_main() {
