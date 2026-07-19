@@ -27,6 +27,10 @@ struct SingleKeyTrigger {
     }
 
     mutating func keyUp(at t: Date) -> Action {
+        // A release with no matching keyDown (the trigger was reset while the
+        // key was physically held) must be inert — a stray .stop pulse here
+        // would toggle dictation back ON from idle.
+        guard downTime != nil else { return .none }
         defer { downTime = nil }
         let held = downTime.map { t.timeIntervalSince($0) } ?? 0
         if startedOnThisDown {

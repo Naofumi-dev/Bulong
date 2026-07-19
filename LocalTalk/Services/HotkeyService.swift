@@ -155,9 +155,13 @@ final class HotkeyService {
         wasSingleKeyDown = false
     }
 
+    /// Clears the hold/tap decision state WITHOUT touching `wasSingleKeyDown`:
+    /// that flag tracks the PHYSICAL key and is the only thing swallowing
+    /// Carbon auto-repeat presses. Zeroing it mid-hold would let the next
+    /// auto-repeat register as a fresh press — restarting dictation right
+    /// after an Escape-cancel, or retry-looping a failed start while held.
     func resetSingleKey() {
         trigger.reset()
-        wasSingleKeyDown = false
     }
 
     private func handleFlags(_ event: NSEvent) {

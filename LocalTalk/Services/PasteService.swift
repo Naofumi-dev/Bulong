@@ -156,14 +156,10 @@ final class PasteService {
     /// True only when the focused element's role clearly identifies a
     /// non-text control. Ambiguity (missing role, web areas, Electron groups)
     /// deliberately returns false — those targets often accept Cmd-V even
-    /// though their AX trees say nothing useful.
+    /// though their AX trees say nothing useful. The role list is the ONLY
+    /// signal: value-settability is a trap (sliders and checkboxes have a
+    /// settable AXValue by AX convention and would sneak past a deny list).
     private nonisolated static func isPositivelyNonEditable(_ element: AXUIElement) -> Bool {
-        var settable = DarwinBoolean(false)
-        if AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success,
-           settable.boolValue {
-            return false
-        }
-
         var roleRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef) == .success,
               let role = roleRef as? String else {

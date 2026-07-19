@@ -34,4 +34,15 @@ final class SingleKeyTriggerTests: XCTestCase {
         XCTAssertFalse(trg.isRecording)
         XCTAssertEqual(trg.keyDown(at: at(2)), .start)          // fresh start after reset
     }
+
+    func testReleaseAfterMidHoldResetIsInert() {
+        // Escape-cancel resets the trigger while the key is still physically
+        // held; the eventual release must NOT emit a pulse (a stray .stop
+        // would toggle dictation back on from idle).
+        var trg = SingleKeyTrigger(tapThreshold: 0.25)
+        XCTAssertEqual(trg.keyDown(at: at(0)), .start)
+        trg.reset()                                              // cancel mid-hold
+        XCTAssertEqual(trg.keyUp(at: at(1.5)), .none)            // release: inert
+        XCTAssertEqual(trg.keyDown(at: at(2)), .start)           // next press works
+    }
 }
