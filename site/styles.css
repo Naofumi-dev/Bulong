@@ -274,3 +274,26 @@ p{text-wrap:pretty;color:var(--text-2)}
   color: var(--mint);
   margin: 0 0 12px;
 }
+
+/* ---- Download page: launch-state toggle ---- */
+/* Default page state (class="dl-soon" on <body>) hides the live-only blocks;
+   flipping <body> to class="dl-live" hides the coming-soon blocks instead.
+   Each element keeps its natural display — we only hide the opposite state. */
+.dl-soon .when-live{display:none}
+.dl-live .when-soon{display:none}
+
+/* ---- Download page: hero meta ---- */
+.dl-hero .when-soon,.dl-hero .when-live{display:flex;flex-direction:column;align-items:center}
+.dl-soon .dl-hero .when-live,.dl-live .dl-hero .when-soon{display:none}
+.dl-meta{margin-top:18px}
+
+/* ---- Download page: install steps (namespaced to avoid the index .steps) ---- */
+.install-steps{list-style:none;display:grid;gap:14px;max-width:720px;margin-inline:auto}
+.install-step{display:flex;gap:18px;align-items:flex-start;padding:20px 22px}
+.install-step-num{flex:none;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(43,222,177,.12);color:var(--mint-text);border:0.5px solid var(--mint-dim);font-size:15px;font-weight:500}
+.install-step-body h3{margin-bottom:5px}
+.install-step-body p{font-size:15px}
+@media (max-width:520px){
+  .install-step{gap:14px;padding:18px 18px}
+  .install-step-num{width:30px;height:30px;font-size:14px}
+}
