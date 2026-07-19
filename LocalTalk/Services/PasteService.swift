@@ -107,13 +107,28 @@ final class PasteService {
         }
     }
 
-    private enum AXInsertOutcome {
+    enum AXInsertOutcome: Equatable {
         case inserted
         /// Focus looks like (or might be) a text target, but the direct AX
-        /// write isn't supported there — Cmd-V is safe and appropriate.
+        /// write isn't supported/reliable there — Cmd-V is safe and appropriate.
         case fallBackToCmdV
         /// Focus is positively NOT a text target (button, menu, image, …).
         case noEditableFocus
+    }
+
+    /// Pure routing decision, factored out of the AX/IPC plumbing so it is
+    /// unit-testable. Order matters: a positively non-text focus is never
+    /// pasted into; web content (browser/Electron) always takes Cmd-V because
+    /// its AX text write is a silent no-op; native focus takes the AX write and
+    /// falls back to Cmd-V only if that write fails.
+    nonisolated static func insertionRoute(
+        isNonEditable: Bool,
+        isWebContent: Bool,
+        axWriteSucceeded: @autoclosure () -> Bool
+    ) -> AXInsertOutcome {
+        if isNonEditable { return .noEditableFocus }
+        if isWebContent { return .fallBackToCmdV }
+        return axWriteSucceeded() ? .inserted : .fallBackToCmdV
     }
 
     private func axInsert(_ text: String) async -> AXInsertOutcome {
@@ -142,15 +157,43 @@ final class PasteService {
         let axElement = focused as! AXUIElement
         AXUIElementSetMessagingTimeout(axElement, axTimeoutSeconds)
 
-        if AXUIElementSetAttributeValue(
-            axElement,
-            kAXSelectedTextAttribute as CFString,
-            text as CFString
-        ) == .success {
-            return .inserted
-        }
+        // Web content (browsers, Electron apps like Slack/Claude/VS Code)
+        // silently IGNORES an AXSelectedText write while still returning
+        // .success — a false positive that would swallow the transcript. Route
+        // editable web fields straight to Cmd-V, which is reliable there; native
+        // apps (TextEdit, Messages, Notes, Xcode) keep the direct AX write.
+        return insertionRoute(
+            isNonEditable: isPositivelyNonEditable(axElement),
+            isWebContent: isWebContent(axElement),
+            axWriteSucceeded: AXUIElementSetAttributeValue(
+                axElement,
+                kAXSelectedTextAttribute as CFString,
+                text as CFString
+            ) == .success
+        )
+    }
 
-        return isPositivelyNonEditable(axElement) ? .noEditableFocus : .fallBackToCmdV
+    /// Walks the focused element's ancestry looking for an `AXWebArea` — the
+    /// hallmark of a WebKit/Chromium render surface (real browsers and every
+    /// Electron app). Bounded and cheap: each hop is one AX IPC under the
+    /// short messaging timeout already set on the subtree.
+    private nonisolated static func isWebContent(_ element: AXUIElement) -> Bool {
+        var current: AXUIElement? = element
+        for _ in 0..<24 {
+            guard let el = current else { return false }
+            var roleRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(el, kAXRoleAttribute as CFString, &roleRef) == .success,
+               (roleRef as? String) == "AXWebArea" {
+                return true
+            }
+            var parentRef: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(el, kAXParentAttribute as CFString, &parentRef) == .success,
+                  let parent = parentRef else {
+                return false
+            }
+            current = (parent as! AXUIElement)
+        }
+        return false
     }
 
     /// True only when the focused element's role clearly identifies a
