@@ -42,12 +42,12 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(s2.hudPosition, .topRight)
     }
 
-    @MainActor func testTriggerKindDefaultsComboAndPersists() {
+    @MainActor func testTriggerKindDefaultsSingleKeyAndPersists() {
         let s1 = SettingsStore(defaults: defaults)
-        XCTAssertEqual(s1.triggerKind, .combo)
-        s1.triggerKind = .singleKey
+        XCTAssertEqual(s1.triggerKind, .singleKey)
+        s1.triggerKind = .combo
         let s2 = SettingsStore(defaults: defaults)
-        XCTAssertEqual(s2.triggerKind, .singleKey)
+        XCTAssertEqual(s2.triggerKind, .combo)
     }
 
     @MainActor func testSingleKeyChoiceDefaultsRightOptionAndPersists() {
@@ -60,9 +60,23 @@ final class SettingsStoreTests: XCTestCase {
 
     func testSingleKeyChoiceDeviceMasks() {
         // Pins the device-dependent modifier bits — a wrong mask detects the wrong key.
-        XCTAssertEqual(SingleKeyChoice.rightShift.deviceMask, 0x04)
-        XCTAssertEqual(SingleKeyChoice.rightCommand.deviceMask, 0x10)
-        XCTAssertEqual(SingleKeyChoice.rightOption.deviceMask, 0x40)
-        XCTAssertEqual(SingleKeyChoice.fn.deviceMask, 0x800000)
+        XCTAssertEqual(SingleKeyChoice.rightShift.kind, .modifier(deviceMask: 0x04))
+        XCTAssertEqual(SingleKeyChoice.rightCommand.kind, .modifier(deviceMask: 0x10))
+        XCTAssertEqual(SingleKeyChoice.rightOption.kind, .modifier(deviceMask: 0x40))
+        XCTAssertEqual(SingleKeyChoice.rightControl.kind, .modifier(deviceMask: 0x2000))
+        XCTAssertEqual(SingleKeyChoice.fn.kind, .modifier(deviceMask: 0x800000))
+    }
+
+    func testSingleKeyChoiceFunctionKeyCodes() {
+        // Pins the virtual key codes — a wrong code registers the wrong key.
+        XCTAssertEqual(SingleKeyChoice.f8.kind, .key(keyCode: 100))
+        XCTAssertEqual(SingleKeyChoice.f13.kind, .key(keyCode: 105))
+        XCTAssertEqual(SingleKeyChoice.f19.kind, .key(keyCode: 80))
+    }
+
+    func testFunctionKeysNeedNoAccessibility() {
+        XCTAssertFalse(SingleKeyChoice.f8.needsAccessibility)
+        XCTAssertTrue(SingleKeyChoice.rightOption.needsAccessibility)
+        XCTAssertTrue(SingleKeyChoice.fn.needsAccessibility)
     }
 }

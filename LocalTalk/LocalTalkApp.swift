@@ -259,10 +259,10 @@ enum AppComposition {
         switch model.settings.triggerKind {
         case .combo:
             hotkey.stopSingleKeyMonitor()
+            hotkey.stopSingleKeyHotKey()
             hotkey.register(model.settings.hotkey)
         case .singleKey:
             hotkey.unregisterPrimaryCombo()
-            hotkey.singleKeyMask = model.settings.singleKeyChoice.deviceMask
             hotkey.onSingleKeyAction = { [weak model] action in
                 guard let model else { return }
                 Task { @MainActor in
@@ -275,7 +275,15 @@ enum AppComposition {
                     }
                 }
             }
-            hotkey.startSingleKeyMonitor()
+            switch model.settings.singleKeyChoice.kind {
+            case .modifier(let deviceMask):
+                hotkey.stopSingleKeyHotKey()
+                hotkey.singleKeyMask = deviceMask
+                hotkey.startSingleKeyMonitor()
+            case .key(let keyCode):
+                hotkey.stopSingleKeyMonitor()
+                hotkey.registerSingleKey(keyCode: keyCode)
+            }
         }
     }
 

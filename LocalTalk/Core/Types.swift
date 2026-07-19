@@ -37,24 +37,60 @@ enum TriggerKind: String, Codable, CaseIterable {
 }
 
 enum SingleKeyChoice: String, Codable, CaseIterable {
-    case rightOption, rightCommand, rightShift, fn
+    case rightOption, rightCommand, rightShift, rightControl, fn
+    case f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12
+    case f13, f14, f15, f16, f17, f18, f19
+
+    /// How the key is observed. Modifier keys only surface as flag changes
+    /// (NSEvent monitor — needs Accessibility); regular keys like F8 register
+    /// as zero-modifier Carbon hotkeys, which need no permissions at all.
+    enum Kind: Equatable {
+        case modifier(deviceMask: UInt)
+        case key(keyCode: UInt32)
+    }
+
+    var kind: Kind {
+        switch self {
+        case .rightShift: .modifier(deviceMask: 0x04)     // NX_DEVICERSHIFTKEYMASK
+        case .rightCommand: .modifier(deviceMask: 0x10)   // NX_DEVICERCMDKEYMASK
+        case .rightControl: .modifier(deviceMask: 0x2000) // NX_DEVICERCTLKEYMASK
+        case .rightOption: .modifier(deviceMask: 0x40)    // NX_DEVICERALTKEYMASK
+        case .fn: .modifier(deviceMask: 0x800000)         // NSEvent.ModifierFlags.function
+        case .f1: .key(keyCode: 122)
+        case .f2: .key(keyCode: 120)
+        case .f3: .key(keyCode: 99)
+        case .f4: .key(keyCode: 118)
+        case .f5: .key(keyCode: 96)
+        case .f6: .key(keyCode: 97)
+        case .f7: .key(keyCode: 98)
+        case .f8: .key(keyCode: 100)
+        case .f9: .key(keyCode: 101)
+        case .f10: .key(keyCode: 109)
+        case .f11: .key(keyCode: 103)
+        case .f12: .key(keyCode: 111)
+        case .f13: .key(keyCode: 105)
+        case .f14: .key(keyCode: 107)
+        case .f15: .key(keyCode: 113)
+        case .f16: .key(keyCode: 106)
+        case .f17: .key(keyCode: 64)
+        case .f18: .key(keyCode: 79)
+        case .f19: .key(keyCode: 80)
+        }
+    }
+
+    var needsAccessibility: Bool {
+        if case .modifier = kind { return true }
+        return false
+    }
 
     var displayName: String {
         switch self {
         case .rightOption: "Right Option (⌥)"
         case .rightCommand: "Right Command (⌘)"
         case .rightShift: "Right Shift (⇧)"
+        case .rightControl: "Right Control (⌃)"
         case .fn: "Fn / Globe"
-        }
-    }
-
-    /// Device-dependent modifier bit in NSEvent.modifierFlags.rawValue.
-    var deviceMask: UInt {
-        switch self {
-        case .rightShift: 0x04     // NX_DEVICERSHIFTKEYMASK
-        case .rightCommand: 0x10   // NX_DEVICERCMDKEYMASK
-        case .rightOption: 0x40    // NX_DEVICERALTKEYMASK
-        case .fn: 0x800000         // NSEvent.ModifierFlags.function
+        default: rawValue.uppercased()
         }
     }
 }

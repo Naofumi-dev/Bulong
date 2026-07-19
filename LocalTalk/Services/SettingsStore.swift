@@ -10,7 +10,9 @@ final class SettingsStore {
         self.language = defaults.string(forKey: "language") ?? "en"
         self.task = DictationTask(rawValue: defaults.string(forKey: "task") ?? "") ?? .transcribe
         self.hotkeyMode = HotkeyMode(rawValue: defaults.string(forKey: "hotkeyMode") ?? "") ?? .toggle
-        self.triggerKind = TriggerKind(rawValue: defaults.string(forKey: "triggerKind") ?? "") ?? .combo
+        // Single key is the default trigger; the combo stays as a legacy
+        // option (existing users who stored an explicit choice keep it).
+        self.triggerKind = TriggerKind(rawValue: defaults.string(forKey: "triggerKind") ?? "") ?? .singleKey
         self.singleKeyChoice = SingleKeyChoice(rawValue: defaults.string(forKey: "singleKeyChoice") ?? "") ?? .rightOption
         self.pasteAfterTranscription = defaults.object(forKey: "pasteAfterTranscription") as? Bool ?? true
         self.playSounds = defaults.object(forKey: "playSounds") as? Bool ?? false

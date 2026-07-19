@@ -100,6 +100,14 @@ struct OnboardingView: View {
                     removal: .move(edge: .leading).combined(with: .opacity))
     }
 
+    /// The label for whatever trigger is actually armed — single key by
+    /// default, the legacy combo if the user chose it.
+    private var activeTriggerLabel: String {
+        model.settings.triggerKind == .combo
+            ? model.settings.hotkey.displayString
+            : model.settings.singleKeyChoice.displayName
+    }
+
     private var continueEnabled: Bool {
         switch step {
         case 1: micGranted            // accessibility stays optional
@@ -214,7 +222,7 @@ struct OnboardingView: View {
             case .ready:
                 HStack(spacing: 6) {
                     Text("Click the field, press").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
-                    HotkeyChip(text: model.settings.hotkey.displayString)
+                    HotkeyChip(text: activeTriggerLabel)
                     Text("and speak.").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
                 }
                 TextField("", text: $testText, prompt: Text("Your words land here…")

@@ -24,6 +24,7 @@ final class HotkeyService {
     var singleKeyMask: UInt = 0x40
     private var globalMonitor: Any?
     private var localMonitor: Any?
+    private var singleKeyHotKeyRef: EventHotKeyRef?
     private var trigger = SingleKeyTrigger()
     private var wasSingleKeyDown = false
 
@@ -78,6 +79,7 @@ final class HotkeyService {
         unregisterPrimary()
         unregisterEscape()
         stopSingleKeyMonitor()
+        stopSingleKeyHotKey()
         if let handlerRef {
             RemoveEventHandler(handlerRef)
             self.handlerRef = nil
@@ -119,13 +121,50 @@ final class HotkeyService {
         wasSingleKeyDown = false
     }
 
+    /// Regular single keys (F8 etc.) register as a zero-modifier Carbon hotkey
+    /// — global, no Accessibility needed. Press/release edges feed the same
+    /// hold-or-tap trigger as the modifier path; the `wasSingleKeyDown` guard
+    /// swallows Carbon's auto-repeat presses so holding never re-toggles.
+    func registerSingleKey(keyCode: UInt32) {
+        stopSingleKeyHotKey()
+        ensureHandlerInstalled()
+        singleKeyError = nil
+        trigger.reset()
+        wasSingleKeyDown = false
+
+        let hotKeyID = EventHotKeyID(signature: Self.signature, id: 3)
+        let status = RegisterEventHotKey(
+            keyCode,
+            0,
+            hotKeyID,
+            GetEventDispatcherTarget(),
+            0,
+            &singleKeyHotKeyRef
+        )
+
+        if status != noErr {
+            singleKeyError = "Couldn't register that key. Another app may be using it."
+        }
+    }
+
+    func stopSingleKeyHotKey() {
+        if let singleKeyHotKeyRef {
+            UnregisterEventHotKey(singleKeyHotKeyRef)
+            self.singleKeyHotKeyRef = nil
+        }
+        wasSingleKeyDown = false
+    }
+
     func resetSingleKey() {
         trigger.reset()
         wasSingleKeyDown = false
     }
 
     private func handleFlags(_ event: NSEvent) {
-        let down = (event.modifierFlags.rawValue & singleKeyMask) != 0
+        handleSingleKeyEdge(down: (event.modifierFlags.rawValue & singleKeyMask) != 0)
+    }
+
+    fileprivate func handleSingleKeyEdge(down: Bool) {
         guard down != wasSingleKeyDown else { return }   // only real transitions of the chosen key
         wasSingleKeyDown = down
         let action = down ? trigger.keyDown(at: Date()) : trigger.keyUp(at: Date())
@@ -174,6 +213,8 @@ final class HotkeyService {
                         service.onPressed?()
                     } else if hotKeyID.id == 1, kind == UInt32(kEventHotKeyReleased) {
                         service.onReleased?()
+                    } else if hotKeyID.id == 3 {
+                        service.handleSingleKeyEdge(down: kind == UInt32(kEventHotKeyPressed))
                     }
                 }
 

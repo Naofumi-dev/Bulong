@@ -245,6 +245,13 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 4)
                 }
+                if case .key = model.settings.singleKeyChoice.kind {
+                    Text("Function keys work globally without Accessibility. On the built-in keyboard, press Fn with F1–F12 unless \"Use F1, F2, etc. as standard function keys\" is on.")
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 4)
+                }
                 if let singleKeyError = AppComposition.hotkey.singleKeyError {
                     Text(singleKeyError)
                         .font(Theme.Fonts.caption)
