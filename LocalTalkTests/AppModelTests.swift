@@ -218,6 +218,14 @@ final class AppModelTests: XCTestCase {
         guard case .recording = model.state else { return XCTFail("expected recording") }
         await model.cancelDictation()
     }
+
+    func testWatchdogDeadlineScalesWithRecordingLength() {
+        // Short recordings keep the base; long ones get proportional headroom
+        // so a legitimate 60s+ dictation isn't killed mid-transcription.
+        XCTAssertEqual(AppModel.watchdogDeadline(base: 60, recordedSeconds: 5), 60)
+        XCTAssertEqual(AppModel.watchdogDeadline(base: 60, recordedSeconds: 60), 110)
+        XCTAssertEqual(AppModel.watchdogDeadline(base: 60, recordedSeconds: 300), 470)
+    }
 }
 
 @MainActor

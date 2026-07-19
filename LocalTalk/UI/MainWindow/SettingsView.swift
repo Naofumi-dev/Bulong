@@ -278,7 +278,7 @@ struct SettingsView: View {
                     footer: "English is ready — download another only if you dictate in other languages.") {
             row("Language") {
                 MenuPicker(options: languages.map { (label: $0.name, value: $0.code) },
-                           selection: bind(\.language))
+                           selection: languageBinding)
                     .frame(width: 190)
             }
             divider
@@ -530,6 +530,18 @@ struct SettingsView: View {
 
     private func bind<T>(_ keyPath: ReferenceWritableKeyPath<SettingsStore, T>) -> Binding<T> {
         Binding(get: { model.settings[keyPath: keyPath] }, set: { model.settings[keyPath: keyPath] = $0 })
+    }
+
+    /// Persists the language, then warms the newly-routed engine in the
+    /// background so the next dictation doesn't pay the cold model load.
+    private var languageBinding: Binding<String> {
+        Binding(
+            get: { model.settings.language },
+            set: { newValue in
+                model.settings.language = newValue
+                AppComposition.prewarmCurrentEngine()
+            }
+        )
     }
 
     /// Persists the choice, then re-applies the live trigger so combo↔single-key

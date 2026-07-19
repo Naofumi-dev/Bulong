@@ -10,6 +10,12 @@ actor ParakeetEngine: TranscriptionEngine {
     nonisolated let id: EngineID = .parakeet
 
     private nonisolated let version: AsrModelVersion
+    /// CoreML models are loaded ONCE per app run and cached here. A
+    /// `SlidingWindowAsrManager` is single-use per streaming session
+    /// (its input stream can't be restarted after `finish()`), so each
+    /// dictation gets a fresh manager attached to these cached models —
+    /// that attach is cheap, the model load is the expensive part.
+    private var models: AsrModels?
     private var manager: SlidingWindowAsrManager?
     private var cancelled = false
 
@@ -25,12 +31,17 @@ actor ParakeetEngine: TranscriptionEngine {
         options: TranscriptionOptions,
         progress: @escaping @Sendable (Double) -> Void
     ) async throws {
-        let models = try await AsrModels.downloadAndLoad(version: version) { progressState in
-            progress(progressState.fractionCompleted)
+        if models == nil {
+            models = try await AsrModels.downloadAndLoad(version: version) { progressState in
+                progress(progressState.fractionCompleted)
+            }
         }
+        guard let models else { return }
+        progress(0.9)
         let manager = SlidingWindowAsrManager(config: .streaming)
         try await manager.loadModels(models)
         self.manager = manager
+        progress(1)
     }
 
     nonisolated func transcribe(
@@ -62,6 +73,9 @@ actor ParakeetEngine: TranscriptionEngine {
         guard let manager else {
             throw EngineError.modelNotDownloaded(.parakeet)
         }
+        // Consume the prepared manager: it is single-use per streaming session,
+        // so the next dictation must build a fresh one (from the cached models).
+        self.manager = nil
 
         try await manager.startStreaming(source: .microphone)
 

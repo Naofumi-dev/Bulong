@@ -11,6 +11,9 @@ struct HUDView: View {
     let state: DictationState
     let level: Float
     let partial: String
+    /// Transient pipeline status (e.g. cold model-load progress) — shown while
+    /// processing so a slow first transcription reads as loading, not a hang.
+    var status: String = ""
     let language: String
     var onCancel: () -> Void
     var onDragChanged: (CGSize) -> Void
@@ -107,8 +110,16 @@ struct HUDView: View {
     private var detail: String {
         if case .failed(let m) = state { return m }
         if !partial.isEmpty { return Self.wordTrimmedTail(partial) }
+        if !status.isEmpty, isProcessing { return status }
         if case .recording = state { return "Esc to cancel" }
         return "On-device dictation"
+    }
+
+    private var isProcessing: Bool {
+        switch state {
+        case .transcribing, .inserting: true
+        default: false
+        }
     }
 
     private var showsLivePartial: Bool {

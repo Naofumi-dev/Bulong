@@ -56,6 +56,11 @@ enum AppComposition {
     static let settings = SettingsStore()
     static let uiState = UIState()
     static let whisperEngine = WhisperKitEngine()
+    // One engine per Parakeet version, shared across dictations: the engine
+    // caches its loaded CoreML models, so only the FIRST dictation pays the
+    // multi-second model load. (Managers inside are still per-session.)
+    static let parakeetV2Engine = ParakeetEngine(version: .v2)
+    static let parakeetV3Engine = ParakeetEngine(version: .v3)
     static var onboardingWindow: NSWindow?
     private static var onboardingCloseObserver: NSObjectProtocol?
 
@@ -64,12 +69,7 @@ enum AppComposition {
             settings: settings,
             history: HistoryStore(),
             engineProvider: { route in
-                switch route.engine {
-                case .parakeet:
-                    ParakeetEngine(version: route.parakeetVersion ?? .v2)
-                case .whisperKit:
-                    whisperEngine
-                }
+                engine(for: route)
             },
             audioStart: {
                 (try? audio.start()) ?? AsyncStream { continuation in
@@ -108,9 +108,37 @@ enum AppComposition {
         )
     }
 
+    static func engine(for route: EngineRoute) -> any TranscriptionEngine {
+        switch route.engine {
+        case .parakeet:
+            (route.parakeetVersion ?? .v2) == .v2 ? parakeetV2Engine : parakeetV3Engine
+        case .whisperKit:
+            whisperEngine
+        }
+    }
+
+    /// Loads the CoreML models for the currently-routed engine in the
+    /// background so the FIRST dictation after launch (or a language switch)
+    /// doesn't sit in "Transcribing" for the whole cold model load.
+    /// Only warms models that are already on disk — never downloads.
+    static func prewarmCurrentEngine() {
+        let options = TranscriptionOptions(language: settings.language, task: settings.task)
+        let route = EngineSelector.route(
+            language: settings.language,
+            task: settings.task,
+            override: settings.engineOverride
+        )
+        let engine = engine(for: route)
+        Task(priority: .utility) {
+            guard await engine.isReady(for: options) else { return }
+            try? await engine.prepare(options: options) { _ in }
+        }
+    }
+
     static func wireHotkey(to model: AppModel) {
         paste.isOnboardingActive = { onboardingWindow?.isVisible == true }
         showOnboardingIfNeeded(for: model)
+        prewarmCurrentEngine()
 
         model.onStateChange = { [weak model] state in
             guard let model else { return }
@@ -264,6 +292,7 @@ struct HUDStateView: View {
             state: model.state,
             level: AppComposition.audio.level,
             partial: model.lastPartial,
+            status: model.statusDetail,
             language: model.settings.language,
             onCancel: { Task { await model.cancelDictation() } },
             onDragChanged: { _ in AppComposition.hud.dragChanged() },

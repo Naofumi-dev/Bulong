@@ -113,6 +113,42 @@ final class AppModel {
         dictationTask = Task { [weak self, audio] in
             await self?.runPipeline(engine: engine, audio: audio.stream, options: options)
         }
+
+        // Warm the model WHILE the user speaks so stop → transcript is fast
+        // even on a cold launch. Idempotent per engine; never downloads here
+        // (isReady guarded above). Progress feeds the HUD's detail line so a
+        // cold load reads as loading, not as a hang.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let handleProgress: @Sendable (Double) -> Void = { [weak self] fraction in
+                Task { @MainActor in
+                    self?.noteModelLoadProgress(fraction)
+                }
+            }
+            try? await engine.prepare(options: options, progress: handleProgress)
+            self.clearStaleModelLoadStatus()
+        }
+    }
+
+    private static let modelLoadPrefix = "Loading speech model"
+
+    private func noteModelLoadProgress(_ fraction: Double) {
+        guard fraction < 1 else {
+            clearStaleModelLoadStatus()
+            return
+        }
+        switch state {
+        case .recording, .transcribing:
+            statusDetail = "\(Self.modelLoadPrefix)… \(Int(fraction * 100))%"
+        default:
+            break
+        }
+    }
+
+    private func clearStaleModelLoadStatus() {
+        if statusDetail.hasPrefix(Self.modelLoadPrefix) {
+            statusDetail = ""
+        }
     }
 
     private func stopRecording() {
@@ -125,10 +161,11 @@ final class AppModel {
 
         state = .transcribing
         audioStop()
-        startWatchdog()
+        startWatchdog(recordedSeconds: Date().timeIntervalSince(started))
     }
 
     func cancelDictation(reason: String = "") async {
+        statusDetail = ""
         audioStop()
         await activeEngine?.cancel()
         watchdogTask?.cancel()
@@ -198,6 +235,7 @@ final class AppModel {
     private func finish(_ newState: DictationState) {
         watchdogTask?.cancel()
         watchdogTask = nil
+        if case .failed = newState { statusDetail = "" }
         state = newState
         lastPartial = ""
         activeEngine = nil
@@ -205,13 +243,21 @@ final class AppModel {
         resumeIdleWaiters()
     }
 
-    private func startWatchdog() {
+    private func startWatchdog(recordedSeconds: TimeInterval) {
+        let deadline = Self.watchdogDeadline(base: watchdogSeconds, recordedSeconds: recordedSeconds)
         watchdogTask?.cancel()
-        watchdogTask = Task { [weak self, watchdogSeconds] in
-            try? await Task.sleep(for: .seconds(watchdogSeconds))
+        watchdogTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(deadline))
             guard !Task.isCancelled else { return }
             await self?.cancelIfStillTranscribing()
         }
+    }
+
+    /// A fixed watchdog kills legitimate long recordings: a 60s+ dictation on
+    /// a cold model load can genuinely need more than 60s of processing. Scale
+    /// the deadline with what was recorded; the base stays the floor.
+    static func watchdogDeadline(base: TimeInterval, recordedSeconds: TimeInterval) -> TimeInterval {
+        max(base, 20 + recordedSeconds * 1.5)
     }
 
     private func cancelIfStillTranscribing() async {

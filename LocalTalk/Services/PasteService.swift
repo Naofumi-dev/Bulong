@@ -5,6 +5,14 @@ import ApplicationServices
 final class PasteService {
     private static let trustedPromptOption = "AXTrustedCheckOptionPrompt"
 
+    /// AX calls are synchronous mach IPC into the TARGET app; a busy target
+    /// (Electron apps under load) can stall the caller up to the default 6s
+    /// timeout PER CALL. They run on this queue with a short explicit timeout
+    /// so Bulong's main thread — and with it the HUD — can never beachball
+    /// on someone else's process.
+    private nonisolated static let axQueue = DispatchQueue(label: "com.armageddonvivas.Bulong.ax", qos: .userInitiated)
+    private nonisolated static let axTimeoutSeconds: Float = 1.5
+
     private(set) var targetApp: NSRunningApplication?
 
     /// Probe injected by the composition root: true while the onboarding
@@ -86,15 +94,24 @@ final class PasteService {
             try? await Task.sleep(for: .milliseconds(150))
         }
 
-        if axInsert(text) {
+        if await axInsert(text) {
             return .insertedDirectly
         }
 
         return await pasteViaCmdV(text, preserveClipboard: !alsoCopy)
     }
 
-    private func axInsert(_ text: String) -> Bool {
+    private func axInsert(_ text: String) async -> Bool {
+        await withCheckedContinuation { continuation in
+            Self.axQueue.async {
+                continuation.resume(returning: Self.performAXInsert(text))
+            }
+        }
+    }
+
+    private nonisolated static func performAXInsert(_ text: String) -> Bool {
         let systemWide = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(systemWide, axTimeoutSeconds)
         var focused: CFTypeRef?
         guard AXUIElementCopyAttributeValue(
             systemWide,
@@ -105,6 +122,7 @@ final class PasteService {
         }
 
         let axElement = focused as! AXUIElement
+        AXUIElementSetMessagingTimeout(axElement, axTimeoutSeconds)
         return AXUIElementSetAttributeValue(
             axElement,
             kAXSelectedTextAttribute as CFString,
