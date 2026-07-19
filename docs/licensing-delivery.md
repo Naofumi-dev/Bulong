@@ -48,7 +48,7 @@ licenses; rotating it invalidates every key already sold.
 
 ### 2. Put the PUBLIC key in the app
 
-In `LocalTalk/Services/LicenseVerifier.swift`, replace `bundledPublicKeyB64`
+In `LocalTalk/Services/Licensing/LicenseVerifier.swift`, replace `bundledPublicKeyB64`
 with your PUBLIC key (it currently holds the committed **test** key — shipping
 that is a launch blocker). Then rebuild, sign, and notarize
 (`script/release.sh` → `script/sign_and_notarize.sh`).
