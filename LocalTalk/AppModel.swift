@@ -125,6 +125,7 @@ final class AppModel {
         targetAppName = frontmostAppName()
         recordingStarted = Date()
         lastPartial = ""
+        statusDetail = ""
         state = .recording(started: recordingStarted!)
 
         let audio = UncheckedAudioStream(stream: stream)

@@ -209,8 +209,11 @@ enum AppComposition {
             case .idle:
                 hotkey.unregisterEscape()
                 hotkey.resetSingleKey()   // cancel/stop landed us idle — clear any half-open tap
+                // A run that produced an outcome gets a longer beat so the
+                // "Done" badge (or the clipboard-fallback notice) registers.
+                let lingerMs = model.statusDetail.isEmpty ? 600 : 1400
                 Task {
-                    try? await Task.sleep(for: .milliseconds(600))
+                    try? await Task.sleep(for: .milliseconds(lingerMs))
                     await MainActor.run {
                         if case .idle = model.state {
                             hud.hide()

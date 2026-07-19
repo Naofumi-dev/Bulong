@@ -1,4 +1,5 @@
 import SwiftUI
+@preconcurrency import AVFoundation
 
 enum MainSection: String, CaseIterable, Identifiable {
     case history = "History"
@@ -22,6 +23,8 @@ struct MainWindowView: View {
     var license: LicenseService
     @Bindable private var uiState = AppComposition.uiState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    @State private var axTrusted = PasteService.isAccessibilityTrusted
 
     var body: some View {
         NavigationSplitView {
@@ -57,7 +60,20 @@ struct MainWindowView: View {
             .safeAreaInset(edge: .top) {
                 brandHeader
             }
+            .safeAreaInset(edge: .bottom) {
+                sidebarStatus
+            }
             .background(Theme.ink0)
+            .task {
+                // Live health readout: cheap synchronous checks, only while
+                // the window is open (the task cancels on disappear).
+                while !Task.isCancelled {
+                    micGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+                    axTrusted = PasteService.isAccessibilityTrusted
+                    modelManager.refresh()
+                    try? await Task.sleep(for: .seconds(2))
+                }
+            }
         } detail: {
             ZStack {
                 Theme.ink0.ignoresSafeArea()
@@ -77,6 +93,71 @@ struct MainWindowView: View {
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
         .background(Theme.ink0)
+    }
+
+    /// At-a-glance health: the armed trigger key plus the three things that
+    /// must be true for dictation to work. Anything red deep-links to Settings.
+    private var sidebarStatus: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 6) {
+                Text("Trigger")
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textTertiary)
+                HotkeyChip(text: triggerLabel)
+            }
+            statusRow("Microphone", ok: micGranted)
+            statusRow("Accessibility", ok: axTrusted)
+            statusRow("Speech model", ok: modelReady)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 13)
+        .padding(.vertical, 11)
+        .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
+        .background(Theme.ink0)
+    }
+
+    private func statusRow(_ label: String, ok: Bool) -> some View {
+        Button {
+            if !ok { uiState.mainSection = .settings }
+        } label: {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(ok ? Theme.accent : Theme.failure)
+                    .frame(width: 5, height: 5)
+                Text(label)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(ok ? Theme.textSecondary : Theme.textPrimary)
+                if !ok {
+                    Text("Fix")
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.accentText)
+                }
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(label): \(ok ? "ready" : "needs attention")")
+    }
+
+    private var triggerLabel: String {
+        model.settings.triggerKind == .combo
+            ? model.settings.hotkey.displayString
+            : model.settings.singleKeyChoice.displayName
+    }
+
+    private var modelReady: Bool {
+        let route = EngineSelector.route(
+            language: model.settings.language,
+            task: model.settings.task,
+            override: model.settings.engineOverride
+        )
+        switch route.engine {
+        case .whisperKit:
+            return modelManager.whisperLargeTurbo == .ready
+        case .parakeet:
+            return (route.parakeetVersion == .v3 ? modelManager.parakeetV3 : modelManager.parakeetV2) == .ready
+        }
     }
 
     private var brandHeader: some View {

@@ -28,8 +28,16 @@ struct HUDView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            OrbView(level: level, state: state, reduceMotion: reduceMotion)
-                .frame(width: 34, height: 34)
+            ZStack {
+                if isDone {
+                    DoneBadge(clipboardOnly: doneIsClipboardOnly)
+                        .transition(reduceMotion ? .opacity : .scale(scale: 0.5).combined(with: .opacity))
+                } else {
+                    OrbView(level: level, state: state, reduceMotion: reduceMotion)
+                }
+            }
+            .frame(width: 34, height: 34)
+            .animation(reduceMotion ? Theme.easeFast : Theme.spring, value: isDone)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary)
                 // Live partials keep the newest words visible (head-truncate,
@@ -97,18 +105,31 @@ struct HUDView: View {
         return isRecording && hovering
     }
 
+    /// The post-run beat: back to idle with an outcome to show. The panel
+    /// lingers briefly (see wireHotkey) so "Done — inserted" registers before
+    /// the fade; clipboard fallbacks get their promised subtle notification.
+    private var isDone: Bool {
+        if case .idle = state { return !status.isEmpty }
+        return false
+    }
+
+    private var doneIsClipboardOnly: Bool {
+        status.hasPrefix("Copied")
+    }
+
     private var title: String {
         switch state {
         case .recording: "Listening"
         case .transcribing: "Transcribing"
         case .inserting: "Inserting"
         case .failed: "Failed"
-        case .idle: "Bulong"
+        case .idle: isDone ? "Done" : "Bulong"
         }
     }
 
     private var detail: String {
         if case .failed(let m) = state { return m }
+        if isDone { return status }
         if !partial.isEmpty { return Self.wordTrimmedTail(partial) }
         if !status.isEmpty, isProcessing { return status }
         if case .recording = state { return "Esc to cancel" }
@@ -148,6 +169,33 @@ struct HUDView: View {
     }
 }
 
+/// The success beat: a solid mint sphere-badge with the outcome glyph.
+/// Same 3D shading family as the orb so the swap reads as one object landing.
+struct DoneBadge: View {
+    let clipboardOnly: Bool
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(RadialGradient(
+                    colors: [Color.white.opacity(0.9), Theme.accent, Theme.accent.opacity(0.55)],
+                    center: UnitPoint(x: 0.36, y: 0.3), startRadius: 0, endRadius: 15))
+                .frame(width: 24, height: 24)
+                .shadow(color: Theme.accent.opacity(0.45), radius: 7, y: 2)
+            Circle()
+                .stroke(
+                    LinearGradient(colors: [Color.white.opacity(0.55), .clear],
+                                   startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1)
+                .frame(width: 24, height: 24)
+            Image(systemName: clipboardOnly ? "doc.on.clipboard" : "checkmark")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Color.black.opacity(0.72))
+        }
+        .accessibilityLabel(clipboardOnly ? "Copied to clipboard" : "Inserted")
+    }
+}
+
 /// The living orb: a mint radial core whose glow breathes with the live level.
 /// Silence reads as silence — below the threshold it settles to a calm minimum.
 struct OrbView: View {
@@ -159,6 +207,7 @@ struct OrbView: View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: paused)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             let energy = energyValue(t: t)
+            let bodySize = 16 + 5 * energy
             ZStack {
                 Circle()
                     .fill(RadialGradient(
@@ -168,7 +217,21 @@ struct OrbView: View {
                     .fill(RadialGradient(
                         colors: [Color.white.opacity(0.85), color, color.opacity(0.25)],
                         center: UnitPoint(x: 0.38, y: 0.35), startRadius: 0, endRadius: 11))
-                    .frame(width: 16 + 5 * energy, height: 16 + 5 * energy)
+                    .frame(width: bodySize, height: bodySize)
+                    .shadow(color: color.opacity(0.35 * energy), radius: 5, y: 2)
+                // Sphere cues: a top-lit rim and a specular catchlight give the
+                // flat gradient real volume — the HUD's echo of the 3D app icon.
+                Circle()
+                    .stroke(
+                        LinearGradient(colors: [Color.white.opacity(0.5), .clear],
+                                       startPoint: .top, endPoint: .bottom),
+                        lineWidth: 0.8)
+                    .frame(width: bodySize, height: bodySize)
+                Circle()
+                    .fill(Color.white.opacity(0.85))
+                    .frame(width: 3.2, height: 3.2)
+                    .offset(x: -bodySize * 0.17, y: -bodySize * 0.2)
+                    .blur(radius: 0.4)
             }
             // The orb scaling with the live level is motion; under Reduce
             // Motion it still tracks the level but snaps instead of breathing.
