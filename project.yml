@@ -34,6 +34,9 @@ targets:
         CFBundleVersion: "1"
         CFBundleDisplayName: Bulong
         NSPrincipalClass: NSApplication
+        CFBundleURLTypes:
+          - CFBundleURLName: com.armageddonvivas.Bulong.actions
+            CFBundleURLSchemes: [bulong]
     entitlements:
       path: LocalTalk/Support/LocalTalk.entitlements
       properties:

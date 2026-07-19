@@ -2,8 +2,19 @@ import AppKit
 import SwiftUI
 @preconcurrency import AVFoundation
 
+/// Receives `bulong://` action URLs (toggle/start/stop/cancel) so Shortcuts,
+/// Raycast, and scripts can drive dictation without the hotkey.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            AppComposition.handleActionURL(url)
+        }
+    }
+}
+
 @main
 struct LocalTalkApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var appModel: AppModel
 
     init() {
@@ -63,6 +74,31 @@ enum AppComposition {
     static let parakeetV3Engine = ParakeetEngine(version: .v3)
     static var onboardingWindow: NSWindow?
     private static var onboardingCloseObserver: NSObjectProtocol?
+    /// Set by wireHotkey; the URL handler routes actions through the same
+    /// model the hotkey uses.
+    private static weak var appModel: AppModel?
+
+    /// bulong://toggle | bulong://start | bulong://stop | bulong://cancel
+    static func handleActionURL(_ url: URL) {
+        guard url.scheme == "bulong", let model = appModel else { return }
+        Task { @MainActor in
+            switch url.host() {
+            case "toggle":
+                await model.toggleDictation()
+            case "start":
+                switch model.state {
+                case .idle, .failed: await model.toggleDictation()
+                default: break
+                }
+            case "stop":
+                if case .recording = model.state { await model.toggleDictation() }
+            case "cancel":
+                await model.cancelDictation()
+            default:
+                break
+            }
+        }
+    }
 
     static func makeAppModel() -> AppModel {
         return AppModel(
@@ -136,6 +172,7 @@ enum AppComposition {
     }
 
     static func wireHotkey(to model: AppModel) {
+        appModel = model
         paste.isOnboardingActive = { onboardingWindow?.isVisible == true }
         showOnboardingIfNeeded(for: model)
         prewarmCurrentEngine()

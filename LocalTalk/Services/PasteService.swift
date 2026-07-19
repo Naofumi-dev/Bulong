@@ -94,14 +94,29 @@ final class PasteService {
             try? await Task.sleep(for: .milliseconds(150))
         }
 
-        if await axInsert(text) {
+        switch await axInsert(text) {
+        case .inserted:
             return .insertedDirectly
+        case .fallBackToCmdV:
+            return await pasteViaCmdV(text, preserveClipboard: !alsoCopy)
+        case .noEditableFocus:
+            // Never blind-paste: Cmd-V into a non-text target can trigger
+            // arbitrary app shortcuts. Leave it on the clipboard instead.
+            Self.setClipboard(text)
+            return .clipboardOnly(reason: "no text field is focused — click one and press ⌘V")
         }
-
-        return await pasteViaCmdV(text, preserveClipboard: !alsoCopy)
     }
 
-    private func axInsert(_ text: String) async -> Bool {
+    private enum AXInsertOutcome {
+        case inserted
+        /// Focus looks like (or might be) a text target, but the direct AX
+        /// write isn't supported there — Cmd-V is safe and appropriate.
+        case fallBackToCmdV
+        /// Focus is positively NOT a text target (button, menu, image, …).
+        case noEditableFocus
+    }
+
+    private func axInsert(_ text: String) async -> AXInsertOutcome {
         await withCheckedContinuation { continuation in
             Self.axQueue.async {
                 continuation.resume(returning: Self.performAXInsert(text))
@@ -109,7 +124,7 @@ final class PasteService {
         }
     }
 
-    private nonisolated static func performAXInsert(_ text: String) -> Bool {
+    private nonisolated static func performAXInsert(_ text: String) -> AXInsertOutcome {
         let systemWide = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(systemWide, axTimeoutSeconds)
         var focused: CFTypeRef?
@@ -118,16 +133,51 @@ final class PasteService {
             kAXFocusedUIElementAttribute as CFString,
             &focused
         ) == .success, let focused else {
-            return false
+            // No AX focus at all (or the app timed out): unknowable, so keep
+            // the historical Cmd-V behavior rather than regressing apps with
+            // broken AX trees.
+            return .fallBackToCmdV
         }
 
         let axElement = focused as! AXUIElement
         AXUIElementSetMessagingTimeout(axElement, axTimeoutSeconds)
-        return AXUIElementSetAttributeValue(
+
+        if AXUIElementSetAttributeValue(
             axElement,
             kAXSelectedTextAttribute as CFString,
             text as CFString
-        ) == .success
+        ) == .success {
+            return .inserted
+        }
+
+        return isPositivelyNonEditable(axElement) ? .noEditableFocus : .fallBackToCmdV
+    }
+
+    /// True only when the focused element's role clearly identifies a
+    /// non-text control. Ambiguity (missing role, web areas, Electron groups)
+    /// deliberately returns false — those targets often accept Cmd-V even
+    /// though their AX trees say nothing useful.
+    private nonisolated static func isPositivelyNonEditable(_ element: AXUIElement) -> Bool {
+        var settable = DarwinBoolean(false)
+        if AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success,
+           settable.boolValue {
+            return false
+        }
+
+        var roleRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef) == .success,
+              let role = roleRef as? String else {
+            return false
+        }
+
+        let nonTextRoles: Set<String> = [
+            kAXButtonRole, kAXMenuButtonRole, kAXMenuItemRole, kAXMenuRole,
+            kAXCheckBoxRole, kAXRadioButtonRole, kAXPopUpButtonRole,
+            kAXImageRole, kAXStaticTextRole, kAXToolbarRole, kAXSliderRole,
+            kAXTabGroupRole, kAXTableRole, kAXOutlineRole, "AXLink",
+            kAXDisclosureTriangleRole,
+        ]
+        return nonTextRoles.contains(role)
     }
 
     private func pasteViaCmdV(_ text: String, preserveClipboard: Bool) async -> InsertionResult {
