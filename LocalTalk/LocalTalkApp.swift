@@ -108,9 +108,7 @@ enum AppComposition {
                 engine(for: route)
             },
             audioStart: {
-                (try? audio.start()) ?? AsyncStream { continuation in
-                    continuation.finish()
-                }
+                try audio.start()
             },
             audioStop: {
                 audio.stop()

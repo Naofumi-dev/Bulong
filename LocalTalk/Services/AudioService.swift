@@ -12,12 +12,15 @@ final class AudioService {
 
     enum AudioError: LocalizedError {
         case micPermissionDenied
+        case micPermissionPending
         case engineStartFailed(String)
 
         var errorDescription: String? {
             switch self {
             case .micPermissionDenied:
                 return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
+            case .micPermissionPending:
+                return "macOS is asking for microphone access — click Allow, then dictate again."
             case .engineStartFailed(let message):
                 return "Couldn't start audio input: \(message)"
             }
@@ -36,7 +39,15 @@ final class AudioService {
     }
 
     func start() throws -> AsyncStream<AVAudioPCMBuffer> {
-        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            break
+        case .notDetermined:
+            // Fire the one-time system consent prompt so a dictation attempt
+            // is never a silent no-op; the user allows once and retries.
+            Task { _ = await AVCaptureDevice.requestAccess(for: .audio) }
+            throw AudioError.micPermissionPending
+        default:
             throw AudioError.micPermissionDenied
         }
 

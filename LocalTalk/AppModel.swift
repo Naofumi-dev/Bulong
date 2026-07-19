@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os.log
 @preconcurrency import AVFoundation
 
 private struct UncheckedAudioStream: @unchecked Sendable {
@@ -8,8 +9,15 @@ private struct UncheckedAudioStream: @unchecked Sendable {
 
 @MainActor @Observable
 final class AppModel {
+    /// Pipeline diagnostics. State labels and failure reasons only —
+    /// transcript text is NEVER logged.
+    private static let log = Logger(subsystem: "com.armageddonvivas.Bulong", category: "dictation")
+
     private(set) var state: DictationState = .idle {
-        didSet { onStateChange?(state) }
+        didSet {
+            Self.log.info("state → \(self.state.logLabel, privacy: .public)")
+            onStateChange?(state)
+        }
     }
     private(set) var lastPartial: String = ""
     private(set) var lastTranscript: String = ""
@@ -21,7 +29,7 @@ final class AppModel {
     let history: HistoryStore
 
     private let engineProvider: (EngineRoute) -> any TranscriptionEngine
-    private let audioStart: @MainActor () -> AsyncStream<AVAudioPCMBuffer>
+    private let audioStart: @MainActor () throws -> AsyncStream<AVAudioPCMBuffer>
     private let audioStop: @MainActor () -> Void
     private let captureTarget: @MainActor () -> Void
     private let insertText: @MainActor (String) async -> InsertionResult
@@ -44,7 +52,7 @@ final class AppModel {
         settings: SettingsStore,
         history: HistoryStore,
         engineProvider: @escaping (EngineRoute) -> any TranscriptionEngine,
-        audioStart: @escaping @MainActor () -> AsyncStream<AVAudioPCMBuffer>,
+        audioStart: @escaping @MainActor () throws -> AsyncStream<AVAudioPCMBuffer>,
         audioStop: @escaping @MainActor () -> Void,
         captureTarget: @escaping @MainActor () -> Void = {},
         insertText: @escaping @MainActor (String) async -> InsertionResult,
@@ -102,13 +110,24 @@ final class AppModel {
             return
         }
 
+        // Start capture BEFORE claiming to record: a mic-permission problem
+        // must surface as a clear failure, never as a silent empty recording.
+        let stream: AsyncStream<AVAudioPCMBuffer>
+        do {
+            stream = try audioStart()
+        } catch {
+            Self.log.error("audio start failed: \(error.localizedDescription, privacy: .public)")
+            state = .failed(message: error.localizedDescription)
+            return
+        }
+
         activeEngine = engine
         targetAppName = frontmostAppName()
         recordingStarted = Date()
         lastPartial = ""
         state = .recording(started: recordingStarted!)
 
-        let audio = UncheckedAudioStream(stream: audioStart())
+        let audio = UncheckedAudioStream(stream: stream)
         let options = currentOptions()
         dictationTask = Task { [weak self, audio] in
             await self?.runPipeline(engine: engine, audio: audio.stream, options: options)
@@ -215,6 +234,7 @@ final class AppModel {
 
             lastTranscript = text
             statusDetail = Self.describe(result)
+            Self.log.info("insertion: \(Self.describe(result), privacy: .public)")
             try? history.append(HistoryEntry(
                 id: UUID(),
                 text: text,
@@ -228,6 +248,7 @@ final class AppModel {
         } catch is CancellationError {
             finish(.idle)
         } catch {
+            Self.log.error("pipeline error: \(error.localizedDescription, privacy: .public)")
             finish(.failed(message: error.localizedDescription))
         }
     }

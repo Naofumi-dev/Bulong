@@ -6,6 +6,17 @@ enum DictationState: Equatable {
     case transcribing
     case inserting
     case failed(message: String)
+
+    /// Log-safe label: carries the failure reason but never transcript text.
+    var logLabel: String {
+        switch self {
+        case .idle: "idle"
+        case .recording: "recording"
+        case .transcribing: "transcribing"
+        case .inserting: "inserting"
+        case .failed(let message): "failed(\(message))"
+        }
+    }
 }
 
 enum EngineID: String, Codable, CaseIterable {

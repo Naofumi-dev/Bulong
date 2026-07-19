@@ -219,6 +219,30 @@ final class AppModelTests: XCTestCase {
         await model.cancelDictation()
     }
 
+    func testAudioStartFailureLandsInFailedStateNotSilentEmptyRecording() async throws {
+        struct MicPending: LocalizedError {
+            var errorDescription: String? { "mic permission pending" }
+        }
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in FakeEngine() },
+            audioStart: { throw MicPending() },
+            audioStop: {},
+            insertText: { _ in .insertedDirectly },
+            frontmostAppName: { "TextEdit" },
+            minimumDuration: 0
+        )
+
+        await model.toggleDictation()
+
+        guard case .failed(let message) = model.state else {
+            return XCTFail("expected failed, got \(model.state)")
+        }
+        XCTAssertTrue(message.contains("mic permission pending"))
+        XCTAssertTrue(model.history.entries.isEmpty)
+    }
+
     func testWatchdogDeadlineScalesWithRecordingLength() {
         // Short recordings keep the base; long ones get proportional headroom
         // so a legitimate 60s+ dictation isn't killed mid-transcription.
