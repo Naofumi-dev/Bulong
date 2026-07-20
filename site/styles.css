@@ -297,3 +297,65 @@ p{text-wrap:pretty;color:var(--text-2)}
   .install-step{gap:14px;padding:18px 18px}
   .install-step-num{width:30px;height:30px;font-size:14px}
 }
+
+/* ---- Motion layer (all gated for reduced motion at the bottom) ---- */
+
+/* Hero: the 3D-rendered mark floats above the headline. */
+.hero-mark{width:132px;height:132px;margin-bottom:6px;outline:0;border-radius:0;
+  filter:drop-shadow(0 22px 44px rgba(43,222,177,.22));
+  animation:markFloat 7s ease-in-out infinite}
+@keyframes markFloat{
+  0%,100%{transform:translateY(0) rotate(-1.2deg)}
+  50%{transform:translateY(-12px) rotate(1.2deg)}
+}
+
+/* Hero HUD: bars dance, orb breathes — the site finally moves like the app. */
+.waveform i{animation:wave 1.15s ease-in-out infinite alternate}
+.waveform i:nth-child(1){animation-delay:-.9s}
+.waveform i:nth-child(2){animation-delay:-.65s}
+.waveform i:nth-child(3){animation-delay:-.4s}
+.waveform i:nth-child(4){animation-delay:-.15s}
+.waveform i:nth-child(5){animation-delay:-.55s}
+.waveform i:nth-child(6){animation-delay:-.8s}
+.waveform i:nth-child(7){animation-delay:-1.05s}
+@keyframes wave{from{transform:scaleY(.45)}to{transform:scaleY(1.08)}}
+.orb{animation:orbBreathe 3.2s ease-in-out infinite}
+@keyframes orbBreathe{
+  0%,100%{box-shadow:0 0 22px rgba(43,222,177,.45);transform:scale(1)}
+  50%{box-shadow:0 0 34px rgba(43,222,177,.7);transform:scale(1.06)}
+}
+
+/* Scroll reveals: JS adds .in-view via IntersectionObserver. The hidden
+   initial state ONLY applies once the matching JS generation has announced
+   itself on <html> (js-reveal) — without JS (or with a stale cached script)
+   every section stays fully visible. Never hide content on a JS promise. */
+.js-reveal .reveal{opacity:0;transform:translateY(22px);
+  transition:opacity .6s ease-out,transform .6s ease-out}
+.js-reveal .reveal.in-view{opacity:1;transform:none}
+.js-reveal .reveal-stagger>*{opacity:0;transform:translateY(20px);
+  transition:opacity .55s ease-out,transform .55s ease-out}
+.js-reveal .reveal-stagger.in-view>*{opacity:1;transform:none}
+.js-reveal .reveal-stagger.in-view>*:nth-child(2){transition-delay:.08s}
+.js-reveal .reveal-stagger.in-view>*:nth-child(3){transition-delay:.16s}
+.js-reveal .reveal-stagger.in-view>*:nth-child(4){transition-delay:.24s}
+
+/* Demo video section */
+.demo-video{width:100%;max-width:960px;margin-inline:auto;display:block;
+  border-radius:var(--radius-card);border:0.5px solid var(--hairline);
+  box-shadow:0 48px 110px -40px rgba(0,0,0,.85)}
+
+/* Contact / book-a-call (GoHighLevel embeds) */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:960px;margin-inline:auto}
+.contact-card{padding:26px;display:flex;flex-direction:column;gap:14px}
+.contact-card h3{color:var(--text)}
+.contact-card p{font-size:15px}
+.contact-embed{width:100%;min-height:460px;border:0;border-radius:var(--radius-ctrl);background:var(--ink2)}
+.contact-fallback{display:flex;flex-direction:column;gap:12px;align-items:flex-start;
+  padding:22px;border:1px dashed var(--hairline-strong);border-radius:var(--radius-ctrl)}
+@media (max-width:820px){.contact-grid{grid-template-columns:1fr}}
+
+/* One switch turns ALL of the above off. */
+@media (prefers-reduced-motion:reduce){
+  .hero-mark,.waveform i,.orb{animation:none}
+  .reveal,.reveal-stagger>*{opacity:1;transform:none;transition:none}
+}

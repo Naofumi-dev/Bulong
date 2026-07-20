@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="Bulong — Filipino &amp; Taglish dictation for macOS, on-device">
   <meta name="twitter:description" content="Dictation that speaks Filipino — and never leaves your Mac. Real, unedited Taglish results. No cloud, no account, $29 once.">
   <meta name="twitter:image" content="https://bulong.app/assets/og.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=4">
   <noscript><style>@media (max-width:720px){.nav-links{display:flex!important}.nav-toggle{display:none!important}}</style></noscript>
 </head>
 <body>
@@ -61,6 +61,7 @@
   <main id="main">
     <section class="hero" id="top">
       <div class="wrap hero-inner">
+        <img class="hero-mark" src="assets/logo3d.png" alt="" width="132" height="132" aria-hidden="true">
         <p class="badge mono"><span class="badge-dot" aria-hidden="true"></span>100% on-device · nothing uploaded, ever</p>
         <h1>Dictation that speaks <span class="mint">Filipino</span>&nbsp;— and never leaves your Mac.</h1>
         <p class="hero-sub">Press a key, talk, and clean text lands in any app — English, Tagalog, or Taglish mid-sentence. Everything is transcribed on your Mac: no cloud, no account, no telemetry.</p>
@@ -91,9 +92,22 @@
       </div>
     </section>
 
+    <section class="section" id="demo">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Demo</span>
+          <h2>Thirty seconds, start to finish.</h2>
+          <p>Press a key, talk in Taglish, and watch the words land in the app you're using.</p>
+        </div>
+        <video class="demo-video reveal" src="assets/bulong-demo.mp4" poster="assets/demo-poster.png"
+               autoplay muted loop playsinline
+               aria-label="Bulong demo: the dictation bar listens to a Taglish sentence, transcribes it on-device, and types it into an app."></video>
+      </div>
+    </section>
+
     <section class="section" id="receipts">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">Receipts</span>
           <h2>It actually types Taglish.</h2>
           <p>Say the sentence the way you'd actually say it &mdash; half English, half Tagalog &mdash; and this is what lands. Three real dictations, shown unedited, misses included.</p>
@@ -142,7 +156,7 @@
 
     <section class="section" id="privacy-pitch">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">Privacy</span>
           <h2>Private by architecture, not by promise.</h2>
         </div>
@@ -169,11 +183,11 @@
 
     <section class="section" id="how">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">How it works</span>
           <h2>Three keys and your voice.</h2>
         </div>
-        <ol class="steps">
+        <ol class="steps reveal-stagger">
           <li class="step card lift">
             <span class="step-num mono" aria-hidden="true">1</span>
             <h3>Press your hotkey</h3>
@@ -195,7 +209,7 @@
 
     <section class="section" id="see">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">See it</span>
           <h2>Designed to disappear.</h2>
           <p>The whole app is a menu-bar icon, a dictation bar, and a window for your history.</p>
@@ -228,7 +242,7 @@
 
     <section class="section" id="features">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">Features</span>
           <h2>Everything you need, nothing you don't.</h2>
         </div>
@@ -279,7 +293,7 @@
 
     <section class="section" id="compare">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">Compared</span>
           <h2>Why on-device wins.</h2>
         </div>
@@ -346,11 +360,11 @@
 
     <section class="section" id="pricing">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">Pricing</span>
           <h2>One price. No subscription, ever.</h2>
         </div>
-        <div class="price-card card">
+        <div class="price-card card reveal">
           <p class="price-soon mono">Launching soon</p>
           <p class="price-amount"><span class="price-num tabular" data-price>$29</span><span class="price-once">once</span></p>
           <ul class="price-list">
@@ -369,7 +383,7 @@
 
     <section class="section" id="faq">
       <div class="wrap faq-wrap">
-        <div class="section-head">
+        <div class="section-head reveal">
           <span class="eyebrow">FAQ</span>
           <h2>Questions.</h2>
         </div>
@@ -406,6 +420,42 @@
             <summary>Why &ldquo;Bulong&rdquo;?</summary>
             <div class="faq-body"><div><p>It's Tagalog for &ldquo;whisper.&rdquo; Bulong is built by a Filipino developer who dictates in Taglish every day &mdash; the name and the language support come from the same place.</p></div></div>
           </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="contact">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Talk to us</span>
+          <h2>Questions? Want a walkthrough?</h2>
+          <p>Send a message or grab a time — either lands directly with the maker.</p>
+        </div>
+        <div class="contact-grid reveal-stagger">
+          <!-- GHL FORM: paste your widget URL into data-ghl-src, e.g.
+               https://api.leadconnectorhq.com/widget/form/YOUR_FORM_ID -->
+          <div class="card contact-card">
+            <h3>Message us</h3>
+            <p>Feature requests, accuracy reports, anything.</p>
+            <div data-ghl-src="" data-ghl-title="Contact form">
+              <div class="contact-fallback">
+                <p>The contact form is warming up — email works right now:</p>
+                <a class="btn btn-ghost" href="mailto:hello@bulong.app">hello@bulong.app</a>
+              </div>
+            </div>
+          </div>
+          <!-- GHL CALENDAR: paste your widget URL into data-ghl-src, e.g.
+               https://api.leadconnectorhq.com/widget/booking/YOUR_CALENDAR_ID -->
+          <div class="card contact-card">
+            <h3>Book a 15-minute call</h3>
+            <p>A live walkthrough of Bulong, in English or Taglish.</p>
+            <div data-ghl-src="" data-ghl-title="Book a call">
+              <div class="contact-fallback">
+                <p>The calendar is warming up — ask for a slot by email:</p>
+                <a class="btn btn-ghost" href="mailto:hello@bulong.app?subject=Bulong%20walkthrough%20call">Request a time</a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -455,6 +505,6 @@
       </div>
     </div>
   </footer>
-  <script src="main.js" defer></script>
+  <script src="main.js?v=4" defer></script>
 </body>
 </html>

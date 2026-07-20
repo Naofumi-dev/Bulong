@@ -12,3 +12,7 @@ build/
 
 # Stray dictation test recordings dropped at the repo root.
 weave_test_recording_*.mp3
+
+# Remotion video project
+video/node_modules/
+video/out/
