@@ -144,6 +144,20 @@ try:
 except Exception:
     scene.cycles.device = "CPU"
 
+OUTRO_MODE = "--outro" in sys.argv
+
+if OUTRO_MODE:
+    # Crisp variant for the video end-card: shrink the lights (hard speculars,
+    # defined edges), push energy to compensate, and frame the tile tightly.
+    for light in [o for o in bpy.data.objects if o.type == "LIGHT"]:
+        light.data.size *= 0.45
+        light.data.energy *= 1.35
+    cam.data.lens = 118
+    scene.render.filepath = f"{out_dir}/icon_outro_1024.png"
+    bpy.ops.render.render(write_still=True)
+    print("RENDER_DONE")
+    raise SystemExit
+
 # ---- render 1: full icon ---------------------------------------------------
 scene.render.filepath = f"{out_dir}/icon_master_1024.png"
 bpy.ops.render.render(write_still=True)

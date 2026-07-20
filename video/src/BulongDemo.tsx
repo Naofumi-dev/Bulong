@@ -508,13 +508,12 @@ const Outro: React.FC = () => {
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
       <Bg glow={0.12} />
       <Img
-        src={staticFile('icon3d.png')}
+        src={staticFile('icon3d_outro.png')}
         style={{
-          width: 360,
-          height: 360,
+          width: 300,
+          height: 300,
           transform: `scale(${pop})`,
-          filter:
-            'drop-shadow(0 26px 50px rgba(0,0,0,0.55)) saturate(1.2) contrast(1.12)',
+          filter: 'drop-shadow(0 24px 48px rgba(0,0,0,0.55))',
         }}
       />
       <div
