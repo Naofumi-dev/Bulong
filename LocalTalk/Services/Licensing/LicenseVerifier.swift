@@ -8,11 +8,12 @@ struct LicenseVerifier {
         self.publicKey = publicKey
     }
 
-    /// The bundled PRODUCTION public key. REPLACE the base64 below with the
-    /// production key before shipping (the matching private key is generated
-    /// once via `sign_license.swift --genkey` and kept offline, never committed).
-    /// Until then this equals the committed test key — a launch blocker if unswapped.
-    static let bundledPublicKeyB64 = "o68OJn5GMgqyDX44U3U7lWcvOBA3dIRKRHJnNeAvxc0="
+    /// The bundled PRODUCTION public key. Safe to commit — it can only VERIFY.
+    /// The matching private key was generated once via
+    /// `sign_license.swift --genkey`, is held offline, and lives only in the
+    /// license webhook's `LICENSE_PRIVATE_KEY_B64` env var. Never ship or commit it.
+    /// Rotating this invalidates every license already sold.
+    static let bundledPublicKeyB64 = "Kr4SZY0rx8k9VXIxHGhOM2jN93Pj95d/hNEtQ0O0PAo="
 
     static func bundled() -> LicenseVerifier {
         let data = Data(base64Encoded: bundledPublicKeyB64)!
