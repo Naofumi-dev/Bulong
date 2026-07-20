@@ -81,6 +81,11 @@ Project **bulong** → Settings → Environment Variables (Production):
 | `LEMONSQUEEZY_WEBHOOK_SECRET` | the signing secret from step 4 |
 | `RESEND_API_KEY` | the Resend API key from step 3 |
 | `LICENSE_FROM_EMAIL` | `Bulong <hello@bulong.app>` (optional) |
+| `NODEJS_HELPERS` | `0` — **required.** Stops Vercel's Node bridge from parsing (and consuming) the request body, which would leave nothing for the HMAC to verify. Already set on the project. |
+
+Note: test the webhook against a **deployment**, not `vercel dev` — the dev
+server consumes the body regardless of `NODEJS_HELPERS` and every POST will
+report `empty body` locally even though production works.
 
 Redeploy so the function picks them up. `vercel deploy --prod` (or push to the
 connected branch).

@@ -11,14 +11,21 @@
 //   LICENSE_FROM_EMAIL             optional, e.g. "Bulong <hello@bulong.app>" (verified domain).
 //
 // The private key lives ONLY here (server env) — the app ships just the public
-// key. Uses the Web Request/Response signature so the raw body is available
-// verbatim for HMAC verification.
+// key. Uses the Vercel Node runtime's (req, res) signature: bare api/*.mjs
+// files are NOT invoked with a Web Request (a Web-style handler returns a
+// Response nobody consumes and the request hangs — observed in prod). The raw
+// body is read from the stream ourselves so the HMAC sees exact bytes.
 import crypto from 'node:crypto';
 import { signLicense } from '../_lib/license.mjs';
 import { sendLicenseEmail } from '../_lib/email.mjs';
 
-export default async function handler(request) {
-  if (request.method !== 'POST') return json({ error: 'method not allowed' }, 405);
+export default async function handler(req, res) {
+  const json = (obj, status) => {
+    res.statusCode = status;
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify(obj));
+  };
+  if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
   const privB64 = process.env.LICENSE_PRIVATE_KEY_B64;
@@ -26,12 +33,17 @@ export default async function handler(request) {
   const from = process.env.LICENSE_FROM_EMAIL || 'Bulong <hello@bulong.app>';
   if (!secret || !privB64 || !resendKey) return json({ error: 'server not configured' }, 500);
 
-  // Raw bytes exactly as sent — required for the HMAC to match.
-  const raw = Buffer.from(await request.arrayBuffer());
+  // Raw bytes exactly as sent — required for the HMAC to match. REQUIRES the
+  // NODEJS_HELPERS=0 project env var: without it Vercel's Node bridge parses
+  // the JSON body and consumes the stream, leaving nothing to verify.
+  // (`vercel dev` consumes the body regardless — test webhooks against a
+  // deployment, not the dev server.)
+  const raw = await readRawBody(req);
+  if (!raw || raw.length === 0) return json({ error: 'empty body' }, 400);
 
   // 1) Authenticate the webhook (HMAC-SHA256, timing-safe). Reject anything else.
   const expected = crypto.createHmac('sha256', secret).update(raw).digest('hex');
-  const provided = request.headers.get('x-signature') || '';
+  const provided = String(req.headers['x-signature'] || '');
   if (!timingSafeEqualHex(expected, provided)) return json({ error: 'bad signature' }, 401);
 
   let event;
@@ -72,11 +84,16 @@ export default async function handler(request) {
   return json({ ok: true, order: orderRef }, 200);
 }
 
-function json(obj, status) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
+// The Vercel Node bridge may have pre-buffered the body (exposed as req.body /
+// req.rawBody) or left the stream readable — handle every case, preferring
+// whatever preserves the exact bytes for the HMAC.
+async function readRawBody(req) {
+  if (Buffer.isBuffer(req.rawBody)) return req.rawBody;
+  if (Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === 'string') return Buffer.from(req.body, 'utf8');
+  const chunks = [];
+  for await (const chunk of req) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
 }
 
 function timingSafeEqualHex(a, b) {
