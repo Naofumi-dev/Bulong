@@ -37,11 +37,16 @@ const TAGLISH_2 = "Send mo na lang sa akin yung report bago mag-launch.";
 const smooth = { damping: 200 };
 const snappy = { damping: 20, stiffness: 200 };
 
-// Deterministic pseudo-noise (Remotion forbids Math.random()).
-const wob = (frame: number, i: number) =>
-  0.5 +
-  0.28 * Math.sin(frame / 3.1 + i * 1.7) +
-  0.22 * Math.sin(frame / 7.7 + i * 4.3);
+// Deterministic pseudo-noise, normalized to 0..1 (Remotion forbids Math.random()).
+const wob = (frame: number, i: number) => {
+  const raw =
+    0.5 + 0.28 * Math.sin(frame / 3.1 + i * 1.7) + 0.22 * Math.sin(frame / 7.7 + i * 4.3);
+  return Math.min(1, Math.max(0, raw));
+};
+// Bars must never collapse to a circle: BAR_W is the width, so the floor has to
+// stay comfortably above it or a 12px-tall bar renders as a dot.
+const BAR_W = 13;
+const BAR_MIN = 30;
 
 // ---- Shared bits -----------------------------------------------------------
 const Bg: React.FC<{ glow?: number }> = ({ glow = 0.07 }) => (
@@ -199,9 +204,11 @@ const Hud: React.FC<{
           <div
             key={i}
             style={{
-              width: 12,
-              borderRadius: 6,
-              height: active ? Math.max(12, cap * 78 * wob(frame, i)) : cap * 24,
+              width: BAR_W,
+              borderRadius: BAR_W / 2,
+              height: active
+                ? BAR_MIN + cap * 74 * (0.35 + 0.65 * wob(frame, i))
+                : BAR_MIN + cap * 16,
               background: i >= 2 && i <= 4 ? MINT : 'rgba(255,255,255,0.28)',
             }}
           />
@@ -244,10 +251,12 @@ const Intro: React.FC = () => {
       <Img
         src={staticFile('logo3d.png')}
         style={{
-          width: 460,
-          height: 460,
+          width: 620,
+          height: 620,
+          marginBottom: -90,
           transform: `scale(${pop}) rotate(${(1 - pop) * -14}deg)`,
-          filter: 'drop-shadow(0 40px 80px rgba(43,222,177,0.25))',
+          filter:
+            'drop-shadow(0 30px 70px rgba(43,222,177,0.35)) saturate(1.25) contrast(1.1)',
         }}
       />
       <div
@@ -257,7 +266,7 @@ const Intro: React.FC = () => {
           fontWeight: 600,
           letterSpacing: -2,
           color: TEXT,
-          marginTop: -40,
+          marginTop: 0,
           opacity: text,
           transform: `translateY(${(1 - text) * 30}px)`,
         }}
@@ -324,13 +333,19 @@ const HudScene: React.FC = () => {
             phase === 'listen'
               ? `…${shown.slice(-38)}`
               : phase === 'transcribe'
-                ? 'On-device · nothing uploaded'
+                ? 'Working on-device…'
                 : 'Inserted.'
           }
           done={phase === 'done'}
         />
       </div>
-      <Caption delay={8}>Press one key. Speak the way you actually speak.</Caption>
+      <Caption key={phase} delay={phase === 'listen' ? 8 : 0}>
+        {phase === 'listen'
+          ? 'Press one key. Speak the way you actually speak.'
+          : phase === 'transcribe'
+            ? 'Transcribed on your Mac — nothing leaves the device.'
+            : 'Done — and already in your app.'}
+      </Caption>
     </AbsoluteFill>
   );
 };
@@ -341,7 +356,7 @@ const InsertScene: React.FC = () => {
   const { fps } = useVideoConfig();
   const enter = spring({ frame, fps, config: smooth, durationInFrames: 24 });
   const chars = Math.floor(
-    interpolate(frame, [16, 76], [0, TAGLISH_1.length], {
+    interpolate(frame, [6, 66], [0, TAGLISH_1.length], {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     }),
@@ -479,10 +494,11 @@ const Outro: React.FC = () => {
       <Img
         src={staticFile('icon3d.png')}
         style={{
-          width: 420,
-          height: 420,
+          width: 360,
+          height: 360,
           transform: `scale(${pop})`,
-          filter: 'drop-shadow(0 50px 100px rgba(0,0,0,0.6))',
+          filter:
+            'drop-shadow(0 26px 50px rgba(0,0,0,0.55)) saturate(1.2) contrast(1.12)',
         }}
       />
       <div
