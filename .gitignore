@@ -5,3 +5,10 @@ dist/
 LocalTalk.xcodeproj/
 Bulong.xcodeproj/
 DerivedData/
+
+# Release output: release.sh writes build/Bulong.xcarchive + build/export,
+# make_dmg.sh writes the DMG here. Keeps multi-hundred-MB artifacts out of git.
+build/
+
+# Stray dictation test recordings dropped at the repo root.
+weave_test_recording_*.mp3
