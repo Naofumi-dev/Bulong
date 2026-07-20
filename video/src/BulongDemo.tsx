@@ -48,6 +48,22 @@ const wob = (frame: number, i: number) => {
 const BAR_W = 13;
 const BAR_MIN = 30;
 
+// A slow camera push. Sparse 1920x1080 compositions read as static; drifting
+// ~5% across a scene fills the frame over time and keeps the eye moving without
+// ever announcing itself. Applied per-Sequence, so `frame` here starts at 0.
+const PushIn: React.FC<{
+  children: React.ReactNode;
+  duration: number;
+  to?: number;
+}> = ({ children, duration, to = 1.06 }) => {
+  const frame = useCurrentFrame();
+  const scale = interpolate(frame, [0, duration], [1, to], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  return <AbsoluteFill style={{ transform: `scale(${scale})` }}>{children}</AbsoluteFill>;
+};
+
 // ---- Shared bits -----------------------------------------------------------
 const Bg: React.FC<{ glow?: number }> = ({ glow = 0.07 }) => (
   <AbsoluteFill
@@ -537,19 +553,29 @@ export const BulongDemo: React.FC = () => {
     <AbsoluteFill style={{ background: INK0 }}>
       {WITH_VOICEOVER ? <Audio src={staticFile('voiceover.mp3')} /> : null}
       <Sequence durationInFrames={90} premountFor={30}>
-        <Intro />
+        <PushIn duration={90} to={1.05}>
+          <Intro />
+        </PushIn>
       </Sequence>
       <Sequence from={90} durationInFrames={250} premountFor={1 * fps}>
-        <HudScene />
+        <PushIn duration={250} to={1.07}>
+          <HudScene />
+        </PushIn>
       </Sequence>
       <Sequence from={340} durationInFrames={170} premountFor={1 * fps}>
-        <InsertScene />
+        <PushIn duration={170} to={1.05}>
+          <InsertScene />
+        </PushIn>
       </Sequence>
       <Sequence from={510} durationInFrames={170} premountFor={1 * fps}>
-        <FeatureScene />
+        <PushIn duration={170} to={1.05}>
+          <FeatureScene />
+        </PushIn>
       </Sequence>
       <Sequence from={680} durationInFrames={220} premountFor={1 * fps}>
-        <Outro />
+        <PushIn duration={220} to={1.05}>
+          <Outro />
+        </PushIn>
       </Sequence>
     </AbsoluteFill>
   );
