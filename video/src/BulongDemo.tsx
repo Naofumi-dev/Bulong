@@ -10,6 +10,12 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
+import { loadFont } from '@remotion/google-fonts/Nunito';
+
+const { fontFamily: NUNITO } = loadFont('normal', {
+  weights: ['700', '800'],
+  subsets: ['latin'],
+});
 
 export const DEMO_FPS = 30;
 export const DEMO_DURATION = 900; // 30s
@@ -17,22 +23,23 @@ export const DEMO_DURATION = 900; // 30s
 // Set true after dropping an ElevenLabs render at video/public/voiceover.mp3
 const WITH_VOICEOVER = false;
 
-// ---- Brand tokens (mirror site/styles.css + app Theme) ---------------------
-const INK0 = '#07090B';
-const INK1 = '#101214';
-const MINT = '#2BDEB1';
-const MINT_TEXT = '#B0F9E2';
-const TEXT = '#F0F2F2';
-const TEXT2 = 'rgba(255,255,255,0.62)';
-const TEXT3 = 'rgba(255,255,255,0.52)';
-const HAIRLINE = 'rgba(255,255,255,0.12)';
+// ---- Brand tokens (light glass system — mirror site/styles.css) ------------
+const PAPER = '#F3F7FA';
+const CARD = '#FFFFFF';
+const NAVY = '#13324B';
+const NAVY2 = '#3E5E77';
+const NAVY3 = '#6C879B';
+const TEAL = '#178F7C';
+const GRAD_A = '#3FC3AC';
+const GRAD_B = '#4394D8';
+const HAIRLINE = 'rgba(18,58,87,0.14)';
+const GRAD = `linear-gradient(120deg, ${GRAD_A} 0%, ${GRAD_B} 100%)`;
 const SANS =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif';
 const MONO =
   'ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Code", monospace';
 
 const TAGLISH_1 = 'Na-approve na ba yung leave request ko?';
-const TAGLISH_2 = "Send mo na lang sa akin yung report bago mag-launch.";
 
 const smooth = { damping: 200 };
 const snappy = { damping: 20, stiffness: 200 };
@@ -44,7 +51,7 @@ const wob = (frame: number, i: number) => {
   return Math.min(1, Math.max(0, raw));
 };
 // Bars must never collapse to a circle: BAR_W is the width, so the floor has to
-// stay comfortably above it or a 12px-tall bar renders as a dot.
+// stay comfortably above it or a short bar renders as a dot.
 const BAR_W = 13;
 const BAR_MIN = 30;
 
@@ -65,10 +72,11 @@ const PushIn: React.FC<{
 };
 
 // ---- Shared bits -----------------------------------------------------------
-const Bg: React.FC<{ glow?: number }> = ({ glow = 0.07 }) => (
+// Light aurora paper, matching the site's page background.
+const Bg: React.FC<{ glow?: number }> = ({ glow = 0.12 }) => (
   <AbsoluteFill
     style={{
-      background: `radial-gradient(120% 90% at 50% 8%, rgba(43,222,177,${glow}) 0%, transparent 55%), ${INK0}`,
+      background: `radial-gradient(90% 55% at 50% 0%, rgba(67,148,216,${glow}) 0%, rgba(63,195,172,${glow / 2}) 45%, transparent 72%), ${PAPER}`,
     }}
   />
 );
@@ -91,7 +99,7 @@ const Caption: React.FC<{ children: React.ReactNode; delay?: number }> = ({
         fontSize: 44,
         fontWeight: 500,
         letterSpacing: -0.4,
-        color: TEXT2,
+        color: NAVY2,
         opacity: p,
         transform: `translateY(${(1 - p) * 24}px)`,
       }}
@@ -101,7 +109,7 @@ const Caption: React.FC<{ children: React.ReactNode; delay?: number }> = ({
   );
 };
 
-// ---- The HUD pill, rebuilt for video (larger, cinematic) -------------------
+// ---- The HUD pill: white glass, whisper mark, gradient bars ----------------
 const Hud: React.FC<{
   title: string;
   partial: string;
@@ -120,66 +128,52 @@ const Hud: React.FC<{
         height: 220,
         padding: '0 52px',
         borderRadius: 60,
-        background: `linear-gradient(135deg, #14181B 0%, #0B0E10 100%)`,
-        border: `1.5px solid ${HAIRLINE}`,
-        boxShadow: '0 60px 140px rgba(0,0,0,0.6)',
+        background: `linear-gradient(175deg, #FFFFFF 0%, #EDF5F9 78%, #E2EEF5 100%)`,
+        border: `1.5px solid rgba(18,58,87,0.16)`,
+        boxShadow:
+          '0 60px 140px -40px rgba(18,58,87,0.45), inset 0 2px 0 #fff',
       }}
     >
-      {/* orb / done badge */}
-      <div style={{ width: 104, height: 104, position: 'relative', flexShrink: 0 }}>
+      {/* whisper mark / done badge */}
+      <div
+        style={{
+          width: 110,
+          height: 110,
+          position: 'relative',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {done ? (
           <div
             style={{
-              position: 'absolute',
-              inset: 8,
+              width: 92,
+              height: 92,
               borderRadius: '50%',
-              background: `radial-gradient(circle at 36% 30%, rgba(255,255,255,0.92), ${MINT} 55%, rgba(43,222,177,0.5))`,
-              boxShadow: `0 0 60px rgba(43,222,177,0.5)`,
+              background: GRAD,
+              boxShadow: `0 14px 34px -10px rgba(56,140,190,0.65), inset 0 2px 0 rgba(255,255,255,0.5)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 46,
               fontWeight: 800,
-              color: 'rgba(0,0,0,0.72)',
+              color: '#fff',
             }}
           >
             ✓
           </div>
         ) : (
-          <>
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '50%',
-                background: `radial-gradient(circle, rgba(43,222,177,${
-                  0.28 + 0.14 * Math.sin(frame / 6)
-                }) 0%, transparent 65%)`,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                inset: 22,
-                borderRadius: '50%',
-                background: `radial-gradient(circle at 38% 33%, rgba(255,255,255,0.9), ${MINT} 58%, rgba(43,222,177,0.28))`,
-                transform: `scale(${1 + 0.05 * Math.sin(frame / 5)})`,
-                boxShadow: `0 6px 30px rgba(43,222,177,0.45)`,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                left: 34,
-                top: 32,
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.9)',
-                filter: 'blur(0.5px)',
-              }}
-            />
-          </>
+          <Img
+            src={staticFile('brand-mark.png')}
+            style={{
+              width: 104,
+              height: 'auto',
+              transform: `scale(${1 + 0.03 * Math.sin(frame / 6)})`,
+              filter: 'drop-shadow(0 8px 18px rgba(18,58,87,0.35))',
+            }}
+          />
         )}
       </div>
 
@@ -187,10 +181,10 @@ const Hud: React.FC<{
       <div style={{ flexGrow: 1, minWidth: 0 }}>
         <div
           style={{
-            fontFamily: SANS,
-            fontSize: 42,
-            fontWeight: 600,
-            color: TEXT,
+            fontFamily: NUNITO,
+            fontSize: 44,
+            fontWeight: 800,
+            color: NAVY,
             letterSpacing: -0.3,
           }}
         >
@@ -200,7 +194,7 @@ const Hud: React.FC<{
           style={{
             fontFamily: MONO,
             fontSize: 30,
-            color: done ? MINT_TEXT : TEXT2,
+            color: done ? TEAL : NAVY3,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'clip',
@@ -209,12 +203,12 @@ const Hud: React.FC<{
         >
           {partial}
           {!done && partial.length > 0 ? (
-            <span style={{ opacity: Math.sin(frame / 4) > 0 ? 1 : 0 }}>▎</span>
+            <span style={{ opacity: Math.sin(frame / 4) > 0 ? 1 : 0, color: TEAL }}>▎</span>
           ) : null}
         </div>
       </div>
 
-      {/* waveform */}
+      {/* waveform: teal→blue gradient bars */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         {bars.map((cap, i) => (
           <div
@@ -225,7 +219,8 @@ const Hud: React.FC<{
               height: active
                 ? BAR_MIN + cap * 74 * (0.35 + 0.65 * wob(frame, i))
                 : BAR_MIN + cap * 16,
-              background: i >= 2 && i <= 4 ? MINT : 'rgba(255,255,255,0.28)',
+              background:
+                i >= 2 && i <= 4 ? GRAD : 'rgba(18,58,87,0.2)',
             }}
           />
         ))}
@@ -240,10 +235,11 @@ const Hud: React.FC<{
               fontFamily: MONO,
               fontSize: 21,
               fontWeight: 700,
-              color: TEXT3,
+              color: NAVY2,
               padding: '10px 20px',
               borderRadius: 999,
               border: `1.5px solid ${HAIRLINE}`,
+              background: CARD,
             }}
           >
             {b}
@@ -254,7 +250,7 @@ const Hud: React.FC<{
   );
 };
 
-// ---- Scene 1: logo intro ---------------------------------------------------
+// ---- Scene 1: whisper-mark intro -------------------------------------------
 const Intro: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -263,43 +259,41 @@ const Intro: React.FC = () => {
   const tag = spring({ frame, fps, delay: 30, config: smooth, durationInFrames: 26 });
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Bg glow={0.1} />
+      <Bg glow={0.16} />
       <Img
-        src={staticFile('logo3d.png')}
+        src={staticFile('brand-mark.png')}
         style={{
-          width: 620,
-          height: 620,
-          marginBottom: -90,
-          transform: `scale(${pop}) rotate(${(1 - pop) * -14}deg)`,
-          filter:
-            'drop-shadow(0 30px 70px rgba(43,222,177,0.35)) saturate(1.25) contrast(1.1)',
+          width: 430,
+          height: 'auto',
+          transform: `scale(${pop}) rotate(${(1 - pop) * -10}deg)`,
+          filter: 'drop-shadow(0 44px 80px rgba(18,58,87,0.35))',
         }}
       />
       <div
         style={{
-          fontFamily: MONO,
-          fontSize: 92,
-          fontWeight: 600,
+          fontFamily: NUNITO,
+          fontSize: 108,
+          fontWeight: 800,
           letterSpacing: -2,
-          color: TEXT,
-          marginTop: 0,
+          color: NAVY,
+          marginTop: 26,
           opacity: text,
           transform: `translateY(${(1 - text) * 30}px)`,
         }}
       >
-        bulong
+        Bulong
       </div>
       <div
         style={{
           fontFamily: SANS,
           fontSize: 46,
-          color: TEXT2,
-          marginTop: 22,
+          color: NAVY2,
+          marginTop: 16,
           opacity: tag,
           transform: `translateY(${(1 - tag) * 24}px)`,
         }}
       >
-        Dictation that speaks <span style={{ color: MINT }}>Filipino</span>.
+        Dictation that speaks <span style={{ color: TEAL, fontWeight: 600 }}>Filipino</span>.
       </div>
     </AbsoluteFill>
   );
@@ -311,8 +305,6 @@ const HudScene: React.FC = () => {
   const { fps } = useVideoConfig();
   const enter = spring({ frame, fps, config: smooth, durationInFrames: 26 });
 
-  // beats (local frames): 0–20 appear · 20–150 listening/typing ·
-  // 150–195 transcribing · 195+ done
   const TYPE_START = 22;
   const TYPE_END = 148;
   const TRANSCRIBE = 152;
@@ -366,7 +358,7 @@ const HudScene: React.FC = () => {
   );
 };
 
-// ---- Scene 3: text lands in the app ---------------------------------------
+// ---- Scene 3: text lands in the app ----------------------------------------
 const InsertScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -380,14 +372,14 @@ const InsertScene: React.FC = () => {
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
       <Bg />
-      {/* chat compose mock */}
+      {/* light chat compose mock */}
       <div
         style={{
           width: 1240,
           borderRadius: 28,
-          background: INK1,
+          background: CARD,
           border: `1.5px solid ${HAIRLINE}`,
-          boxShadow: '0 60px 140px rgba(0,0,0,0.55)',
+          boxShadow: '0 60px 140px -40px rgba(18,58,87,0.4), inset 0 1px 0 #fff',
           overflow: 'hidden',
           opacity: enter,
           transform: `translateY(${(1 - enter) * 60}px)`,
@@ -401,12 +393,13 @@ const InsertScene: React.FC = () => {
             gap: 12,
             padding: '0 30px',
             borderBottom: `1px solid ${HAIRLINE}`,
+            background: '#F6FAFC',
           }}
         >
           {['#FF5F57', '#FEBC2E', '#28C840'].map((c) => (
             <div key={c} style={{ width: 20, height: 20, borderRadius: '50%', background: c }} />
           ))}
-          <div style={{ fontFamily: SANS, fontSize: 26, color: TEXT3, marginLeft: 16 }}>
+          <div style={{ fontFamily: SANS, fontSize: 26, color: NAVY3, marginLeft: 16 }}>
             Any app — chat, editor, browser
           </div>
         </div>
@@ -416,11 +409,11 @@ const InsertScene: React.FC = () => {
               minHeight: 120,
               borderRadius: 18,
               border: `1.5px solid ${HAIRLINE}`,
-              background: '#0B0E10',
+              background: '#F4F8FB',
               padding: '30px 34px',
               fontFamily: SANS,
               fontSize: 40,
-              color: TEXT,
+              color: NAVY,
               lineHeight: 1.4,
             }}
           >
@@ -428,7 +421,7 @@ const InsertScene: React.FC = () => {
             <span
               style={{
                 opacity: Math.sin(frame / 4) > 0 ? 1 : 0,
-                color: MINT,
+                color: TEAL,
               }}
             >
               ▎
@@ -454,7 +447,7 @@ const FeatureScene: React.FC = () => {
   const { fps } = useVideoConfig();
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Bg glow={0.09} />
+      <Bg glow={0.14} />
       <div
         style={{
           display: 'flex',
@@ -471,19 +464,23 @@ const FeatureScene: React.FC = () => {
             config: snappy,
             durationInFrames: 30,
           });
+          const lead = i === 0;
           return (
             <div
               key={f}
               style={{
-                fontFamily: SANS,
+                fontFamily: NUNITO,
                 fontSize: 64,
-                fontWeight: 600,
+                fontWeight: 800,
                 letterSpacing: -1,
-                color: i === 0 ? MINT_TEXT : TEXT,
+                color: lead ? '#FFFFFF' : NAVY,
                 padding: '26px 64px',
                 borderRadius: 999,
-                border: `1.5px solid ${i === 0 ? 'rgba(43,222,177,0.5)' : HAIRLINE}`,
-                background: i === 0 ? 'rgba(43,222,177,0.08)' : INK1,
+                border: lead ? 'none' : `1.5px solid ${HAIRLINE}`,
+                background: lead ? GRAD : CARD,
+                boxShadow: lead
+                  ? '0 24px 54px -18px rgba(56,140,190,0.6), inset 0 2px 0 rgba(255,255,255,0.4)'
+                  : '0 18px 40px -24px rgba(18,58,87,0.35), inset 0 1px 0 #fff',
                 opacity: p,
                 transform: `translateY(${(1 - p) * 46}px) scale(${0.9 + p * 0.1})`,
               }}
@@ -497,7 +494,7 @@ const FeatureScene: React.FC = () => {
   );
 };
 
-// ---- Scene 5: outro ---------------------------------------------------------
+// ---- Scene 5: outro — the dark icon tile pops on light ----------------------
 const Outro: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -506,23 +503,24 @@ const Outro: React.FC = () => {
   const t2 = spring({ frame, fps, delay: 30, config: smooth, durationInFrames: 26 });
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Bg glow={0.12} />
+      <Bg glow={0.16} />
       <Img
-        src={staticFile('icon3d_outro.png')}
+        src={staticFile('brand-tile.png')}
         style={{
           width: 300,
           height: 300,
+          borderRadius: 66,
           transform: `scale(${pop})`,
-          filter: 'drop-shadow(0 24px 48px rgba(0,0,0,0.55))',
+          filter: 'drop-shadow(0 40px 70px rgba(18,58,87,0.45))',
         }}
       />
       <div
         style={{
-          fontFamily: MONO,
-          fontSize: 76,
-          fontWeight: 600,
-          color: TEXT,
-          marginTop: 30,
+          fontFamily: NUNITO,
+          fontSize: 84,
+          fontWeight: 800,
+          color: NAVY,
+          marginTop: 34,
           opacity: t1,
           transform: `translateY(${(1 - t1) * 26}px)`,
         }}
@@ -533,8 +531,8 @@ const Outro: React.FC = () => {
         style={{
           fontFamily: SANS,
           fontSize: 40,
-          color: TEXT2,
-          marginTop: 20,
+          color: NAVY2,
+          marginTop: 18,
           opacity: t2,
           transform: `translateY(${(1 - t2) * 22}px)`,
         }}
@@ -549,7 +547,7 @@ const Outro: React.FC = () => {
 export const BulongDemo: React.FC = () => {
   const { fps } = useVideoConfig();
   return (
-    <AbsoluteFill style={{ background: INK0 }}>
+    <AbsoluteFill style={{ background: PAPER }}>
       {WITH_VOICEOVER ? <Audio src={staticFile('voiceover.mp3')} /> : null}
       <Sequence durationInFrames={90} premountFor={30}>
         <PushIn duration={90} to={1.05}>
