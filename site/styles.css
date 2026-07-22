@@ -96,7 +96,6 @@ p{text-wrap:pretty;color:var(--text-2)}
 /* ---- Hero HUD (CSS recreation of the app's dictation bar) ---- */
 .hud{width:100%;max-width:640px;margin-top:clamp(48px,7vw,76px)}
 .hud-inner{display:flex;align-items:center;gap:20px;padding:20px 24px;border-radius:22px;background:linear-gradient(175deg,#FFFFFF 0%,#EDF5F9 78%,#E2EEF5 100%);border:1px solid rgba(18,58,87,.16);box-shadow:0 34px 64px -26px rgba(18,58,87,.4),inset 0 1px 0 #fff}
-.orb{width:44px;height:44px;flex:none;border-radius:50%;background:radial-gradient(circle at 38% 34%,#a6ffe4 0%,#2BDEB1 42%,#0f5f4b 100%);box-shadow:0 0 22px rgba(43,222,177,.45)}
 .hud-logo{height:48px;width:auto;flex:none;outline:0;border-radius:0;filter:drop-shadow(0 4px 10px rgba(18,58,87,.3))}
 .hud-text{display:flex;flex-direction:column;gap:2px;text-align:left;margin-right:auto;min-width:0}
 .hud-title{font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
@@ -118,18 +117,8 @@ p{text-wrap:pretty;color:var(--text-2)}
   .hud-pills{display:none}
 }
 @media (prefers-reduced-motion:no-preference){
-  .hud .orb{animation:breathe 2.6s ease-in-out infinite}
   .hud .hud-logo{animation:markFloat 6s ease-in-out infinite}
-  .hud .waveform i{animation:wave 1.1s ease-in-out infinite}
-  .hud .waveform i:nth-child(2){animation-delay:.1s}
-  .hud .waveform i:nth-child(3){animation-delay:.2s}
-  .hud .waveform i:nth-child(4){animation-delay:.3s}
-  .hud .waveform i:nth-child(5){animation-delay:.4s}
-  .hud .waveform i:nth-child(6){animation-delay:.5s}
-  .hud .waveform i:nth-child(7){animation-delay:.6s}
 }
-@keyframes breathe{0%,100%{box-shadow:0 0 18px rgba(43,222,177,.35);transform:scale(1)}50%{box-shadow:0 0 30px rgba(43,222,177,.6);transform:scale(1.06)}}
-@keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
 
 /* ---- Taglish receipts ---- */
 .receipts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
@@ -326,11 +315,6 @@ p{text-wrap:pretty;color:var(--text-2)}
 .waveform i:nth-child(6){animation-delay:-.8s}
 .waveform i:nth-child(7){animation-delay:-1.05s}
 @keyframes wave{from{transform:scaleY(.45)}to{transform:scaleY(1.08)}}
-.orb{animation:orbBreathe 3.2s ease-in-out infinite}
-@keyframes orbBreathe{
-  0%,100%{box-shadow:0 0 22px rgba(43,222,177,.45);transform:scale(1)}
-  50%{box-shadow:0 0 34px rgba(43,222,177,.7);transform:scale(1.06)}
-}
 
 /* Scroll reveals: JS adds .in-view via IntersectionObserver. The hidden
    initial state ONLY applies once the matching JS generation has announced
@@ -351,6 +335,32 @@ p{text-wrap:pretty;color:var(--text-2)}
   border-radius:var(--radius-card);border:1px solid var(--hairline-strong);
   box-shadow:0 48px 110px -40px rgba(18,58,87,.55)}
 
+/* Lead-capture form (download page) */
+.lead-form{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;margin-top:30px;width:100%;max-width:660px}
+.lead-field{display:flex;flex:1 1 200px;min-width:0}
+.lead-field--email{flex:1.4 1 220px}
+.lead-input{width:100%;min-height:47px;padding:11px 18px;border:1px solid var(--hairline-strong);border-radius:var(--pill);background:var(--ink1);color:var(--text);font-family:var(--font-sans);font-size:15px;box-shadow:inset 0 1px 2px rgba(18,58,87,.06)}
+.lead-input::placeholder{color:var(--text-3)}
+.lead-input:focus-visible{outline:2px solid var(--mint);outline-offset:1px}
+.lead-input[aria-invalid="true"]{border-color:var(--coral)}
+.lead-select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-position:right 22px top 55%,right 17px top 55%;background-size:5px 5px;background-repeat:no-repeat}
+.lead-form .btn{flex:none}
+.lead-status{flex-basis:100%;font-size:14px;color:var(--coral);text-align:center}
+.lead-status a{color:var(--mint);text-decoration:underline}
+.lead-hint{flex-basis:100%;font-size:13px;color:var(--text-3);text-align:center}
+.lead-success{font-size:16px;font-weight:600;color:var(--mint-text);text-align:center;width:100%;padding:12px 0}
+.lead-price{margin-top:18px}
+.lead-form--compact{margin-top:22px;max-width:520px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+@media (max-width:560px){
+  .lead-form{flex-direction:column;align-items:stretch}
+  /* column layout: flex-basis now acts on HEIGHT — reset it or fields balloon */
+  .lead-field,.lead-field--email{flex:0 0 auto}
+  .lead-form .btn{width:100%}
+}
+
 /* Contact / book-a-call (GoHighLevel embeds) */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:960px;margin-inline:auto}
 .contact-card{padding:26px;display:flex;flex-direction:column;gap:14px}
@@ -363,6 +373,6 @@ p{text-wrap:pretty;color:var(--text-2)}
 
 /* One switch turns ALL of the above off. */
 @media (prefers-reduced-motion:reduce){
-  .hero-mark,.waveform i,.orb{animation:none}
+  .hero-mark,.waveform i,.hud-logo{animation:none}
   .reveal,.reveal-stagger>*{opacity:1;transform:none;transition:none}
 }

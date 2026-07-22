@@ -42,6 +42,48 @@ if (!reduceMotion && 'IntersectionObserver' in window) {
   revealables.forEach((el) => el.classList.add('in-view'));
 }
 
+// Lead-capture forms → POST /api/lead. On any failure the hidden mailto
+// fallback line is revealed, so a lead always has a way in.
+document.querySelectorAll('form[data-lead-form]').forEach((form) => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    const status = form.querySelector('.lead-status');
+    const email = form.elements.email.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      form.elements.email.focus();
+      form.elements.email.setAttribute('aria-invalid', 'true');
+      return;
+    }
+    form.elements.email.removeAttribute('aria-invalid');
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const r = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          lang: form.elements.lang ? form.elements.lang.value : '',
+          website: form.elements.website.value,
+          page: location.pathname,
+        }),
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      const done = document.createElement('p');
+      done.className = 'lead-success';
+      done.setAttribute('role', 'status');
+      done.textContent = "You're in — one email the day it ships. Salamat!";
+      form.replaceChildren(done);
+    } catch {
+      btn.disabled = false;
+      btn.textContent = label;
+      if (status) status.hidden = false;
+    }
+  });
+});
+
 // GoHighLevel embeds — form + calendar.
 // To go live: paste your GHL widget URLs into the data-ghl-src attributes in
 // index.html (form:  https://api.leadconnectorhq.com/widget/form/FORM_ID,

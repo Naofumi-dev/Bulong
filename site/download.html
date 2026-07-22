@@ -17,7 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=7">
+  <noscript><style>@media (max-width:720px){.nav-links{display:flex!important}.nav-toggle{display:none!important}}</style></noscript>
 
   <!--
     ============================================================
@@ -43,7 +44,7 @@
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
-      <div class="nav-links" id="nav-links" data-nav>
+      <div class="nav-links" id="nav-links">
         <ul>
           <li><a href="index.html#features">Features</a></li>
           <li><a href="privacy.html">Privacy</a></li>
@@ -60,16 +61,33 @@
         <p class="badge mono"><span class="badge-dot" aria-hidden="true"></span>100% on-device · nothing uploaded, ever</p>
 
         <!-- COMING-SOON hero -->
-        <div class="when-soon">
+        <div class="when-soon" id="notify">
           <h1>Bulong is almost&nbsp;ready.</h1>
           <p class="hero-sub">The final build is in testing. Leave your email and you'll get one message the day it ships — no list, no follow-ups.</p>
-          <div class="hero-cta">
-            <a class="btn btn-primary" href="mailto:hello@bulong.app?subject=Notify%20me%20when%20Bulong%20launches&amp;body=Please%20email%20me%20when%20Bulong%20is%20available.%0A%0AI%27d%20mostly%20dictate%20in%3A%20">
+          <form class="lead-form" data-lead-form aria-label="Get notified at launch" novalidate>
+            <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label class="lead-field lead-field--email">
+              <span class="visually-hidden">Email address</span>
+              <input class="lead-input" type="email" name="email" required autocomplete="email"
+                     inputmode="email" placeholder="you@email.com">
+            </label>
+            <label class="lead-field">
+              <span class="visually-hidden">I'd mostly dictate in</span>
+              <select class="lead-input lead-select" name="lang">
+                <option value="" selected>I'd mostly dictate in…</option>
+                <option>Taglish</option>
+                <option>Tagalog</option>
+                <option>English</option>
+                <option>Another language</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit">
               <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
-              Get notified at launch
-            </a>
-            <span class="mono price">Launching soon — <span data-price>$29</span> once · free 14-day trial</span>
-          </div>
+              Notify me at launch
+            </button>
+            <p class="lead-status" hidden>That didn't send — email <a href="mailto:hello@bulong.app?subject=Notify%20me%20when%20Bulong%20launches">hello@bulong.app</a> instead and you're in.</p>
+          </form>
+          <p class="mono price lead-price">Launching soon — <span data-price>$29</span> once · free 14-day trial</p>
         </div>
 
         <!-- LIVE hero -->
@@ -86,6 +104,17 @@
           </div>
           <!-- DMG-META: version · size -->
           <p class="mono req dl-meta"><span data-version>1.0.0</span> · <span data-size>~25&nbsp;MB</span> · Apple&nbsp;Silicon · macOS&nbsp;14+ · free 14-day trial</p>
+          <form class="lead-form lead-form--compact" data-lead-form aria-label="Get setup tips and updates" novalidate>
+            <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label class="lead-field lead-field--email">
+              <span class="visually-hidden">Email address</span>
+              <input class="lead-input" type="email" name="email" required autocomplete="email"
+                     inputmode="email" placeholder="you@email.com">
+            </label>
+            <button class="btn btn-ghost" type="submit">Send me setup tips</button>
+            <p class="lead-hint">A quick-start guide by email, plus update news. No spam.</p>
+            <p class="lead-status" hidden>That didn't send — email <a href="mailto:hello@bulong.app?subject=Bulong%20setup%20tips">hello@bulong.app</a> instead.</p>
+          </form>
         </div>
 
         <p class="mono req when-soon">Apple Silicon · macOS 14+</p>
@@ -149,7 +178,7 @@
           </ul>
           <!-- BUY-URL: point these at your checkout (Gumroad / Paddle / Lemon Squeezy / etc.) -->
           <a class="btn btn-primary price-cta when-live" href="#">Buy a license — <span data-price>$29</span></a>
-          <a class="btn btn-primary price-cta when-soon" href="mailto:hello@bulong.app?subject=Notify%20me%20when%20Bulong%20launches&amp;body=Please%20email%20me%20when%20Bulong%20is%20available.%0A%0AI%27d%20mostly%20dictate%20in%3A%20">
+          <a class="btn btn-primary price-cta when-soon" href="#notify">
             <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
             Get notified at launch
           </a>
@@ -163,7 +192,7 @@
         <h2 class="when-soon">Almost there. Get the launch email.</h2>
         <h2 class="when-live">Try it in Taglish. Then turn off your Wi-Fi.</h2>
         <div class="hero-cta">
-          <a class="btn btn-primary when-soon" href="mailto:hello@bulong.app?subject=Notify%20me%20when%20Bulong%20launches&amp;body=Please%20email%20me%20when%20Bulong%20is%20available.%0A%0AI%27d%20mostly%20dictate%20in%3A%20">
+          <a class="btn btn-primary when-soon" href="#notify">
             <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
             Get notified at launch
           </a>
@@ -201,6 +230,6 @@
       </div>
     </div>
   </footer>
-  <script src="main.js?v=4" defer></script>
+  <script src="main.js?v=5" defer></script>
 </body>
 </html>
