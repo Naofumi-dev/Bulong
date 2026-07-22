@@ -173,10 +173,9 @@ struct MainWindowView: View {
                 )
 
             VStack(alignment: .leading, spacing: 1) {
-                // The wordmark is always lowercase mono; capitalized "Bulong"
-                // lives only in prose.
-                Text("bulong")
-                    .font(Theme.Fonts.mono(15, weight: .semibold))
+                // Rebrand: rounded capitalized wordmark, matching the logo lockup.
+                Text("Bulong")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Private, on-device dictation")
                     .font(Theme.Fonts.caption)

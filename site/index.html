@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bulong — Filipino &amp; Taglish dictation for macOS, on-device</title>
   <meta name="description" content="Press a key, talk, and clean text lands in any app — English, Tagalog, or Taglish mid-sentence. Runs entirely on your Mac: no cloud, no account, no telemetry. $29 once.">
-  <meta name="theme-color" content="#07090B">
+  <meta name="theme-color" content="#F3F7FA">
   <link rel="canonical" href="https://bulong.app/">
   <link rel="icon" type="image/png" href="assets/icon.png">
   <link rel="apple-touch-icon" href="assets/icon.png">
@@ -21,7 +21,10 @@
   <meta name="twitter:title" content="Bulong — Filipino &amp; Taglish dictation for macOS, on-device">
   <meta name="twitter:description" content="Dictation that speaks Filipino — and never leaves your Mac. Real, unedited Taglish results. No cloud, no account, $29 once.">
   <meta name="twitter:image" content="https://bulong.app/assets/og.png">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=5">
   <noscript><style>@media (max-width:720px){.nav-links{display:flex!important}.nav-toggle{display:none!important}}</style></noscript>
 </head>
 <body>
@@ -29,17 +32,8 @@
   <header class="site-header">
     <nav class="nav wrap" data-nav aria-label="Primary">
       <a class="brand mono" href="#top" aria-label="Bulong home">
-        <svg class="brand-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <rect class="brand-glyph__bg" width="24" height="24" rx="6.2"/>
-          <g class="brand-glyph__bars">
-            <rect x="4.6" y="9.6" width="1.9" height="4.8" rx=".95"/>
-            <rect x="8.1" y="7" width="1.9" height="10" rx=".95"/>
-            <rect x="11.6" y="4.5" width="1.9" height="15" rx=".95"/>
-            <rect x="15.1" y="7.6" width="1.9" height="8.8" rx=".95"/>
-            <rect x="18.6" y="10" width="1.9" height="4" rx=".95"/>
-          </g>
-        </svg>
-        <span>bulong</span>
+        <img class="brand-img" src="assets/icon.png" alt="">
+        <span>Bulong</span>
       </a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -61,7 +55,7 @@
   <main id="main">
     <section class="hero" id="top">
       <div class="wrap hero-inner">
-        <img class="hero-mark" src="assets/logo3d.png" alt="" width="132" height="132" aria-hidden="true">
+        <img class="hero-mark" src="assets/brand-mark.png" alt="" width="150" height="154" aria-hidden="true">
         <p class="badge mono"><span class="badge-dot" aria-hidden="true"></span>100% on-device · nothing uploaded, ever</p>
         <h1>Dictation that speaks <span class="mint">Filipino</span>&nbsp;— and never leaves your Mac.</h1>
         <p class="hero-sub">Press a key, talk, and clean text lands in any app — English, Tagalog, or Taglish mid-sentence. Everything is transcribed on your Mac: no cloud, no account, no telemetry.</p>
@@ -77,7 +71,7 @@
         <p class="mono req">Apple Silicon · macOS 14+</p>
         <figure class="hud" role="img" aria-label="Bulong dictation bar: a glowing orb, the word Listening with the live partial transcript “…na-approve na ba yung leave”, an animated waveform, an on-device badge, and a Tagalog language badge.">
           <div class="hud-inner">
-            <span class="orb" aria-hidden="true"></span>
+            <img class="hud-logo" src="assets/brand-mark.png" alt="" aria-hidden="true">
             <div class="hud-text">
               <span class="hud-title">Listening</span>
               <span class="hud-partial mono">…na-approve na ba yung leave</span>
@@ -478,17 +472,8 @@
     <div class="wrap footer-inner">
       <div class="footer-brand">
         <a class="brand mono" href="#top" aria-label="Bulong home">
-          <svg class="brand-glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <rect class="brand-glyph__bg" width="24" height="24" rx="6.2"/>
-            <g class="brand-glyph__bars">
-              <rect x="4.6" y="9.6" width="1.9" height="4.8" rx=".95"/>
-              <rect x="8.1" y="7" width="1.9" height="10" rx=".95"/>
-              <rect x="11.6" y="4.5" width="1.9" height="15" rx=".95"/>
-              <rect x="15.1" y="7.6" width="1.9" height="8.8" rx=".95"/>
-              <rect x="18.6" y="10" width="1.9" height="4" rx=".95"/>
-            </g>
-          </svg>
-          <span>bulong</span>
+          <img class="brand-img" src="assets/icon.png" alt="">
+          <span>Bulong</span>
         </a>
         <p class="footer-tag">Private, on-device dictation for macOS &mdash; in English, Filipino, and Taglish.</p>
       </div>
