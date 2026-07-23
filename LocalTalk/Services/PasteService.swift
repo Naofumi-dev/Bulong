@@ -105,6 +105,11 @@ final class PasteService {
             // arbitrary app shortcuts. Leave it on the clipboard instead.
             Self.setClipboard(text)
             return .clipboardOnly(reason: "no text field is focused — click one and press ⌘V")
+        case .selfTarget:
+            // Unreachable: axInsert resolves self-targets on main before
+            // returning. Kept exhaustive-safe with the clipboard fallback.
+            Self.setClipboard(text)
+            return .clipboardOnly(reason: "copied — press ⌘V to paste")
         }
     }
 
@@ -115,6 +120,13 @@ final class PasteService {
         case fallBackToCmdV
         /// Focus is positively NOT a text target (button, menu, image, …).
         case noEditableFocus
+        /// The focused element belongs to BULONG ITSELF. In-process AX calls
+        /// don't cross MIG — they execute AppKit's text machinery directly on
+        /// the CALLING queue, and TSM asserts main-thread (observed crash:
+        /// dispatch_assert_queue_fail via NSTextView selection during a write
+        /// into our own History search field). The caller must redo the
+        /// insert on the main thread.
+        case selfTarget
     }
 
     /// Pure routing decision, factored out of the AX/IPC plumbing so it is
@@ -133,14 +145,19 @@ final class PasteService {
     }
 
     private func axInsert(_ text: String) async -> AXInsertOutcome {
-        await withCheckedContinuation { continuation in
+        let outcome = await withCheckedContinuation { continuation in
             Self.axQueue.async {
                 continuation.resume(returning: Self.performAXInsert(text))
             }
         }
+        guard outcome == .selfTarget else { return outcome }
+        // Dictating into Bulong's own window (History search, license field):
+        // rerun the whole insert ON MAIN — self-targeted AX executes in-process
+        // and is only safe where AppKit text machinery is allowed to run.
+        return Self.performAXInsert(text, allowSelfTarget: true)
     }
 
-    private nonisolated static func performAXInsert(_ text: String) -> AXInsertOutcome {
+    private nonisolated static func performAXInsert(_ text: String, allowSelfTarget: Bool = false) -> AXInsertOutcome {
         let systemWide = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(systemWide, axTimeoutSeconds)
         var focused: CFTypeRef?
@@ -157,6 +174,16 @@ final class PasteService {
 
         let axElement = focused as! AXUIElement
         AXUIElementSetMessagingTimeout(axElement, axTimeoutSeconds)
+
+        // Detect self-targeting BEFORE any further AX call on the element —
+        // even reads execute in-process for our own elements.
+        if !allowSelfTarget {
+            var pid: pid_t = 0
+            if AXUIElementGetPid(axElement, &pid) == .success,
+               pid == ProcessInfo.processInfo.processIdentifier {
+                return .selfTarget
+            }
+        }
 
         // Web content (browsers, Electron apps like Slack/Claude/VS Code)
         // silently IGNORES an AXSelectedText write while still returning
