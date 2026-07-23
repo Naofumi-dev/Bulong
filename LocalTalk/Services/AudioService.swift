@@ -9,6 +9,12 @@ final class AudioService {
 
     private let engine = AVAudioEngine()
     private var continuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
+    // Adaptive gain for the level METER (never the recorded audio): the dB
+    // floor of a "quiet room" varies wildly by mic and gain, so a fixed gate
+    // can't separate voice from room everywhere. Track the floor and the
+    // speech peak live and normalize between them.
+    private var noiseFloor: Float = 0.45
+    private var speechPeak: Float = 0.7
 
     enum AudioError: LocalizedError {
         case micPermissionDenied
@@ -71,12 +77,19 @@ final class AudioService {
         // the instant AVFoundation invokes it off the main actor. The `@Sendable`
         // annotation is compiler-enforced, so it's also the regression guard.
         // Touch `self` only inside the MainActor hop for the UI level update.
+        noiseFloor = 0.45
+        speechPeak = 0.7
         let tap: @Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void = { buffer, _ in
             continuation.yield(buffer)
             let rms = Self.rms(of: buffer)
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                self.level = max(rms, self.level * 0.7)
+                var floor = self.noiseFloor
+                var peak = self.speechPeak
+                let norm = Self.adaptiveNormalize(raw: rms, floor: &floor, peak: &peak)
+                self.noiseFloor = floor
+                self.speechPeak = peak
+                self.level = max(norm, self.level * 0.7)
             }
         }
         input.installTap(onBus: 0, bufferSize: 4096, format: format, block: tap)
@@ -107,6 +120,24 @@ final class AudioService {
         continuation = nil
         isRunning = false
         level = 0
+    }
+
+    /// Maps a raw dB-scaled level onto 0…1 between the LEARNED noise floor and
+    /// speech peak. Floor falls fast (adapts to any quiet room in <1s) and
+    /// rises very slowly (speech can't drag it up); the peak follows loud
+    /// speech instantly and decays gently. Pure so it's unit-testable.
+    nonisolated static func adaptiveNormalize(raw: Float, floor: inout Float, peak: inout Float) -> Float {
+        if raw < floor {
+            floor += (raw - floor) * 0.25
+        } else {
+            // Rising slowly enough that bursty speech can't drag the floor up
+            // (every between-word dip pulls it straight back down), but fast
+            // enough that a genuinely louder room is absorbed in a few seconds.
+            floor += (raw - floor) * 0.02
+        }
+        peak = max(raw, max(peak * 0.995, floor + 0.18))
+        let span = max(peak - floor, 0.18)
+        return max(0, min(1, (raw - floor - 0.05) / span))
     }
 
     private nonisolated static func rms(of buffer: AVAudioPCMBuffer) -> Float {

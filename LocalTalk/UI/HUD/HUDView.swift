@@ -4,11 +4,10 @@ import SwiftUI
 struct HUDView: View {
     /// Single source of truth for the pill's size — the panel content must match exactly.
     static let hudSize = NSSize(width: 392, height: 74)
-    /// Voice gate. AudioService maps RMS onto a dB scale where quiet-room
-    /// ambience reads ≈0.25–0.35 — the old 0.06 threshold let the bars dance
-    /// to background noise, which read as "the wave isn't my voice." Levels
-    /// below the gate sit flat; speech above it gets the bars' full travel.
-    static let silenceThreshold: Float = 0.28
+    /// Voice gate over AudioService's ADAPTIVELY NORMALIZED level (the noise
+    /// floor is already learned and subtracted upstream), so this only trims
+    /// residual flutter. Levels below it sit flat; speech gets full travel.
+    static let silenceThreshold: Float = 0.1
 
     let state: DictationState
     let level: Float
@@ -227,17 +226,14 @@ struct LogoTile: View {
 
     var body: some View {
         let energy = CGFloat(min(max(level, 0), 1))
-        Image("MenuIcon")
+        // The BARE mark, not the app-icon tile — the tile's baked-in wordmark
+        // turns to mush at 34pt. The clean mark stays crisp and floats on the
+        // smoked glass exactly like the reference art.
+        Image("WhisperMark")
             .resizable()
             .scaledToFit()
-            .frame(width: 34, height: 34)
-            .clipShape(RoundedRectangle(cornerRadius: 8.5, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8.5, style: .continuous)
-                .stroke(
-                    LinearGradient(colors: [Color.white.opacity(0.4), Color.white.opacity(0.08)],
-                                   startPoint: .top, endPoint: .bottom),
-                    lineWidth: 1))
-            .shadow(color: glowColor.opacity(0.3 + 0.5 * Double(energy)),
+            .frame(width: 32, height: 32)
+            .shadow(color: glowColor.opacity(0.35 + 0.5 * Double(energy)),
                     radius: 5 + 9 * energy, y: 1)
             .saturation(isFailed ? 0.4 : 1)
             // The glow tracking the live level is motion; under Reduce Motion

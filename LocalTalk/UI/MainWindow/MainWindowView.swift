@@ -160,15 +160,13 @@ struct MainWindowView: View {
 
     private var brandHeader: some View {
         HStack(spacing: 10) {
-            Image("MenuIcon")
+            // The bare whisper mark — the icon tile's baked-in wordmark is
+            // illegible at 30pt and doubles the "Bulong" text beside it.
+            Image("WhisperMark")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 30, height: 30)
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(Theme.hairlineStrong, lineWidth: 1)
-                )
+                .shadow(color: Theme.accent.opacity(0.35), radius: 6, y: 1)
 
             VStack(alignment: .leading, spacing: 1) {
                 // Rebrand: rounded capitalized wordmark, matching the logo lockup.
