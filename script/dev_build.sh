@@ -34,6 +34,9 @@ sleep 1
 
 rm -rf "$DEST"
 ditto "$BUILT" "$DEST"
+# Delete the DerivedData product after installing: Spotlight indexes it and
+# users end up seeing two or three "Bulong" apps in search. One copy on disk.
+rm -rf "$BUILT"
 "$LSREGISTER" -f "$DEST"
 
 open "$DEST"
