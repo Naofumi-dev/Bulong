@@ -308,7 +308,7 @@ enum AppComposition {
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.isMovableByWindowBackground = true
-            window.backgroundColor = NSColor(Theme.ink0)
+            window.backgroundColor = NSColor(Theme.inkSolid)
             window.center()
             window.isReleasedWhenClosed = false
             onboardingWindow = window

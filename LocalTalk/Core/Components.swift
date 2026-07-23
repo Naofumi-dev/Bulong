@@ -2,6 +2,25 @@ import SwiftUI
 
 /// Shared UI state that outlives individual scenes (e.g. which main-window
 /// pane is selected, so the popover can deep-link into History or Settings).
+/// Live AppKit blur (`.behindWindow` samples whatever is UNDER the window —
+/// wallpaper, other apps) — the smoked-glass base every dashboard surface
+/// tints over. AppKit manages the transparency; no window config needed.
+struct VisualEffectBackground: NSViewRepresentable {
+    var material: NSVisualEffectView.Material = .underWindowBackground
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ view: NSVisualEffectView, context: Context) {
+        view.material = material
+    }
+}
+
 enum SettingsTab: Hashable { case setup, advanced }
 
 @MainActor
@@ -197,7 +216,7 @@ struct MintToggleStyle: ToggleStyle {
                     if configuration.isOn {
                         Image(systemName: "checkmark")
                             .font(Theme.Fonts.mono(9, weight: .bold))
-                            .foregroundStyle(Theme.ink0)
+                            .foregroundStyle(Theme.inkSolid)
                     }
                 }
                 .frame(width: 16, height: 16)

@@ -4,10 +4,14 @@ import SwiftUI
 /// font sizes outside this file. Depth on dark = surface ladder + hairlines;
 /// drop shadows only on floating panels (HUD, popover).
 enum Theme {
-    // Surface ladder (window -> raised -> overlay)
-    static let ink0 = Color(red: 9/255, green: 20/255, blue: 32/255)
-    static let ink1 = Color(red: 15/255, green: 30/255, blue: 46/255)
-    static let ink2 = Color(red: 22/255, green: 41/255, blue: 60/255)
+    // Surface ladder (window -> raised -> overlay). The window itself is a
+    // live blur (VisualEffectBackground); ink0 is the navy smoke tinting it,
+    // ink1/ink2 are glass fills that BRIGHTEN over the blur — same smoked-
+    // glass language as the HUD pill and the reference art.
+    static let inkSolid = Color(red: 9/255, green: 20/255, blue: 32/255)  // opaque base (plain NSWindows)
+    static let ink0 = Color(red: 9/255, green: 20/255, blue: 32/255).opacity(0.52)
+    static let ink1 = Color.white.opacity(0.06)
+    static let ink2 = Color.white.opacity(0.115)
 
     // Hairlines
     static let hairline = Color.white.opacity(0.08)

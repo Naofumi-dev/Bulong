@@ -63,7 +63,7 @@ struct MainWindowView: View {
             .safeAreaInset(edge: .bottom) {
                 sidebarStatus
             }
-            .background(Theme.ink0)
+            .background(VisualEffectBackground(material: .sidebar).overlay(Theme.ink0).ignoresSafeArea())
             .task {
                 // Live health readout: cheap synchronous checks, only while
                 // the window is open (the task cancels on disappear).
@@ -76,7 +76,7 @@ struct MainWindowView: View {
             }
         } detail: {
             ZStack {
-                Theme.ink0.ignoresSafeArea()
+                VisualEffectBackground().overlay(Theme.ink0).ignoresSafeArea()
                 switch uiState.mainSection {
                 case .history:
                     HistoryView(model: model)
@@ -92,7 +92,7 @@ struct MainWindowView: View {
         .frame(minWidth: 680, minHeight: 460)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
-        .background(Theme.ink0)
+        .background(VisualEffectBackground().ignoresSafeArea())
     }
 
     /// At-a-glance health: the armed trigger key plus the three things that

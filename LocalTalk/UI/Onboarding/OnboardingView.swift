@@ -48,7 +48,7 @@ struct OnboardingView: View {
                     } label: {
                         Text(step == 2 ? "Finish" : "Continue")
                             .font(Theme.Fonts.action)
-                            .foregroundStyle(continueEnabled ? Theme.ink0 : Theme.textTertiary)
+                            .foregroundStyle(continueEnabled ? Theme.inkSolid : Theme.textTertiary)
                             .padding(.horizontal, 16).padding(.vertical, 7)
                             .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
                     }
@@ -60,7 +60,7 @@ struct OnboardingView: View {
             .padding(20)
         }
         .frame(width: 560, height: 420)
-        .background(Theme.ink0)
+        .background(Theme.inkSolid)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
         .onAppear { modelManager.refresh() }

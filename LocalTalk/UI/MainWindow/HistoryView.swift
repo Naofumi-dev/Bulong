@@ -27,7 +27,6 @@ struct HistoryView: View {
                 }
             }
         }
-        .background(Theme.ink0)
         .confirmationDialog("Delete all transcripts?", isPresented: $confirmClear) {
             Button("Delete All", role: .destructive) { try? model.history.clear() }
         }
@@ -162,7 +161,7 @@ private struct EmptyHistoryView: View {
                 Task { await model.toggleDictation(clipboardOnly: true) }
             } label: {
                 Text("Try it now")
-                    .font(Theme.Fonts.action).foregroundStyle(Theme.ink0)
+                    .font(Theme.Fonts.action).foregroundStyle(Theme.inkSolid)
                     .padding(.horizontal, 14).padding(.vertical, 7)
                     .background(Capsule().fill(Theme.accent))
             }

@@ -95,23 +95,31 @@ p{text-wrap:pretty;color:var(--text-2)}
 
 /* ---- Hero HUD (CSS recreation of the app's dictation bar) ---- */
 .hud{width:100%;max-width:640px;margin-top:clamp(48px,7vw,76px)}
-.hud-inner{display:flex;align-items:center;gap:20px;padding:20px 24px;border-radius:22px;background:linear-gradient(175deg,#FFFFFF 0%,#EDF5F9 78%,#E2EEF5 100%);border:1px solid rgba(18,58,87,.16);box-shadow:0 34px 64px -26px rgba(18,58,87,.4),inset 0 1px 0 #fff}
+/* Dark smoked-glass pill — mirrors the app's real HUD (navy smoke over blur,
+   glossy rim, teal light pooling along the bottom edge). */
+.hud-inner{display:flex;align-items:center;gap:20px;padding:20px 24px;border-radius:22px;
+  background:linear-gradient(180deg,rgba(24,40,52,.72) 0%,rgba(7,14,20,.86) 100%);
+  backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 34px 64px -26px rgba(9,20,32,.55),
+             inset 0 1px 0 rgba(255,255,255,.16),
+             inset 0 -12px 26px -16px rgba(63,195,172,.6)}
 .hud-logo{height:48px;width:auto;flex:none;outline:0;border-radius:0;filter:drop-shadow(0 4px 10px rgba(18,58,87,.3))}
 .hud-text{display:flex;flex-direction:column;gap:2px;text-align:left;margin-right:auto;min-width:0}
-.hud-title{font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
-.hud-partial{font-size:14px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-title{font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.01em;color:rgba(255,255,255,.94)}
+.hud-partial{font-size:14px;color:#ADC7D4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .waveform{display:flex;align-items:center;gap:4px;height:34px;flex:none}
 .waveform i{display:block;width:4px;border-radius:2px;background:linear-gradient(180deg,#3FC3AC,#4394D8);transform-origin:center}
-.waveform i:nth-child(1){height:12px;background:rgba(18,58,87,.22)}
-.waveform i:nth-child(2){height:20px;background:rgba(18,58,87,.22)}
-.waveform i:nth-child(3){height:30px}
-.waveform i:nth-child(4){height:34px}
-.waveform i:nth-child(5){height:28px}
-.waveform i:nth-child(6){height:18px;background:rgba(18,58,87,.22)}
-.waveform i:nth-child(7){height:12px;background:rgba(18,58,87,.22)}
+.waveform i:nth-child(1){height:12px;background:rgba(255,255,255,.22)}
+.waveform i:nth-child(2){height:20px;background:rgba(255,255,255,.22)}
+.waveform i:nth-child(3){height:30px;box-shadow:0 0 8px rgba(63,195,172,.55)}
+.waveform i:nth-child(4){height:34px;box-shadow:0 0 8px rgba(63,195,172,.55)}
+.waveform i:nth-child(5){height:28px;box-shadow:0 0 8px rgba(63,195,172,.55)}
+.waveform i:nth-child(6){height:18px;background:rgba(255,255,255,.22)}
+.waveform i:nth-child(7){height:12px;background:rgba(255,255,255,.22)}
 .hud-pills{display:flex;align-items:center;gap:8px;flex:none}
-.hud-pill{font-size:11px;letter-spacing:.08em;padding:5px 10px;border:1px solid var(--mint-dim);border-radius:var(--pill);color:var(--mint-text);white-space:nowrap}
-.hud-pill--dim{color:var(--text-3)}
+.hud-pill{font-size:11px;letter-spacing:.08em;padding:5px 10px;border:1px solid rgba(255,255,255,.22);border-radius:var(--pill);color:#B0E9F0;white-space:nowrap}
+.hud-pill--dim{color:rgba(150,178,192,.85)}
 @media (max-width:560px){
   .hud-inner{gap:14px;padding:16px 18px}
   .hud-pills{display:none}

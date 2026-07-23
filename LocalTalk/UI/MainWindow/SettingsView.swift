@@ -49,7 +49,6 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(20)
         }
-        .background(Theme.ink0)
         .onAppear { modelManager.refresh() }
         .task {
             while !Task.isCancelled {

@@ -4,9 +4,11 @@ import SwiftUI
 struct HUDView: View {
     /// Single source of truth for the pill's size — the panel content must match exactly.
     static let hudSize = NSSize(width: 392, height: 74)
-    /// Below this level the orb settles and the bars go flat. One constant so the
-    /// orb and the waveform can never disagree on what silence is.
-    static let silenceThreshold: Float = 0.06
+    /// Voice gate. AudioService maps RMS onto a dB scale where quiet-room
+    /// ambience reads ≈0.25–0.35 — the old 0.06 threshold let the bars dance
+    /// to background noise, which read as "the wave isn't my voice." Levels
+    /// below the gate sit flat; speech above it gets the bars' full travel.
+    static let silenceThreshold: Float = 0.28
 
     let state: DictationState
     let level: Float
@@ -308,9 +310,13 @@ struct SmoothedWaveform: View {
         let cap = base[i] * 22
         switch state {
         case .recording:
-            let target = level < HUDView.silenceThreshold ? 0 : level
+            // Re-normalize the above-gate range to 0…1 and apply a soft-knee
+            // curve so normal speech uses the bars' full travel — the wave
+            // tracks the VOICE, not the room.
+            let gated = max(0, level - HUDView.silenceThreshold) / (1 - HUDView.silenceThreshold)
+            let target = powf(gated, 0.75)
             smoother.values[i] += (target - smoother.values[i]) * lag[i]   // per-bar lag
-            return max(4, cap * CGFloat(0.2 + 0.8 * smoother.values[i]))
+            return max(4, cap * CGFloat(0.15 + 0.85 * smoother.values[i]))
         case .transcribing, .inserting:
             return reduceMotion ? cap * 0.5 : max(4, cap * (0.35 + 0.25 * abs(sin(t * 2 + Double(i) * 0.9))))
         case .failed: return 4
