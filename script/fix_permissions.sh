@@ -27,14 +27,18 @@ sleep 1
 
 echo "==> Unregistering stray Bulong/LocalTalk copies (keeping $DEST)"
 # DerivedData build products
+# NOTE: each pipeline ends `|| true` — the while loop's exit status is the
+# LAST body command's, so with set -e/pipefail an unregister that returns
+# nonzero would silently kill the whole script here (observed: the TCC reset
+# and onboarding re-arm below never ran).
 find "$HOME/Library/Developer/Xcode/DerivedData" -maxdepth 5 \
   \( -name "Bulong.app" -o -name "LocalTalk.app" \) -path "*Products*" 2>/dev/null | while read -r app; do
   "$LSREGISTER" -u "$app" >/dev/null 2>&1 && echo "    unregistered: $app"
-done
+done || true
 # In-repo build artifacts
 find "$(cd "$(dirname "$0")/.." && pwd)/build" -maxdepth 6 -name "Bulong.app" 2>/dev/null | while read -r app; do
   [ "$app" != "$DEST" ] && "$LSREGISTER" -u "$app" >/dev/null 2>&1 && echo "    unregistered: $app"
-done
+done || true
 
 if [ ! -d "$DEST" ]; then
   echo "!! $DEST not found — run script/dev_build.sh first, then re-run this."
