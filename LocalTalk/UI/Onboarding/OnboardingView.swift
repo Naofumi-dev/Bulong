@@ -48,7 +48,7 @@ struct OnboardingView: View {
                     } label: {
                         Text(step == 2 ? "Finish" : "Continue")
                             .font(Theme.Fonts.action)
-                            .foregroundStyle(continueEnabled ? Theme.inkSolid : Theme.textTertiary)
+                            .foregroundStyle(continueEnabled ? .white : Theme.textTertiary)
                             .padding(.horizontal, 16).padding(.vertical, 7)
                             .background(Capsule().fill(continueEnabled ? Theme.accent : Theme.ink2))
                     }
@@ -60,8 +60,8 @@ struct OnboardingView: View {
             .padding(20)
         }
         .frame(width: 560, height: 420)
-        .background(Theme.inkSolid)
-        .preferredColorScheme(.dark)
+        .background(Theme.paperSolid.overlay(AuroraWash()).ignoresSafeArea())
+        .preferredColorScheme(.light)
         .tint(Theme.accent)
         .onAppear { modelManager.refresh() }
         .task {
@@ -119,14 +119,9 @@ struct OnboardingView: View {
     // Step 0 — the promise
     private var promiseStep: some View {
         VStack(spacing: 16) {
-            HStack(spacing: 3) {
-                ForEach(0..<7, id: \.self) { i in
-                    Capsule().fill(Theme.accent)
-                        .frame(width: 4, height: [12, 22, 34, 26, 36, 18, 10][i])
-                }
-            }
-            .accessibilityHidden(true)
-            Text("bulong").font(Theme.Fonts.mono(30, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+            FloatingMark(size: 76)
+                .accessibilityHidden(true)
+            Text("Bulong").font(.system(size: 30, weight: .bold, design: .rounded)).foregroundStyle(Theme.textPrimary)
             Text("Tagalog for “whisper”")
                 .font(Theme.Fonts.caption).foregroundStyle(Theme.textTertiary)
             Text("Press a hotkey. Speak. The words appear —\nand your voice never leaves this Mac.")

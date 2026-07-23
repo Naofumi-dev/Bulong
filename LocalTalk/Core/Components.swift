@@ -5,6 +5,38 @@ import SwiftUI
 /// Live AppKit blur (`.behindWindow` samples whatever is UNDER the window —
 /// wallpaper, other apps) — the smoked-glass base every dashboard surface
 /// tints over. AppKit manages the transparency; no window config needed.
+/// The whisper mark with the site hero's gentle float — slow bob and tilt,
+/// a soft teal glow. The brand's "premium" motion beat; still under Reduce
+/// Motion. Size is the mark's frame; the float stays within ~4pt of it.
+struct FloatingMark: View {
+    var size: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var floating = false
+
+    var body: some View {
+        Image("WhisperMark")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .shadow(color: Theme.accent.opacity(0.35), radius: size * 0.16, y: size * 0.06)
+            .rotationEffect(.degrees(floating ? 1.2 : -1.2))
+            .offset(y: floating ? -4 : 2)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 3.4).repeatForever(autoreverses: true),
+                       value: floating)
+            .onAppear { if !reduceMotion { floating = true } }
+    }
+}
+
+/// The site's paper-aurora wash: blue glow from the top, a teal whisper
+/// below it, fading out by mid-window. Pure decoration — never hit-testable.
+struct AuroraWash: View {
+    var body: some View {
+        LinearGradient(colors: [Theme.auroraBlue, Theme.auroraTeal, .clear],
+                       startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.7))
+            .allowsHitTesting(false)
+    }
+}
+
 struct VisualEffectBackground: NSViewRepresentable {
     var material: NSVisualEffectView.Material = .underWindowBackground
 
@@ -216,7 +248,7 @@ struct MintToggleStyle: ToggleStyle {
                     if configuration.isOn {
                         Image(systemName: "checkmark")
                             .font(Theme.Fonts.mono(9, weight: .bold))
-                            .foregroundStyle(Theme.inkSolid)
+                            .foregroundStyle(.white)
                     }
                 }
                 .frame(width: 16, height: 16)

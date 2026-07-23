@@ -161,7 +161,7 @@ private struct EmptyHistoryView: View {
                 Task { await model.toggleDictation(clipboardOnly: true) }
             } label: {
                 Text("Try it now")
-                    .font(Theme.Fonts.action).foregroundStyle(Theme.inkSolid)
+                    .font(Theme.Fonts.action).foregroundStyle(.white)
                     .padding(.horizontal, 14).padding(.vertical, 7)
                     .background(Capsule().fill(Theme.accent))
             }

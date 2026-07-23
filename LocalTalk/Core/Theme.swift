@@ -4,36 +4,43 @@ import SwiftUI
 /// font sizes outside this file. Depth on dark = surface ladder + hairlines;
 /// drop shadows only on floating panels (HUD, popover).
 enum Theme {
-    // Surface ladder (window -> raised -> overlay). The window itself is a
-    // live blur (VisualEffectBackground); ink0 is the navy smoke tinting it,
-    // ink1/ink2 are glass fills that BRIGHTEN over the blur — same smoked-
-    // glass language as the HUD pill and the reference art.
-    static let inkSolid = Color(red: 9/255, green: 20/255, blue: 32/255)  // opaque base (plain NSWindows)
-    static let ink0 = Color(red: 9/255, green: 20/255, blue: 32/255).opacity(0.52)
-    static let ink1 = Color.white.opacity(0.06)
-    static let ink2 = Color.white.opacity(0.115)
+    // LIGHT-GLASS window chrome, matching bulong.app: paper-aurora over a
+    // live light blur, navy type, teal accents. Surfaces are white-glass
+    // fills that brighten over the blur. The HUD pill alone stays dark
+    // smoked glass (hud* tokens below) — exactly like the site's hero pill.
+    static let inkSolid = Color(red: 9/255, green: 20/255, blue: 32/255)      // opaque navy (dark surfaces only)
+    static let paperSolid = Color(red: 243/255, green: 247/255, blue: 250/255) // opaque paper (plain NSWindows)
+    static let ink0 = Color.white.opacity(0.34)   // window smoke over the blur
+    static let ink1 = Color.white.opacity(0.58)   // glass card
+    static let ink2 = Color.white.opacity(0.85)   // raised surface / hover
+    // Aurora wash (the site's hero gradient, whispered onto the window)
+    static let auroraBlue = Color(red: 67/255, green: 148/255, blue: 216/255).opacity(0.10)
+    static let auroraTeal = Color(red: 63/255, green: 195/255, blue: 172/255).opacity(0.06)
 
-    // Hairlines
-    static let hairline = Color.white.opacity(0.08)
-    static let hairlineStrong = Color.white.opacity(0.12)
+    // Hairlines — navy-based, like the site
+    static let hairline = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.12)
+    static let hairlineStrong = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.22)
 
-    // Text
-    static let textPrimary = Color(red: 240/255, green: 242/255, blue: 242/255)
-    static let textSecondary = Color.white.opacity(0.62)
-    static let textTertiary = Color.white.opacity(0.40)
+    // Text — the site's navy ladder
+    static let textPrimary = Color(red: 19/255, green: 50/255, blue: 75/255)     // #13324B
+    static let textSecondary = Color(red: 62/255, green: 94/255, blue: 119/255)  // #3E5E77
+    static let textTertiary = Color(red: 108/255, green: 135/255, blue: 155/255) // #6C879B
 
     // Accent — three jobs only: live states, primary action, focus.
-    static let accent = Color(red: 63/255, green: 195/255, blue: 172/255)
-    static let accentText = Color(red: 176/255, green: 233/255, blue: 240/255)
+    // Deep teal (#178F7C) for contrast on light; the HUD keeps the bright
+    // reference teal via hudAccent.
+    static let accent = Color(red: 23/255, green: 143/255, blue: 124/255)
+    static let accentText = Color(red: 15/255, green: 110/255, blue: 95/255)     // #0F6E5F
     static let accentDim = accent.opacity(0.42)   // 42% alpha — composites over the surface behind it
-    static let failure = Color(red: 255/255, green: 118/255, blue: 112/255)
+    static let failure = Color(red: 216/255, green: 73/255, blue: 60/255)        // site coral
 
     // HUD — dark smoked glass over a LIVE blur (the user's reference art):
     // translucent navy tint on ultraThinMaterial, glossy rim, light text,
     // whisper-mark tile, glowing teal wave. Tokens are HUD-local; neither the
     // dark window chrome nor the light site palette belongs on this surface.
-    static let hudTintTop = Color(red: 24/255, green: 40/255, blue: 52/255).opacity(0.42)
-    static let hudTintBottom = Color(red: 7/255, green: 14/255, blue: 20/255).opacity(0.66)
+    static let hudAccent = Color(red: 63/255, green: 195/255, blue: 172/255)     // bright reference teal
+    static let hudTintTop = Color(red: 24/255, green: 40/255, blue: 52/255).opacity(0.30)
+    static let hudTintBottom = Color(red: 7/255, green: 14/255, blue: 20/255).opacity(0.52)
     static let hudRim = Color.white.opacity(0.28)
     static let hudRimGlow = Color(red: 63/255, green: 195/255, blue: 172/255).opacity(0.5)
     static let hudTitle = Color.white.opacity(0.94)

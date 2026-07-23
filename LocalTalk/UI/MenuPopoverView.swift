@@ -20,7 +20,7 @@ struct MenuPopoverView: View {
         .padding(14)
         .frame(width: 300)
         .background(VisualEffectBackground(material: .popover).overlay(Theme.ink0))
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .tint(Theme.accent)
         // Re-derive so the "Trial ended" status line is accurate on open, not
         // stale until the first hotkey press.
@@ -33,7 +33,7 @@ struct MenuPopoverView: View {
                 .fill(isLive ? Theme.accent : Theme.textTertiary)
                 .frame(width: 7, height: 7)
                 .accessibilityHidden(true)
-            Text("bulong").font(Theme.Fonts.mono(14, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+            Text("Bulong").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(Theme.textPrimary)
             Spacer()
             Text(stateText).font(Theme.Fonts.mono(11))
                 .foregroundStyle(isFailed || trialEnded ? Theme.failure : Theme.textSecondary)
@@ -56,7 +56,7 @@ struct MenuPopoverView: View {
             // Fixed content height: the chip is taller than bare text, and the
             // primary button must not change size between states.
             .frame(height: 22)
-            .foregroundStyle(isRecording ? Theme.textPrimary : Theme.inkSolid)
+            .foregroundStyle(isRecording ? Theme.textPrimary : .white)
             .padding(.horizontal, 12).padding(.vertical, 8)
             // Standalone primary CTA = capsule (see Theme shape grammar).
             .background(Capsule().fill(isRecording ? Theme.ink2 : Theme.accent))

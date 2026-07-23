@@ -76,7 +76,7 @@ struct MainWindowView: View {
             }
         } detail: {
             ZStack {
-                VisualEffectBackground().overlay(Theme.ink0).ignoresSafeArea()
+                VisualEffectBackground().overlay(Theme.ink0).overlay(AuroraWash()).ignoresSafeArea()
                 switch uiState.mainSection {
                 case .history:
                     HistoryView(model: model)
@@ -90,7 +90,7 @@ struct MainWindowView: View {
             .navigationTitle(uiState.mainSection.rawValue)
         }
         .frame(minWidth: 680, minHeight: 460)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .tint(Theme.accent)
         .background(VisualEffectBackground().ignoresSafeArea())
     }
@@ -160,13 +160,9 @@ struct MainWindowView: View {
 
     private var brandHeader: some View {
         HStack(spacing: 10) {
-            // The bare whisper mark — the icon tile's baked-in wordmark is
-            // illegible at 30pt and doubles the "Bulong" text beside it.
-            Image("WhisperMark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 30, height: 30)
-                .shadow(color: Theme.accent.opacity(0.35), radius: 6, y: 1)
+            // The bare whisper mark with the brand's gentle float — the icon
+            // tile's baked-in wordmark is illegible at 30pt.
+            FloatingMark(size: 30)
 
             VStack(alignment: .leading, spacing: 1) {
                 // Rebrand: rounded capitalized wordmark, matching the logo lockup.

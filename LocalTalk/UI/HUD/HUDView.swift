@@ -198,10 +198,10 @@ struct DoneBadge: View {
         ZStack {
             Circle()
                 .fill(RadialGradient(
-                    colors: [Color.white.opacity(0.9), Theme.accent, Theme.accent.opacity(0.55)],
+                    colors: [Color.white.opacity(0.9), Theme.hudAccent, Theme.hudAccent.opacity(0.55)],
                     center: UnitPoint(x: 0.36, y: 0.3), startRadius: 0, endRadius: 15))
                 .frame(width: 24, height: 24)
-                .shadow(color: Theme.accent.opacity(0.45), radius: 7, y: 2)
+                .shadow(color: Theme.hudAccent.opacity(0.45), radius: 7, y: 2)
             Circle()
                 .stroke(
                     LinearGradient(colors: [Color.white.opacity(0.55), .clear],
@@ -245,7 +245,7 @@ struct LogoTile: View {
 
     private var glowColor: Color {
         if case .failed = state { return Theme.failure }
-        return Theme.accent
+        return Theme.hudAccent
     }
 }
 
@@ -281,7 +281,7 @@ struct SmoothedWaveform: View {
                         .fill(barStyle(i))
                         .frame(width: 4, height: height(i, t: context.date.timeIntervalSinceReferenceDate))
                         .shadow(color: i >= 2 && i <= 4 && isRecording
-                                    ? Theme.accent.opacity(0.55) : .clear,
+                                    ? Theme.hudAccent.opacity(0.55) : .clear,
                                 radius: 4)
                 }
             }
@@ -298,7 +298,7 @@ struct SmoothedWaveform: View {
     private func barStyle(_ i: Int) -> AnyShapeStyle {
         if case .failed = state { return AnyShapeStyle(Theme.hudWaveInactive.opacity(0.5)) }
         guard i >= 2 && i <= 4 else { return AnyShapeStyle(Theme.hudWaveInactive) }
-        return AnyShapeStyle(LinearGradient(colors: [Theme.accent, Theme.hudAccentDeep],
+        return AnyShapeStyle(LinearGradient(colors: [Theme.hudAccent, Theme.hudAccentDeep],
                                             startPoint: .top, endPoint: .bottom))
     }
 
