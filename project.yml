@@ -47,6 +47,10 @@ targets:
         SWIFT_VERSION: "6.0"
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Keep Debug builds monolithic (no stub + Bulong.debug.dylib split):
+        # matches the Release layout, and binary checks (e.g. `strings` for
+        # the bundled license key) inspect the same file users run.
+        ENABLE_DEBUG_DYLIB: NO
       configs:
         Debug:
           CODE_SIGN_STYLE: Automatic

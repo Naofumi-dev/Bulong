@@ -39,13 +39,13 @@ struct HUDView: View {
             .frame(width: 34, height: 34)
             .animation(reduceMotion ? Theme.easeFast : Theme.spring, value: isDone)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary)
+                Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.hudTitle)
                 // Live partials keep the newest words visible (head-truncate,
                 // pre-trimmed to a word boundary); static hints must not lose
                 // their tail ("…Esc cancels" ≠ hint). Failure messages get two
                 // lines and the width freed by the dropped chips — never
                 // mid-word-truncate what went wrong.
-                Text(detail).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
+                Text(detail).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.hudDetail)
                     .lineLimit(isFailed ? 2 : 1)
                     .truncationMode(showsLivePartial ? .head : .tail)
             }
@@ -62,9 +62,9 @@ struct HUDView: View {
             Button(action: onCancel) {
                 Image(systemName: "xmark")
                     .font(Theme.Fonts.caption)
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.hudDetail)
                     .frame(width: 22, height: 22)
-                    .overlay(Circle().stroke(Theme.hairlineStrong, lineWidth: 1))
+                    .overlay(Circle().stroke(Theme.hudHairline, lineWidth: 1))
                     .contentShape(Circle())
             }
             .buttonStyle(TactilePressStyle())
@@ -83,7 +83,7 @@ struct HUDView: View {
         .overlay(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous)
             .stroke(isFailed ? Theme.failure.opacity(0.6) : Theme.hudRim, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous))
-        .shadow(color: .black.opacity(0.34), radius: 22, y: 12)
+        .shadow(color: Theme.hudShadow, radius: 22, y: 12)
         .overlay(ActiveAlwaysHoverTracker { hovering = $0 })
         // Cancel reveal is opacity-only (its space is reserved), so the fade
         // may stay ungated under Reduce Motion.
@@ -163,9 +163,9 @@ struct HUDView: View {
     /// The orb and waveform own all the accent.
     private func badge(_ text: String) -> some View {
         Text(text).font(Theme.Fonts.mono(9, weight: .bold))
-            .foregroundStyle(Theme.textTertiary)
+            .foregroundStyle(Theme.hudTertiary)
             .padding(.horizontal, 6).padding(.vertical, 2)
-            .background(Capsule().stroke(Theme.hairlineStrong, lineWidth: 1))
+            .background(Capsule().stroke(Theme.hudHairline, lineWidth: 1))
     }
 }
 
@@ -292,7 +292,7 @@ struct SmoothedWaveform: View {
             HStack(spacing: 4) {
                 ForEach(0..<7, id: \.self) { i in
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(barColor(i))
+                        .fill(barStyle(i))
                         .frame(width: 4, height: height(i, t: context.date.timeIntervalSinceReferenceDate))
                 }
             }
@@ -305,10 +305,12 @@ struct SmoothedWaveform: View {
     private var isRecording: Bool { if case .recording = state { true } else { false } }
 
     /// Failure dims the whole strip — status color belongs to the orb and rim,
-    /// not to metadata decoration.
-    private func barColor(_ i: Int) -> Color {
-        if case .failed = state { return Theme.waveInactive.opacity(0.5) }
-        return i >= 2 && i <= 4 ? Theme.accent : Theme.waveInactive
+    /// not to metadata decoration. Active bars carry the brand teal→blue ramp.
+    private func barStyle(_ i: Int) -> AnyShapeStyle {
+        if case .failed = state { return AnyShapeStyle(Theme.hudWaveInactive.opacity(0.5)) }
+        guard i >= 2 && i <= 4 else { return AnyShapeStyle(Theme.hudWaveInactive) }
+        return AnyShapeStyle(LinearGradient(colors: [Theme.accent, Theme.hudAccentDeep],
+                                            startPoint: .top, endPoint: .bottom))
     }
 
     private func height(_ i: Int, t: TimeInterval) -> CGFloat {

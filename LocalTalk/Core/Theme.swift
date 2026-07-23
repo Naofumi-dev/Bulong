@@ -24,10 +24,22 @@ enum Theme {
     static let accentDim = accent.opacity(0.42)   // 42% alpha — composites over the surface behind it
     static let failure = Color(red: 255/255, green: 118/255, blue: 112/255)
 
-    // HUD shell (previously hard-coded in HUDView)
-    static let hudShellTop = Color(red: 20/255, green: 38/255, blue: 56/255)
-    static let hudShellBottom = ink0
-    static let hudRim = Color(red: 70/255, green: 120/255, blue: 150/255).opacity(0.95)
+    // HUD shell — light glass, matching the site/video pill. The HUD floats
+    // over the USER'S content (usually light apps), not over Bulong's dark
+    // chrome, so it carries its own light-surface text/hairline tokens and
+    // must never borrow the dark-window text colors.
+    static let hudShellTop = Color.white
+    static let hudShellBottom = Color(red: 226/255, green: 238/255, blue: 245/255)  // #E2EEF5
+    static let hudRim = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.16)
+    static let hudTitle = Color(red: 19/255, green: 50/255, blue: 75/255)           // #13324B
+    static let hudDetail = Color(red: 62/255, green: 94/255, blue: 119/255)         // #3E5E77
+    static let hudTertiary = Color(red: 108/255, green: 135/255, blue: 155/255)     // #6C879B
+    static let hudHairline = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.22)
+    static let hudWaveInactive = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.20)
+    static let hudShadow = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.32)
+    static let hudAccentDeep = Color(red: 67/255, green: 148/255, blue: 216/255)    // #4394D8, gradient tail
+    // In-window (dark chrome) inactive-wave tone — used by the HUD position
+    // preview in Settings, NOT by the HUD itself.
     static let waveInactive = Color(red: 96/255, green: 116/255, blue: 134/255)
 
     // Type scale
