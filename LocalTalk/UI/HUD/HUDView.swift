@@ -77,9 +77,9 @@ struct HUDView: View {
         .padding(.horizontal, 16)
         .frame(width: Self.hudSize.width, height: Self.hudSize.height)
         .background(
-            // Smoked glass: a REAL blur of whatever is behind the panel
-            // (the NSPanel is clear + non-opaque), tinted toward navy, with
-            // the reference art's teal light pooling along the bottom rim.
+            // Brand glass: a REAL blur of whatever is behind the panel
+            // (the NSPanel is clear + non-opaque) under a white wash, with
+            // the brand's teal light pooling along the bottom rim.
             ZStack {
                 Rectangle().fill(.ultraThinMaterial)
                 LinearGradient(colors: [Theme.hudTintTop, Theme.hudTintBottom],
@@ -93,7 +93,7 @@ struct HUDView: View {
                 }
             }
         )
-        .environment(\.colorScheme, .dark)
+        .environment(\.colorScheme, .light)
         .overlay(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous)
             .stroke(
                 isFailed

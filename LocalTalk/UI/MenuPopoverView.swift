@@ -35,7 +35,7 @@ struct MenuPopoverView: View {
                 .accessibilityHidden(true)
             Text("Bulong").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(Theme.textPrimary)
             Spacer()
-            Text(stateText).font(Theme.Fonts.mono(11))
+            Text(stateText).font(Theme.Fonts.mono(12))
                 .foregroundStyle(isFailed || trialEnded ? Theme.failure : Theme.textSecondary)
                 .lineLimit(1)
                 .help(stateText)
@@ -71,7 +71,7 @@ struct MenuPopoverView: View {
                 .accessibilityHidden(true)
             TimelineView(.periodic(from: started, by: 0.5)) { context in
                 Text(elapsed(from: started, now: context.date))
-                    .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textSecondary)
+                    .font(Theme.Fonts.mono(12)).foregroundStyle(Theme.textSecondary)
             }
             Spacer()
             // No trailing inset: ends on the card's right rail with the
@@ -94,7 +94,7 @@ struct MenuPopoverView: View {
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text(model.lastTranscript)
-                    .font(Theme.Fonts.mono(11.5)).foregroundStyle(Theme.textSecondary)
+                    .font(Theme.Fonts.mono(12.5)).foregroundStyle(Theme.textSecondary)
                     .lineLimit(2).multilineTextAlignment(.leading)
                 Text(copied ? "Copied ✓" : "Click to copy")
                     .font(Theme.Fonts.caption)

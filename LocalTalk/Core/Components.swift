@@ -73,7 +73,7 @@ struct HotkeyChip: View {
 
     var body: some View {
         Text(text)
-            .font(Theme.Fonts.mono(11, weight: .medium))
+            .font(Theme.Fonts.mono(12, weight: .medium))
             .tracking(0.5)
             .foregroundStyle(Theme.accentText)
             .padding(.horizontal, 7).padding(.vertical, 3)

@@ -56,7 +56,7 @@ struct MainWindowView: View {
                 Spacer()
             }
             .padding(.horizontal, 8)
-            .navigationSplitViewColumnWidth(min: 168, ideal: 188)
+            .navigationSplitViewColumnWidth(min: 208, ideal: 232)
             .safeAreaInset(edge: .top) {
                 brandHeader
             }
@@ -98,8 +98,8 @@ struct MainWindowView: View {
     /// At-a-glance health: the armed trigger key plus the three things that
     /// must be true for dictation to work. Anything red deep-links to Settings.
     private var sidebarStatus: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
                 Text("Trigger")
                     .font(Theme.Fonts.caption)
                     .foregroundStyle(Theme.textTertiary)
@@ -110,8 +110,8 @@ struct MainWindowView: View {
             statusRow("Speech model", ok: modelReady)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 13)
-        .padding(.vertical, 11)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
         .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
         .background(Theme.ink0)
     }

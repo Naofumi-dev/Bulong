@@ -107,7 +107,7 @@ struct SettingsView: View {
                         HotkeyChip(text: model.settings.hotkey.displayString)
                     } else {
                         Text("tap \(model.settings.singleKeyChoice.displayName)")
-                            .font(Theme.Fonts.mono(11))
+                            .font(Theme.Fonts.mono(12))
                             .foregroundStyle(Theme.accentText)
                     }
                     Text("anywhere to dictate")
@@ -161,7 +161,7 @@ struct SettingsView: View {
             divider
             row("Version") {
                 Text(appVersion)
-                    .font(Theme.Fonts.mono(11))
+                    .font(Theme.Fonts.mono(12))
                     .foregroundStyle(Theme.textTertiary)
             }
         }
@@ -335,7 +335,7 @@ struct SettingsView: View {
                             .font(Theme.Fonts.mono(12))
                             .foregroundStyle(Theme.textSecondary)
                         Text(l.order)
-                            .font(Theme.Fonts.mono(10.5))
+                            .font(Theme.Fonts.mono(11.5))
                             .foregroundStyle(Theme.textTertiary)
                     }
                 }
@@ -427,7 +427,7 @@ struct SettingsView: View {
             HStack {
                 TextField("Paste your license key", text: $licenseKeyField)
                     .textFieldStyle(.plain)
-                    .font(Theme.Fonts.mono(11))
+                    .font(Theme.Fonts.mono(12))
                     .foregroundStyle(Theme.textPrimary)
                     .focused($keyFieldFocused)
                     .padding(8)
@@ -498,13 +498,13 @@ struct SettingsView: View {
                     .font(Theme.Fonts.caption).foregroundStyle(Theme.accent)
             case .notDownloaded:
                 HStack(spacing: 8) {
-                    Text(size).font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textTertiary)
+                    Text(size).font(Theme.Fonts.mono(11.5)).foregroundStyle(Theme.textTertiary)
                     Button("Download", action: download).buttonStyle(BorderedActionButtonStyle())
                 }
             case .downloading(let p):
                 HStack(spacing: 8) {
                     ProgressView(value: p).frame(width: 90)
-                    Text("\(Int(p * 100))%").font(Theme.Fonts.mono(10.5)).foregroundStyle(Theme.textSecondary)
+                    Text("\(Int(p * 100))%").font(Theme.Fonts.mono(11.5)).foregroundStyle(Theme.textSecondary)
                 }
             case .failed(let msg):
                 VStack(alignment: .trailing, spacing: 4) {

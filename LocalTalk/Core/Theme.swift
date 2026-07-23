@@ -21,10 +21,11 @@ enum Theme {
     static let hairline = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.12)
     static let hairlineStrong = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.22)
 
-    // Text — the site's navy ladder
+    // Text — the site's navy ladder, darkened a step for AA contrast on the
+    // light glass (the original site values read grey and washed-out in-app).
     static let textPrimary = Color(red: 19/255, green: 50/255, blue: 75/255)     // #13324B
-    static let textSecondary = Color(red: 62/255, green: 94/255, blue: 119/255)  // #3E5E77
-    static let textTertiary = Color(red: 108/255, green: 135/255, blue: 155/255) // #6C879B
+    static let textSecondary = Color(red: 47/255, green: 76/255, blue: 100/255)  // #2F4C64
+    static let textTertiary = Color(red: 84/255, green: 113/255, blue: 138/255)  // #54718A
 
     // Accent — three jobs only: live states, primary action, focus.
     // Deep teal (#178F7C) for contrast on light; the HUD keeps the bright
@@ -34,36 +35,36 @@ enum Theme {
     static let accentDim = accent.opacity(0.42)   // 42% alpha — composites over the surface behind it
     static let failure = Color(red: 216/255, green: 73/255, blue: 60/255)        // site coral
 
-    // HUD — dark smoked glass over a LIVE blur (the user's reference art):
-    // translucent navy tint on ultraThinMaterial, glossy rim, light text,
-    // whisper-mark tile, glowing teal wave. Tokens are HUD-local; neither the
-    // dark window chrome nor the light site palette belongs on this surface.
-    static let hudAccent = Color(red: 63/255, green: 195/255, blue: 172/255)     // bright reference teal
-    static let hudTintTop = Color(red: 24/255, green: 40/255, blue: 52/255).opacity(0.30)
-    static let hudTintBottom = Color(red: 7/255, green: 14/255, blue: 20/255).opacity(0.52)
-    static let hudRim = Color.white.opacity(0.28)
-    static let hudRimGlow = Color(red: 63/255, green: 195/255, blue: 172/255).opacity(0.5)
-    static let hudTitle = Color.white.opacity(0.94)
-    static let hudDetail = Color(red: 173/255, green: 199/255, blue: 212/255)
-    static let hudTertiary = Color(red: 150/255, green: 178/255, blue: 192/255).opacity(0.85)
-    static let hudHairline = Color.white.opacity(0.22)
-    static let hudWaveInactive = Color.white.opacity(0.20)
-    static let hudShadow = Color.black.opacity(0.5)
+    // HUD — TRANSPARENT light brand glass (user's spec 2026-07-23: "following
+    // the brand color, NOT dark mode, and it should be transparent"): a real
+    // live blur with a white wash, navy brand text, bright teal→blue accents.
+    // Tokens are HUD-local so the pill never inherits window-chrome values.
+    static let hudAccent = Color(red: 63/255, green: 195/255, blue: 172/255)     // bright brand teal
+    static let hudTintTop = Color.white.opacity(0.55)
+    static let hudTintBottom = Color.white.opacity(0.30)
+    static let hudRim = Color.white.opacity(0.8)
+    static let hudRimGlow = Color(red: 63/255, green: 195/255, blue: 172/255).opacity(0.45)
+    static let hudTitle = Color(red: 19/255, green: 50/255, blue: 75/255)        // brand navy
+    static let hudDetail = Color(red: 47/255, green: 76/255, blue: 100/255)
+    static let hudTertiary = Color(red: 84/255, green: 113/255, blue: 138/255)
+    static let hudHairline = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.25)
+    static let hudWaveInactive = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.22)
+    static let hudShadow = Color(red: 18/255, green: 58/255, blue: 87/255).opacity(0.38)
     static let hudAccentDeep = Color(red: 67/255, green: 148/255, blue: 216/255)    // #4394D8, gradient tail
     // In-window (dark chrome) inactive-wave tone — used by the HUD position
     // preview in Settings, NOT by the HUD itself.
     static let waveInactive = Color(red: 96/255, green: 116/255, blue: 134/255)
 
-    // Type scale
+    // Type scale — bumped 2026-07-23 (user: dashboard text too small).
     enum Fonts {
-        static let display = Font.system(size: 22, weight: .semibold)   // pair with .tracking(-0.4)
-        static let title = Font.system(size: 15, weight: .semibold)
-        static let body = Font.system(size: 13)
-        static let bodyStrong = Font.system(size: 13, weight: .semibold)
-        static let action = Font.system(size: 12, weight: .semibold)
-        static let caption = Font.system(size: 11)
+        static let display = Font.system(size: 24, weight: .semibold)   // pair with .tracking(-0.4)
+        static let title = Font.system(size: 17, weight: .semibold)
+        static let body = Font.system(size: 14)
+        static let bodyStrong = Font.system(size: 14, weight: .semibold)
+        static let action = Font.system(size: 13, weight: .semibold)
+        static let caption = Font.system(size: 12)
         /// Brand voice: transcripts, timers, counts, hotkey chips, model names.
-        static func mono(_ size: CGFloat = 13, weight: Font.Weight = .regular) -> Font {
+        static func mono(_ size: CGFloat = 14, weight: Font.Weight = .regular) -> Font {
             .system(size: size, weight: weight, design: .monospaced)
         }
     }

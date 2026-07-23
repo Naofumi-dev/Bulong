@@ -49,7 +49,7 @@ struct HistoryView: View {
             // Counter and actions only exist once there is something to count.
             if !model.history.entries.isEmpty {
                 Text("\(model.history.entries.count) transcripts · \(totalWords) words")
-                    .font(Theme.Fonts.mono(11)).foregroundStyle(Theme.textTertiary)
+                    .font(Theme.Fonts.mono(12)).foregroundStyle(Theme.textTertiary)
                     .fixedSize()
                 Button("Export") { export() }.buttonStyle(HoverButtonStyle())
                 Button("Clear") { confirmClear = true }.buttonStyle(HoverButtonStyle())
@@ -89,7 +89,7 @@ private struct HistoryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(entry.text)
-                .font(Theme.Fonts.mono(12.5))
+                .font(Theme.Fonts.mono(14))
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(3)
                 .textSelection(.enabled)
@@ -105,7 +105,7 @@ private struct HistoryCard: View {
                     .foregroundStyle(copied ? Theme.accent : Theme.textSecondary)
                     .opacity(hovering ? 1 : 0)
             }
-            .font(Theme.Fonts.mono(10.5))
+            .font(Theme.Fonts.mono(11.5))
             .foregroundStyle(Theme.textTertiary)
         }
         .padding(12)
