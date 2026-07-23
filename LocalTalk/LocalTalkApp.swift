@@ -138,6 +138,10 @@ enum AppComposition {
                 // let the popover's "Trial ended" status line prompt the user —
                 // per the plan, no brittle AppKit window plumbing.
                 uiState.mainSection = .settings
+                // The License card (with Buy) lives on the Advanced tab —
+                // landing on Set up would hide the purchase path at the one
+                // moment the user is ready to pay.
+                uiState.settingsTab = .advanced
             }
         )
     }

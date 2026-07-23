@@ -141,9 +141,7 @@ struct MainWindowView: View {
     }
 
     private var triggerLabel: String {
-        model.settings.triggerKind == .combo
-            ? model.settings.hotkey.displayString
-            : model.settings.singleKeyChoice.displayName
+        model.settings.activeTriggerLabel
     }
 
     private var modelReady: Bool {

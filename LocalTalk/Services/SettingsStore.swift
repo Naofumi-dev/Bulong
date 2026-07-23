@@ -47,6 +47,13 @@ final class SettingsStore {
         didSet { defaults.set(triggerKind.rawValue, forKey: "triggerKind") }
     }
 
+    /// The trigger the user actually presses today. Any UI teaching a hotkey
+    /// must use this — showing the combo while the default trigger is a
+    /// single key teaches a shortcut that does nothing.
+    var activeTriggerLabel: String {
+        triggerKind == .combo ? hotkey.displayString : singleKeyChoice.displayName
+    }
+
     var singleKeyChoice: SingleKeyChoice {
         didSet { defaults.set(singleKeyChoice.rawValue, forKey: "singleKeyChoice") }
     }

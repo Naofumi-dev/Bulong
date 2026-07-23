@@ -24,9 +24,27 @@ final class LicenseVerifierTests: XCTestCase {
         XCTAssertEqual(verifier().verify("a."), .failure(.malformed))
         XCTAssertEqual(verifier().verify(".b"), .failure(.malformed))
         XCTAssertEqual(verifier().verify("a.b.c"), .failure(.malformed))     // exactly 3 parts
-        // Surrounding whitespace / tabs are not part of a valid token.
-        XCTAssertEqual(verifier().verify(" \(LicenseFixtures.validToken) "), .failure(.malformed))
-        XCTAssertEqual(verifier().verify("\t\(LicenseFixtures.validToken)"), .failure(.malformed))
+    }
+
+    func testWhitespaceInPastedTokenIsTolerated() {
+        // Plain-text email clients hard-wrap the ~250-char key at ~78 columns;
+        // base64url never contains whitespace, so stripping it is always safe.
+        // A paying customer's wrapped paste MUST activate.
+        let token = LicenseFixtures.validToken
+        // Surrounding whitespace (sloppy select-all copy).
+        guard case .success = verifier().verify(" \(token) \n") else {
+            return XCTFail("surrounding whitespace must be tolerated")
+        }
+        // Hard-wrapped: a newline every 60 chars, like a text/plain mail body.
+        var wrapped = ""
+        for (i, ch) in token.enumerated() {
+            if i > 0 && i % 60 == 0 { wrapped.append("\n") }
+            wrapped.append(ch)
+        }
+        guard case .success(let lic) = verifier().verify(wrapped) else {
+            return XCTFail("hard-wrapped token must verify")
+        }
+        XCTAssertEqual(lic.name, LicenseFixtures.validName)
     }
 
     func testUnreadablePayloadRejected() {

@@ -243,6 +243,73 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(model.history.entries.isEmpty)
     }
 
+    func testConcurrentTriggersStartExactlyOneRecording() async throws {
+        // Two triggers racing across the engine.isReady suspension must not
+        // both start audio — a second installTap on the same bus is an
+        // uncatchable crash in production.
+        let engine = FakeEngine()
+        engine.readyDelayMs = 50
+        let (model, audio) = makeModel(engine: engine)
+
+        async let first: Void = model.toggleDictation()
+        async let second: Void = model.toggleDictation()
+        _ = await (first, second)
+
+        XCTAssertEqual(audio.startCount, 1, "exactly one audio capture may start")
+        guard case .recording = model.state else {
+            return XCTFail("expected recording, got \(model.state)")
+        }
+        await model.cancelDictation()
+    }
+
+    func testCancelDoesNotClobberStateWithSpuriousFailure() async throws {
+        // Cancelling the pipeline ends its stream with nil (not
+        // CancellationError); the resumed task must NOT re-enter the
+        // no-speech failure branch and overwrite the post-cancel state.
+        let engine = FakeEngine()
+        let (model, audio) = makeModel(engine: engine)
+
+        await model.toggleDictation()
+        audio.emitSilence(buffers: 1)
+        await model.cancelDictation()
+
+        // Let the cancelled pipeline task resume and (incorrectly) finish.
+        for _ in 0..<20 { await Task.yield() }
+        try? await Task.sleep(for: .milliseconds(50))
+
+        XCTAssertEqual(model.state, .idle,
+                       "state must stay .idle after cancel, not flip to .failed")
+    }
+
+    func testTooShortReasonSurvivesPipelineTeardown() async throws {
+        // The too-short cancel sets .failed("Too short…"); the dying pipeline
+        // must not replace it with "No speech detected."
+        let engine = FakeEngine()
+        let audio = AudioStub()
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in engine },
+            audioStart: { audio.start() },
+            audioStop: { audio.stop() },
+            insertText: { _ in .insertedDirectly },
+            frontmostAppName: { "TextEdit" },
+            minimumDuration: 10,     // guarantees the too-short path
+            watchdogSeconds: 5
+        )
+
+        await model.toggleDictation()
+        await model.toggleDictation()   // instant stop → too short
+
+        for _ in 0..<20 { await Task.yield() }
+        try? await Task.sleep(for: .milliseconds(50))
+
+        guard case .failed(let message) = model.state else {
+            return XCTFail("expected failed(too short), got \(model.state)")
+        }
+        XCTAssertTrue(message.contains("Too short"), "got: \(message)")
+    }
+
     func testWatchdogDeadlineScalesWithRecordingLength() {
         // Short recordings keep the base; long ones get proportional headroom
         // so a legitimate 60s+ dictation isn't killed mid-transcription.

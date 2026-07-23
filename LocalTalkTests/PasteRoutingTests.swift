@@ -1,8 +1,27 @@
+import Carbon.HIToolbox
 import XCTest
 @testable import Bulong
 
 @MainActor
 final class PasteRoutingTests: XCTestCase {
+    // The synthesized Cmd-V must target whatever key produces "v" on the
+    // CURRENT layout (9 is only the QWERTY position — it's "k" on Dvorak).
+    func testKeyCodeForVResolvesOnCurrentLayout() {
+        let code = PasteService.keyCodeForV()
+        XCTAssertLessThan(code, 128)
+        // On a QWERTY-family layout the answer is the classic 9; on anything
+        // else it must simply be a valid resolved code (asserted above).
+        let qwertyFamilies = ["com.apple.keylayout.US", "com.apple.keylayout.ABC",
+                              "com.apple.keylayout.British", "com.apple.keylayout.Australian"]
+        if let source = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+           let idPtr = TISGetInputSourceProperty(source, kTISPropertyInputSourceID) {
+            let id = Unmanaged<CFString>.fromOpaque(idPtr).takeUnretainedValue() as String
+            if qwertyFamilies.contains(id) {
+                XCTAssertEqual(code, 9)
+            }
+        }
+    }
+
     // A native, editable focus where the AX write lands: direct insert.
     func testNativeEditableAXWriteSucceedsInsertsDirectly() {
         let route = PasteService.insertionRoute(

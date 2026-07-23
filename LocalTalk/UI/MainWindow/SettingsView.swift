@@ -17,8 +17,7 @@ struct SettingsView: View {
     @FocusState private var keyFieldFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private enum SettingsTab: Hashable { case setup, advanced }
-    @State private var tab: SettingsTab = .setup
+    @Bindable private var uiState = AppComposition.uiState
 
     private let languages: [(code: String, name: String)] = [
         ("en", "English"), ("tl", "Filipino (Tagalog)"), ("es", "Spanish"), ("fr", "French"),
@@ -31,9 +30,9 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 SegmentedChoice(options: [(label: "Set up", value: SettingsTab.setup),
                                           (label: "Advanced", value: .advanced)],
-                                selection: $tab)
+                                selection: $uiState.settingsTab)
                     .frame(maxWidth: .infinity, alignment: .center)
-                if tab == .setup {
+                if uiState.settingsTab == .setup {
                     setupHero
                     permissionsCard
                     hotkeyCard

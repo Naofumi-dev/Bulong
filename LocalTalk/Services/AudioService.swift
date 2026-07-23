@@ -39,6 +39,12 @@ final class AudioService {
     }
 
     func start() throws -> AsyncStream<AVAudioPCMBuffer> {
+        // A second installTap on a bus that already has one raises an
+        // uncatchable ObjC exception — refuse loudly instead of crashing.
+        guard !isRunning else {
+            throw AudioError.engineStartFailed("a recording is already in progress")
+        }
+
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
             break

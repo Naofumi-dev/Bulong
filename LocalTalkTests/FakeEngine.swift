@@ -15,11 +15,17 @@ final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
     ]
     var scriptedError: Error?
     var ready = true
+    /// When > 0, isReady suspends this long first — reproduces the cold-launch
+    /// window where a second trigger can race the first start.
+    var readyDelayMs: UInt64 = 0
     private(set) var cancelCalled = false
     private(set) var buffersReceived = 0
 
     func isReady(for options: TranscriptionOptions) async -> Bool {
-        ready
+        if readyDelayMs > 0 {
+            try? await Task.sleep(for: .milliseconds(readyDelayMs))
+        }
+        return ready
     }
 
     func prepare(

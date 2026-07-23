@@ -22,6 +22,10 @@ struct LicenseVerifier {
     }
 
     func verify(_ token: String) -> Result<License, LicenseError> {
+        // Plain-text email clients hard-wrap the ~250-char key; base64url and
+        // "." never contain whitespace, so stripping ALL of it (not just the
+        // ends) is always safe and rescues a wrapped paste.
+        let token = token.filter { !$0.isWhitespace }
         let parts = token.split(separator: ".", omittingEmptySubsequences: false)
         guard parts.count == 2,
               let payload = Self.b64urlDecode(String(parts[0])),

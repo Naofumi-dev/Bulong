@@ -155,7 +155,7 @@ private struct EmptyHistoryView: View {
                 .font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
             HStack(spacing: 6) {
                 Text("Press").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
-                HotkeyChip(text: model.settings.hotkey.displayString)
+                HotkeyChip(text: model.settings.activeTriggerLabel)
                 Text("in any app to dictate").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
             }
             Button {

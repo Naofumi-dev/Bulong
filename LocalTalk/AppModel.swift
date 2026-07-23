@@ -44,6 +44,7 @@ final class AppModel {
     private var dictationTask: Task<Void, Never>?
     private var watchdogTask: Task<Void, Never>?
     private var recordingStarted: Date?
+    private var isStarting = false
     private var clipboardOnlyRun = false
     private var targetAppName: String = ""
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
@@ -91,6 +92,14 @@ final class AppModel {
     }
 
     private func startDictation() async {
+        // Reentrancy guard: `state` stays .idle across the engine.isReady
+        // suspension below, so a second trigger arriving in that window would
+        // pass toggleDictation's state check and start a second audio tap —
+        // installTap on a bus that already has one is an uncatchable crash.
+        guard !isStarting else { return }
+        isStarting = true
+        defer { isStarting = false }
+
         guard canDictate() else {
             onDictationBlocked()
             return
@@ -215,6 +224,14 @@ final class AppModel {
                     finalText = text
                 }
             }
+
+            // Cancelling this task makes the update stream's `next()` return
+            // nil — it does NOT throw CancellationError — so a cancelled run
+            // falls out of the loop with no final text. cancelDictation has
+            // already set the intended state (.idle, or .failed with its own
+            // reason); bail before the empty-transcript guard clobbers it
+            // with a spurious "No speech detected."
+            if Task.isCancelled { return }
 
             guard let text = finalText?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
                 finish(.failed(message: "No speech detected."))

@@ -2,10 +2,15 @@ import SwiftUI
 
 /// Shared UI state that outlives individual scenes (e.g. which main-window
 /// pane is selected, so the popover can deep-link into History or Settings).
+enum SettingsTab: Hashable { case setup, advanced }
+
 @MainActor
 @Observable
 final class UIState {
     var mainSection: MainSection = .history
+    /// Shared so the trial-expired path can deep-link straight to the
+    /// Advanced tab, where the License card (and its Buy button) lives.
+    var settingsTab: SettingsTab = .setup
 }
 
 /// Keycap-styled hotkey chip, mono type. The brand's rendering of a shortcut.

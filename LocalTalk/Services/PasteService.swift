@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import Carbon.HIToolbox
 
 @MainActor
 final class PasteService {
@@ -236,8 +237,9 @@ final class PasteService {
         Self.setClipboard(text)
 
         let source = CGEventSource(stateID: .combinedSessionState)
-        let vDown = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true)
-        let vUp = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: false)
+        let vKey = Self.keyCodeForV()
+        let vDown = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: true)
+        let vUp = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: false)
         vDown?.flags = .maskCommand
         vUp?.flags = .maskCommand
         vDown?.post(tap: .cghidEventTap)
@@ -255,5 +257,38 @@ final class PasteService {
     private static func setClipboard(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    /// The virtual keycode that produces "v" on the CURRENT keyboard layout.
+    /// Keycode 9 is the PHYSICAL QWERTY-V position, not the character — on
+    /// Dvorak it types "k", so a hardcoded 9 sends Cmd-K to the target app
+    /// (Slack's channel switcher) instead of pasting.
+    static func keyCodeForV() -> CGKeyCode {
+        let fallback: CGKeyCode = 9
+        guard let source = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+              let layoutPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else {
+            return fallback
+        }
+        let layoutData = Unmanaged<CFData>.fromOpaque(layoutPtr).takeUnretainedValue() as Data
+        let target = UniChar(UnicodeScalar("v").value)
+        return layoutData.withUnsafeBytes { raw -> CGKeyCode in
+            guard let layout = raw.bindMemory(to: UCKeyboardLayout.self).baseAddress else {
+                return fallback
+            }
+            for code in 0..<CGKeyCode(128) {
+                var deadKeyState: UInt32 = 0
+                var chars = [UniChar](repeating: 0, count: 4)
+                var length = 0
+                let err = UCKeyTranslate(
+                    layout, UInt16(code), UInt16(kUCKeyActionDown), 0,
+                    UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit),
+                    &deadKeyState, chars.count, &length, &chars
+                )
+                if err == noErr, length == 1, chars[0] == target {
+                    return code
+                }
+            }
+            return fallback
+        }
     }
 }

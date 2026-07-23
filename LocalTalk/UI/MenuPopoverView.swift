@@ -51,7 +51,7 @@ struct MenuPopoverView: View {
                 Text(isRecording ? "Stop and transcribe" : "Start dictation")
                     .font(Theme.Fonts.bodyStrong)
                 Spacer()
-                if !isRecording { HotkeyChip(text: model.settings.hotkey.displayString) }
+                if !isRecording { HotkeyChip(text: model.settings.activeTriggerLabel) }
             }
             // Fixed content height: the chip is taller than bare text, and the
             // primary button must not change size between states.
