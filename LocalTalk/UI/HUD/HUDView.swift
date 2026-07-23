@@ -33,7 +33,7 @@ struct HUDView: View {
                     DoneBadge(clipboardOnly: doneIsClipboardOnly)
                         .transition(reduceMotion ? .opacity : .scale(scale: 0.5).combined(with: .opacity))
                 } else {
-                    OrbView(level: level, state: state, reduceMotion: reduceMotion)
+                    LogoTile(level: level, state: state, reduceMotion: reduceMotion)
                 }
             }
             .frame(width: 34, height: 34)
@@ -76,12 +76,31 @@ struct HUDView: View {
         .padding(.horizontal, 16)
         .frame(width: Self.hudSize.width, height: Self.hudSize.height)
         .background(
-            LinearGradient(colors: [Theme.hudShellTop, Theme.hudShellBottom],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .opacity(0.96)
+            // Smoked glass: a REAL blur of whatever is behind the panel
+            // (the NSPanel is clear + non-opaque), tinted toward navy, with
+            // the reference art's teal light pooling along the bottom rim.
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                LinearGradient(colors: [Theme.hudTintTop, Theme.hudTintBottom],
+                               startPoint: .top, endPoint: .bottom)
+                VStack(spacing: 0) {
+                    Spacer()
+                    LinearGradient(colors: [.clear, Theme.hudRimGlow],
+                                   startPoint: .top, endPoint: .bottom)
+                        .frame(height: 12)
+                        .blur(radius: 5)
+                }
+            }
         )
+        .environment(\.colorScheme, .dark)
         .overlay(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous)
-            .stroke(isFailed ? Theme.failure.opacity(0.6) : Theme.hudRim, lineWidth: 1))
+            .stroke(
+                isFailed
+                    ? AnyShapeStyle(Theme.failure.opacity(0.6))
+                    : AnyShapeStyle(LinearGradient(
+                        colors: [Theme.hudRim, Theme.hudRim.opacity(0.1), Theme.hudRimGlow],
+                        startPoint: .top, endPoint: .bottom)),
+                lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusHUD, style: .continuous))
         .shadow(color: Theme.hudShadow, radius: 22, y: 12)
         .overlay(ActiveAlwaysHoverTracker { hovering = $0 })
@@ -196,70 +215,39 @@ struct DoneBadge: View {
     }
 }
 
-/// The living orb: a mint radial core whose glow breathes with the live level.
-/// Silence reads as silence — below the threshold it settles to a calm minimum.
-struct OrbView: View {
+/// The whisper-mark tile (the reference art's left glass tile): the brand
+/// icon with a teal glow that breathes with the live level while listening.
+/// Silence reads as silence — the glow settles to a calm minimum.
+struct LogoTile: View {
     let level: Float
     let state: DictationState
     let reduceMotion: Bool
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: paused)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let energy = energyValue(t: t)
-            let bodySize = 16 + 5 * energy
-            ZStack {
-                Circle()
-                    .fill(RadialGradient(
-                        colors: [color.opacity(0.45 * energy), .clear],
-                        center: .center, startRadius: 2, endRadius: 17 + 10 * energy))
-                Circle()
-                    .fill(RadialGradient(
-                        colors: [Color.white.opacity(0.85), color, color.opacity(0.25)],
-                        center: UnitPoint(x: 0.38, y: 0.35), startRadius: 0, endRadius: 11))
-                    .frame(width: bodySize, height: bodySize)
-                    .shadow(color: color.opacity(0.35 * energy), radius: 5, y: 2)
-                // Sphere cues: a top-lit rim and a specular catchlight give the
-                // flat gradient real volume — the HUD's echo of the 3D app icon.
-                Circle()
-                    .stroke(
-                        LinearGradient(colors: [Color.white.opacity(0.5), .clear],
-                                       startPoint: .top, endPoint: .bottom),
-                        lineWidth: 0.8)
-                    .frame(width: bodySize, height: bodySize)
-                Circle()
-                    .fill(Color.white.opacity(0.85))
-                    .frame(width: 3.2, height: 3.2)
-                    .offset(x: -bodySize * 0.17, y: -bodySize * 0.2)
-                    .blur(radius: 0.4)
-            }
-            // The orb scaling with the live level is motion; under Reduce
-            // Motion it still tracks the level but snaps instead of breathing.
+        let energy = CGFloat(min(max(level, 0), 1))
+        Image("MenuIcon")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 34, height: 34)
+            .clipShape(RoundedRectangle(cornerRadius: 8.5, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 8.5, style: .continuous)
+                .stroke(
+                    LinearGradient(colors: [Color.white.opacity(0.4), Color.white.opacity(0.08)],
+                                   startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1))
+            .shadow(color: glowColor.opacity(0.3 + 0.5 * Double(energy)),
+                    radius: 5 + 9 * energy, y: 1)
+            .saturation(isFailed ? 0.4 : 1)
+            // The glow tracking the live level is motion; under Reduce Motion
+            // it still tracks but snaps instead of breathing.
             .animation(reduceMotion ? nil : Theme.easeFast, value: energy)
-        }
     }
 
-    private var paused: Bool {
-        if reduceMotion { return true }
-        switch state { case .idle, .failed: return true; default: return false }
-    }
+    private var isFailed: Bool { if case .failed = state { true } else { false } }
 
-    private var color: Color {
+    private var glowColor: Color {
         if case .failed = state { return Theme.failure }
         return Theme.accent
-    }
-
-    /// Recording: live level (flat when below threshold). Transcribing/inserting: slow steady pulse.
-    private func energyValue(t: TimeInterval) -> CGFloat {
-        switch state {
-        case .recording:
-            let live = level < HUDView.silenceThreshold ? 0 : level
-            return CGFloat(0.25 + 0.75 * live)
-        case .transcribing, .inserting:
-            return reduceMotion ? 0.5 : 0.4 + 0.2 * CGFloat(abs(sin(t * 2.2)))
-        case .failed: return 0.2
-        case .idle: return 0.3
-        }
     }
 }
 
@@ -294,6 +282,9 @@ struct SmoothedWaveform: View {
                     RoundedRectangle(cornerRadius: 2)
                         .fill(barStyle(i))
                         .frame(width: 4, height: height(i, t: context.date.timeIntervalSinceReferenceDate))
+                        .shadow(color: i >= 2 && i <= 4 && isRecording
+                                    ? Theme.accent.opacity(0.55) : .clear,
+                                radius: 4)
                 }
             }
         }
