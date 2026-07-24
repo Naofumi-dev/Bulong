@@ -18,7 +18,7 @@ struct MenuPopoverView: View {
             footer
         }
         .padding(14)
-        .frame(width: 300)
+        .frame(width: 324)
         .background(VisualEffectBackground(material: .popover).overlay(Theme.ink0))
         .preferredColorScheme(.light)
         .tint(Theme.accent)
@@ -51,7 +51,12 @@ struct MenuPopoverView: View {
                 Text(isRecording ? "Stop and transcribe" : "Start dictation")
                     .font(Theme.Fonts.bodyStrong)
                 Spacer()
-                if !isRecording { HotkeyChip(text: model.settings.activeTriggerLabel) }
+                if !isRecording {
+                    // The chip is the teachable moment — it must never truncate.
+                    HotkeyChip(text: model.settings.activeTriggerLabel)
+                        .fixedSize()
+                        .layoutPriority(1)
+                }
             }
             // Fixed content height: the chip is taller than bare text, and the
             // primary button must not change size between states.

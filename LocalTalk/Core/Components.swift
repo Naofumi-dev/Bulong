@@ -45,6 +45,11 @@ struct VisualEffectBackground: NSViewRepresentable {
         view.material = material
         view.blendingMode = .behindWindow
         view.state = .active
+        // Bulong is light-glass by design. AppKit resolves materials against
+        // the SYSTEM appearance, so on a dark-mode Mac the popover/sidebar
+        // rendered as a flat dark-grey slab under our navy light-theme text.
+        // Pin the material itself to the light appearance.
+        view.appearance = NSAppearance(named: .aqua)
         return view
     }
 
