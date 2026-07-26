@@ -34,6 +34,25 @@ sleep 1
 
 rm -rf "$DEST"
 ditto "$BUILT" "$DEST"
+
+# Re-sign with a STABLE local identity so macOS permission grants survive
+# rebuilds. Ad-hoc signing gives every build a new cdhash, and TCC binds to it,
+# so mic/Accessibility had to be re-granted after every single build — and the
+# System Settings toggle would sit there looking enabled while the app was
+# actually denied. This identity's designated requirement is
+#   identifier "com.armageddonvivas.Bulong" and certificate leaf = H"<cert>"
+# which does not change when the binary does. Create it once with:
+#   script/make_dev_signing_identity.sh
+# Release builds are unaffected — they use the real Developer ID (release.sh).
+DEV_IDENTITY="Bulong Dev Signing"
+if security find-certificate -c "$DEV_IDENTITY" >/dev/null 2>&1; then
+  codesign --force --deep --sign "$DEV_IDENTITY" "$DEST" >/dev/null 2>&1 \
+    && echo "Signed with '$DEV_IDENTITY' — permissions persist across rebuilds." \
+    || echo "WARNING: signing with '$DEV_IDENTITY' failed; falling back to ad-hoc (permissions will reset)."
+else
+  echo "NOTE: no '$DEV_IDENTITY' identity — ad-hoc build, so macOS will reset permissions."
+  echo "      Run script/make_dev_signing_identity.sh once to stop that."
+fi
 # Delete the DerivedData product after installing: Spotlight indexes it and
 # users end up seeing two or three "Bulong" apps in search. One copy on disk.
 rm -rf "$BUILT"
