@@ -175,6 +175,13 @@ enum AppComposition {
 
     static func wireHotkey(to model: AppModel) {
         appModel = model
+        // A device change kills the tap; end the run visibly instead of
+        // leaving a "Listening" HUD over a mic that is no longer capturing.
+        audio.onInterrupted = { [weak model] reason in
+            Task { @MainActor [weak model] in
+                await model?.audioInterrupted(reason: reason)
+            }
+        }
         paste.isOnboardingActive = { onboardingWindow?.isVisible == true }
         showOnboardingIfNeeded(for: model)
         prewarmCurrentEngine()

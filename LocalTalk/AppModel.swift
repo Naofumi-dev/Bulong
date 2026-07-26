@@ -193,6 +193,21 @@ final class AppModel {
         startWatchdog(recordedSeconds: Date().timeIntervalSince(started))
     }
 
+    /// The capture device disappeared mid-recording (AirPods connected,
+    /// headphones unplugged, input switched). The tap is already dead, so the
+    /// only honest options are to end the run visibly or to keep showing a
+    /// "Listening" HUD over silence. End it.
+    func audioInterrupted(reason: String) async {
+        switch state {
+        case .recording:
+            await cancelDictation(reason: reason)
+        case .idle, .failed, .transcribing, .inserting:
+            // Not capturing any more — transcription of what we already have
+            // should be allowed to finish.
+            break
+        }
+    }
+
     func cancelDictation(reason: String = "") async {
         statusDetail = ""
         audioStop()

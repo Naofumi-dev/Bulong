@@ -16,9 +16,18 @@ final class AudioService {
     private var noiseFloor: Float = 0.45
     private var speechPeak: Float = 0.7
 
+    /// Fires when the hardware configuration changes mid-recording (AirPods
+    /// connect, headphones unplug, input switched in System Settings). macOS
+    /// stops the engine and drops the tap, so the recording is over whether we
+    /// like it or not — the caller must end it visibly instead of leaving a
+    /// live-looking HUD over a dead tap.
+    var onInterrupted: (@MainActor (String) -> Void)?
+    private var configObserver: NSObjectProtocol?
+
     enum AudioError: LocalizedError {
         case micPermissionDenied
         case micPermissionPending
+        case noInputDevice
         case engineStartFailed(String)
 
         var errorDescription: String? {
@@ -27,10 +36,20 @@ final class AudioService {
                 return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
             case .micPermissionPending:
                 return "macOS is asking for microphone access — click Allow, then dictate again."
+            case .noInputDevice:
+                return "No microphone found. Connect one (or wake your audio interface) and try again."
             case .engineStartFailed(let message):
                 return "Couldn't start audio input: \(message)"
             }
         }
+    }
+
+    /// A usable capture format. A missing/asleep input device reports 0 Hz and
+    /// 0 channels, and `installTap` with that format raises an UNCATCHABLE
+    /// ObjC exception — so this must be checked before the tap goes on.
+    /// Pure so it is unit-testable without hardware.
+    nonisolated static func isUsableInputFormat(sampleRate: Double, channelCount: UInt32) -> Bool {
+        sampleRate > 0 && channelCount > 0
     }
 
     static func requestMicPermission() async -> Bool {
@@ -65,6 +84,10 @@ final class AudioService {
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
+        guard Self.isUsableInputFormat(sampleRate: format.sampleRate,
+                                       channelCount: format.channelCount) else {
+            throw AudioError.noInputDevice
+        }
         let (stream, continuation) = AsyncStream.makeStream(
             of: AVAudioPCMBuffer.self,
             bufferingPolicy: .unbounded
@@ -79,11 +102,15 @@ final class AudioService {
         // Touch `self` only inside the MainActor hop for the UI level update.
         noiseFloor = 0.45
         speechPeak = 0.7
+        level = 0
         let tap: @Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void = { buffer, _ in
             continuation.yield(buffer)
             let rms = Self.rms(of: buffer)
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                // Hops enqueued before stop() run after it, so without this
+                // guard a late buffer resurrects `level` and freezes the HUD
+                // glow at speech brightness through the whole transcription.
+                guard let self, self.isRunning else { return }
                 var floor = self.noiseFloor
                 var peak = self.speechPeak
                 let norm = Self.adaptiveNormalize(raw: rms, floor: &floor, peak: &peak)
@@ -103,11 +130,29 @@ final class AudioService {
             throw AudioError.engineStartFailed(error.localizedDescription)
         }
 
+        // A device change tears down the tap underneath us. Watch for it only
+        // while recording so an idle app isn't reacting to every route change.
+        configObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: engine,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.isRunning else { return }
+                self.stop()
+                self.onInterrupted?("The audio device changed — dictation stopped.")
+            }
+        }
+
         isRunning = true
         return stream
     }
 
     func stop() {
+        if let configObserver {
+            NotificationCenter.default.removeObserver(configObserver)
+            self.configObserver = nil
+        }
         guard isRunning else {
             continuation?.finish()
             continuation = nil
@@ -130,12 +175,18 @@ final class AudioService {
         if raw < floor {
             floor += (raw - floor) * 0.25
         } else {
-            // Rising slowly enough that bursty speech can't drag the floor up
-            // (every between-word dip pulls it straight back down), but fast
-            // enough that a genuinely louder room is absorbed in a few seconds.
-            floor += (raw - floor) * 0.02
+            // Must be slow enough that SUSTAINED speech can't teach the floor
+            // to swallow itself. At ~11.7 buffers/s, 0.02 flatlined the meter
+            // to 0.00 within ~10s of continuous talking (bursty speech hid it,
+            // because word gaps pull the floor back down). 0.005 holds speech
+            // at ~0.78 through 8s and still absorbs a genuinely louder room
+            // (settling a no-speech noisy room to ~0.01 within 20s).
+            floor += (raw - floor) * 0.005
         }
-        peak = max(raw, max(peak * 0.995, floor + 0.18))
+        // Decay fast enough that one transient doesn't deaden the meter: a
+        // cough spikes the peak, and at 0.995 (~12s half-life) every following
+        // word read ~35% for 9s+. 0.98 recovers in about two seconds.
+        peak = max(raw, max(peak * 0.98, floor + 0.18))
         let span = max(peak - floor, 0.18)
         return max(0, min(1, (raw - floor - 0.05) / span))
     }

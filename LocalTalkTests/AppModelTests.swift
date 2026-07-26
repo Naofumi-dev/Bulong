@@ -338,6 +338,49 @@ final class AppModelTests: XCTestCase {
         await model.cancelDictation()
     }
 
+    func testAudioInterruptionEndsTheRecordingVisibly() async throws {
+        // AirPods connect mid-sentence: macOS tears down the tap. The app must
+        // NOT keep showing "Listening" over a dead mic.
+        let engine = FakeEngine()
+        let (model, audio) = makeModel(engine: engine)
+
+        await model.toggleDictation()
+        guard case .recording = model.state else { return XCTFail("expected recording") }
+
+        await model.audioInterrupted(reason: "The audio device changed — dictation stopped.")
+
+        guard case .failed(let message) = model.state else {
+            return XCTFail("expected a visible failure, got \(model.state)")
+        }
+        XCTAssertTrue(message.contains("audio device changed"), "got: \(message)")
+        XCTAssertFalse(audio.isRunning)
+    }
+
+    func testAudioInterruptionDoesNotKillAnInFlightTranscription() async throws {
+        // Once capture has stopped, a late device-change notification must not
+        // throw away a transcription that is already running.
+        let engine = FakeEngine()
+        let (model, audio) = makeModel(engine: engine)
+
+        await model.toggleDictation()
+        audio.emitSilence(buffers: 1)
+        await model.toggleDictation()          // -> .transcribing
+        await model.audioInterrupted(reason: "The audio device changed — dictation stopped.")
+        await model.waitForIdle()
+
+        XCTAssertEqual(model.history.entries.first?.text, "hello world")
+    }
+
+    func testUnusableInputFormatIsRejectedBeforeInstallingATap() {
+        // installTap with a 0-channel format is an uncatchable ObjC crash, so
+        // this guard is the only thing standing between a sleeping audio
+        // interface and a hard crash on the hotkey.
+        XCTAssertFalse(AudioService.isUsableInputFormat(sampleRate: 0, channelCount: 0))
+        XCTAssertFalse(AudioService.isUsableInputFormat(sampleRate: 48000, channelCount: 0))
+        XCTAssertFalse(AudioService.isUsableInputFormat(sampleRate: 0, channelCount: 2))
+        XCTAssertTrue(AudioService.isUsableInputFormat(sampleRate: 48000, channelCount: 1))
+    }
+
     func testWatchdogDeadlineScalesWithRecordingLength() {
         // Short recordings keep the base; long ones get proportional headroom
         // so a legitimate 60s+ dictation isn't killed mid-transcription.
