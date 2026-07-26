@@ -20,7 +20,7 @@ final class AppModelTests: XCTestCase {
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
             engineProvider: { _ in engine },
-            audioStart: { audio.start() },
+            audioStart: { try audio.start() },
             audioStop: { audio.stop() },
             insertText: { _ in .insertedDirectly },
             frontmostAppName: { "TextEdit" },
@@ -102,7 +102,7 @@ final class AppModelTests: XCTestCase {
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
             engineProvider: { _ in engine },
-            audioStart: { audio.start() },
+            audioStart: { try audio.start() },
             audioStop: { audio.stop() },
             captureTarget: { captured = true },
             insertText: { _ in .insertedDirectly },
@@ -128,7 +128,7 @@ final class AppModelTests: XCTestCase {
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
             engineProvider: { _ in engine },
-            audioStart: { audio.start() },
+            audioStart: { try audio.start() },
             audioStop: { audio.stop() },
             insertText: { text in
                 insertions.append(text)
@@ -188,7 +188,7 @@ final class AppModelTests: XCTestCase {
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
             engineProvider: { _ in engine },
-            audioStart: { audio.start() },
+            audioStart: { try audio.start() },
             audioStop: { audio.stop() },
             insertText: { _ in .insertedDirectly },
             frontmostAppName: { "TextEdit" },
@@ -208,7 +208,7 @@ final class AppModelTests: XCTestCase {
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
             engineProvider: { _ in engine },
-            audioStart: { audio.start() },
+            audioStart: { try audio.start() },
             audioStop: { audio.stop() },
             insertText: { _ in .insertedDirectly },
             frontmostAppName: { "TextEdit" },
@@ -290,7 +290,7 @@ final class AppModelTests: XCTestCase {
             settings: SettingsStore(defaults: defaults),
             history: HistoryStore(fileURL: tmpHistory),
             engineProvider: { _ in engine },
-            audioStart: { audio.start() },
+            audioStart: { try audio.start() },
             audioStop: { audio.stop() },
             insertText: { _ in .insertedDirectly },
             frontmostAppName: { "TextEdit" },
@@ -310,6 +310,34 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(message.contains("Too short"), "got: \(message)")
     }
 
+    func testEngineErrorWhileRecordingStopsTheMicAndDoesNotBrickDictation() async throws {
+        // An engine that fails while the mic is still live (corrupt model,
+        // CoreML load failure) must not leave the tap installed: the orange
+        // mic indicator would stay lit on a privacy-marketed app, and every
+        // later attempt would die on "a recording is already in progress".
+        let engine = FakeEngine()
+        engine.throwsBeforeConsumingAudio = true
+        engine.scriptedError = EngineError.engineFailure("model exploded")
+        let (model, audio) = makeModel(engine: engine)
+
+        await model.toggleDictation()
+        await model.waitForIdle()
+
+        guard case .failed = model.state else {
+            return XCTFail("expected failed, got \(model.state)")
+        }
+        XCTAssertFalse(audio.isRunning, "the mic must not stay hot after a pipeline error")
+
+        // And the app must still be usable — not soft-locked for the session.
+        engine.throwsBeforeConsumingAudio = false
+        engine.scriptedError = nil
+        await model.toggleDictation()
+        guard case .recording = model.state else {
+            return XCTFail("dictation bricked after an engine error: \(model.state)")
+        }
+        await model.cancelDictation()
+    }
+
     func testWatchdogDeadlineScalesWithRecordingLength() {
         // Short recordings keep the base; long ones get proportional headroom
         // so a legitimate 60s+ dictation isn't killed mid-transcription.
@@ -323,14 +351,25 @@ final class AppModelTests: XCTestCase {
 final class AudioStub {
     private var continuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
     private(set) var startCount = 0
+    /// Mirrors AudioService: a live tap until stop() runs. The real service
+    /// refuses a second start while running, so the stub must too — otherwise
+    /// tests can't see the "mic left hot" class of bug at all.
+    private(set) var isRunning = false
 
-    func start() -> AsyncStream<AVAudioPCMBuffer> {
+    struct AlreadyRunning: LocalizedError {
+        var errorDescription: String? { "a recording is already in progress" }
+    }
+
+    func start() throws -> AsyncStream<AVAudioPCMBuffer> {
+        guard !isRunning else { throw AlreadyRunning() }
         startCount += 1
+        isRunning = true
         return AsyncStream { self.continuation = $0 }
     }
 
     func stop() {
         continuation?.finish()
+        isRunning = false
     }
 
     func emitSilence(buffers: Int) {

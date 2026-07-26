@@ -14,6 +14,10 @@ final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
         .final("hello world"),
     ]
     var scriptedError: Error?
+    /// Throw WITHOUT consuming the audio stream first — reproduces an engine
+    /// that fails while the mic is still live (corrupt model, CoreML load
+    /// failure), which is the path that used to leave the tap installed.
+    var throwsBeforeConsumingAudio = false
     var ready = true
     /// When > 0, isReady suspends this long first — reproduces the cold-launch
     /// window where a second trigger can race the first start.
@@ -43,6 +47,11 @@ final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
         let uncheckedAudio = UncheckedAudioStream(stream: audio)
         return AsyncThrowingStream<TranscriptionUpdate, Error> { continuation in
             Task {
+                if self.throwsBeforeConsumingAudio {
+                    continuation.finish(throwing: self.scriptedError ?? EngineError.engineFailure("boom"))
+                    return
+                }
+
                 for await _ in uncheckedAudio.stream {
                     self.buffersReceived += 1
                 }

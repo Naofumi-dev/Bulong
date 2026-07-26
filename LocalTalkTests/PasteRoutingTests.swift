@@ -22,6 +22,32 @@ final class PasteRoutingTests: XCTestCase {
         }
     }
 
+    // Secure Input (Terminal's Secure Keyboard Entry, a focused password
+    // field) makes macOS swallow synthetic keystrokes. Reporting a successful
+    // paste there loses the transcript silently — the worst failure mode the
+    // app has, because the user believes the text landed.
+    func testSecureInputReportsClipboardFallbackInsteadOfFakeSuccess() {
+        guard let blocked = PasteService.secureInputResult(secureInputEnabled: true) else {
+            return XCTFail("secure input must not report a successful paste")
+        }
+        guard case .clipboardOnly(let reason) = blocked else {
+            return XCTFail("expected clipboardOnly, got \(blocked)")
+        }
+        XCTAssertTrue(reason.contains("⌘V"), "the fallback must tell the user how to paste: \(reason)")
+    }
+
+    func testNormalInputProceedsToCmdV() {
+        XCTAssertNil(PasteService.secureInputResult(secureInputEnabled: false))
+    }
+
+    // The synthesized chord is ⌘-V, so the keycode must come from the
+    // COMMAND-modified table. On "Dvorak - QWERTY ⌘" the unmodified table is
+    // Dvorak while the Command table is QWERTY, and asking the wrong one sends
+    // ⌘-Period (Cancel) to the target app instead of pasting.
+    func testKeyCodeResolvesAgainstTheCommandModifiedTable() {
+        XCTAssertEqual(PasteService.cmdModifierKeyState, 1, "cmdKey 0x0100 >> 8 == 0x01")
+    }
+
     // A native, editable focus where the AX write lands: direct insert.
     func testNativeEditableAXWriteSucceedsInsertsDirectly() {
         let route = PasteService.insertionRoute(

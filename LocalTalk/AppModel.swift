@@ -272,6 +272,14 @@ final class AppModel {
     }
 
     private func finish(_ newState: DictationState) {
+        // Single teardown point for EVERY pipeline exit. The success path has
+        // already stopped audio in stopRecording(), but an engine that throws
+        // while the mic is still live would otherwise leave the tap installed:
+        // the orange mic indicator stays lit, the unbounded buffer stream keeps
+        // filling with no consumer, and AudioService's !isRunning guard turns
+        // every later dictation into "a recording is already in progress".
+        // audioStop() is idempotent, so calling it here is always safe.
+        audioStop()
         watchdogTask?.cancel()
         watchdogTask = nil
         if case .failed = newState { statusDetail = "" }

@@ -263,6 +263,14 @@ final class PasteService {
 
         Self.setClipboard(text)
 
+        // Secure Input makes macOS drop synthetic keystrokes entirely, so the
+        // Cmd-V below would be swallowed and we'd still report success —
+        // silently losing the transcript. The text is on the clipboard, so say
+        // so honestly instead.
+        if let blocked = Self.secureInputResult(secureInputEnabled: IsSecureEventInputEnabled()) {
+            return blocked
+        }
+
         let source = CGEventSource(stateID: .combinedSessionState)
         let vKey = Self.keyCodeForV()
         let vDown = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: true)
@@ -281,6 +289,14 @@ final class PasteService {
         return .pastedViaCmdV
     }
 
+    /// Whether a Cmd-V paste can land at all. Secure Input is enabled by
+    /// Terminal's "Secure Keyboard Entry", password fields, and some password
+    /// managers — process-wide, for every app. Pure so the routing is testable.
+    nonisolated static func secureInputResult(secureInputEnabled: Bool) -> InsertionResult? {
+        guard secureInputEnabled else { return nil }
+        return .clipboardOnly(reason: "secure input is on — press ⌘V to paste")
+    }
+
     private static func setClipboard(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
@@ -290,6 +306,10 @@ final class PasteService {
     /// Keycode 9 is the PHYSICAL QWERTY-V position, not the character — on
     /// Dvorak it types "k", so a hardcoded 9 sends Cmd-K to the target app
     /// (Slack's channel switcher) instead of pasting.
+    /// UCKeyTranslate takes the modifier byte (bits 8–15 of the Carbon event
+    /// modifiers), so cmdKey (0x0100) becomes 0x01.
+    static let cmdModifierKeyState = UInt32((cmdKey >> 8) & 0xFF)
+
     static func keyCodeForV() -> CGKeyCode {
         let fallback: CGKeyCode = 9
         guard let source = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
@@ -306,8 +326,14 @@ final class PasteService {
                 var deadKeyState: UInt32 = 0
                 var chars = [UniChar](repeating: 0, count: 4)
                 var length = 0
+                // Resolve against the COMMAND-modified table, because that is
+                // the chord we are about to synthesize. On "Dvorak - QWERTY ⌘"
+                // the unmodified table is Dvorak while the Command table is
+                // QWERTY, so asking the unmodified table yields the key that
+                // sends ⌘-Period (Cancel) instead of ⌘-V. No-op on layouts
+                // where the two tables agree.
                 let err = UCKeyTranslate(
-                    layout, UInt16(code), UInt16(kUCKeyActionDown), 0,
+                    layout, UInt16(code), UInt16(kUCKeyActionDown), Self.cmdModifierKeyState,
                     UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit),
                     &deadKeyState, chars.count, &length, &chars
                 )
