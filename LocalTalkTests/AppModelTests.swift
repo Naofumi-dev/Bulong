@@ -196,9 +196,44 @@ final class AppModelTests: XCTestCase {
             onDictationBlocked: { blockedCalls += 1 }
         )
         await model.toggleDictation()
-        XCTAssertEqual(model.state, .idle)          // never entered recording
+
+        // Deliberate spec change: this used to assert .idle — i.e. a totally
+        // silent no-op. That is what made day 15 look like a broken app
+        // instead of a purchase prompt, and it also left the single-key
+        // trigger desynced because onStateChange never fired.
+        guard case .failed(let message) = model.state else {
+            return XCTFail("a blocked press must be visible, got \(model.state)")
+        }
+        XCTAssertTrue(message.lowercased().contains("trial"), "got: \(message)")
         XCTAssertEqual(blockedCalls, 1)
-        XCTAssertEqual(audio.startCount, 0)         // no audio captured
+        XCTAssertEqual(audio.startCount, 0)         // still never captures audio
+    }
+
+    func testBlockedPressStillNeverRecordsAndRecoversOncePaid() async {
+        var canDictate = false
+        let engine = FakeEngine()
+        let audio = AudioStub()
+        let model = AppModel(
+            settings: SettingsStore(defaults: defaults),
+            history: HistoryStore(fileURL: tmpHistory),
+            engineProvider: { _ in engine },
+            audioStart: { try audio.start() },
+            audioStop: { audio.stop() },
+            insertText: { _ in .insertedDirectly },
+            frontmostAppName: { "TextEdit" },
+            canDictate: { canDictate }
+        )
+
+        await model.toggleDictation()
+        XCTAssertEqual(audio.startCount, 0)
+
+        // Buying a license mid-session must unblock without a relaunch.
+        canDictate = true
+        await model.toggleDictation()
+        guard case .recording = model.state else {
+            return XCTFail("a purchased license must unblock dictation, got \(model.state)")
+        }
+        await model.cancelDictation()
     }
 
     func testAllowedWhenCanDictate() async {

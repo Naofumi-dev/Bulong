@@ -13,7 +13,9 @@ actor WhisperKitEngine: TranscriptionEngine {
     private var cancelled = false
 
     nonisolated func isReady(for options: TranscriptionOptions) async -> Bool {
-        FileManager.default.fileExists(atPath: ModelManager.whisperModelFolder.path)
+        // Same completeness check the UI uses: a partial download must not
+        // start a dictation that can only fail once the model loads.
+        ModelManager.whisperModelIsComplete()
     }
 
     func prepare(

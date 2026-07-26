@@ -101,6 +101,13 @@ final class AppModel {
         defer { isStarting = false }
 
         guard canDictate() else {
+            // Must move to a real state, not return silently. Day 15 used to
+            // be a total no-op — no HUD, no sound, no log — so the user
+            // concluded the app was broken and uninstalled at the exact
+            // moment they were meant to pay. Setting .failed also makes
+            // onStateChange fire, which resyncs the single-key trigger that
+            // otherwise stayed stuck believing it was still recording.
+            state = .failed(message: Self.trialEndedMessage)
             onDictationBlocked()
             return
         }
@@ -158,6 +165,8 @@ final class AppModel {
             self.clearStaleModelLoadStatus()
         }
     }
+
+    static let trialEndedMessage = "Trial ended — buy a license to keep dictating."
 
     private static let modelLoadPrefix = "Loading speech model"
 

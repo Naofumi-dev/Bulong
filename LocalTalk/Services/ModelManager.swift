@@ -30,17 +30,49 @@ final class ModelManager {
     }
 
     func refresh() {
-        if case .downloading = parakeetV2 {} else {
-            parakeetV2 = Self.parakeetExists(.v2) ? .ready : .notDownloaded
+        parakeetV2 = Self.nextState(current: parakeetV2, isComplete: Self.parakeetExists(.v2))
+        parakeetV3 = Self.nextState(current: parakeetV3, isComplete: Self.parakeetExists(.v3))
+        whisperLargeTurbo = Self.nextState(current: whisperLargeTurbo,
+                                           isComplete: Self.whisperModelIsComplete())
+    }
+
+    /// What a poll may and may not overwrite. `refresh()` runs every ~2s while
+    /// the main window is open, and it used to flatten `.failed` back to
+    /// `.notDownloaded` — so a download error and its Retry button vanished
+    /// about a second after appearing and the user never learned why it broke.
+    /// A failure now survives until the model is actually present or the user
+    /// retries. Pure so the policy is testable.
+    nonisolated static func nextState(current: DownloadState, isComplete: Bool) -> DownloadState {
+        if case .downloading = current { return current }
+        if isComplete { return .ready }
+        if case .failed = current { return current }
+        return .notDownloaded
+    }
+
+    /// Whether the Whisper download actually finished. Readiness used to be a
+    /// bare `fileExists` on the FOLDER, so a download killed by quit, sleep or
+    /// a dropped connection left a partial tree that reported "Ready" forever
+    /// with no way to repair it from inside the app — and every dictation
+    /// after that failed. This matters most for Tagalog, which routes to
+    /// Whisper. Checks the compiled CoreML bundles rather than the wrapper.
+    nonisolated static func whisperModelIsComplete(
+        at folder: URL = whisperModelFolder,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        let required = ["AudioEncoder.mlmodelc", "MelSpectrogram.mlmodelc", "TextDecoder.mlmodelc"]
+        for bundle in required {
+            let directory = folder.appendingPathComponent(bundle, isDirectory: true)
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory),
+                  isDirectory.boolValue,
+                  // The compiled-model marker: present only once the bundle is whole.
+                  fileManager.fileExists(atPath: directory.appendingPathComponent("coremldata.bin").path),
+                  let weights = try? fileManager.contentsOfDirectory(
+                      atPath: directory.appendingPathComponent("weights", isDirectory: true).path),
+                  !weights.isEmpty
+            else { return false }
         }
-        if case .downloading = parakeetV3 {} else {
-            parakeetV3 = Self.parakeetExists(.v3) ? .ready : .notDownloaded
-        }
-        if case .downloading = whisperLargeTurbo {} else {
-            whisperLargeTurbo = FileManager.default.fileExists(atPath: Self.whisperModelFolder.path)
-                ? .ready
-                : .notDownloaded
-        }
+        return true
     }
 
     nonisolated static func parakeetExists(_ version: AsrModelVersion) -> Bool {

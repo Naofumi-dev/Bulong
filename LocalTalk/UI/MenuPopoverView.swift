@@ -36,7 +36,7 @@ struct MenuPopoverView: View {
             Text("Bulong").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(Theme.textPrimary)
             Spacer()
             Text(stateText).font(Theme.Fonts.mono(12))
-                .foregroundStyle(isFailed || trialEnded ? Theme.failure : Theme.textSecondary)
+                .foregroundStyle(isFailed || trialUrgent ? Theme.failure : Theme.textSecondary)
                 .lineLimit(1)
                 .help(stateText)
         }
@@ -147,13 +147,33 @@ struct MenuPopoverView: View {
     private var isLive: Bool {
         switch model.state { case .recording, .transcribing, .inserting: true; default: false }
     }
+    /// The last stretch of the trial, when a countdown is useful rather than
+    /// nagging. Before this the popover just shows the language.
+    private var trialCountdown: Int? {
+        guard let days = license.daysLeft, days <= 7 else { return nil }
+        return days
+    }
+
+    /// Red once it's imminent — a countdown the user can still ignore for a
+    /// week shouldn't shout, but the last few days should.
+    private var trialUrgent: Bool {
+        if trialEnded { return true }
+        if let days = trialCountdown { return days <= 3 }
+        return false
+    }
+
     private var stateText: String {
         switch model.state {
-        case .idle: trialEnded ? "Trial ended — buy to continue" : "\(model.settings.language.uppercased()) · on-device"
-        case .recording: "Listening"
-        case .transcribing: "Transcribing…"
-        case .inserting: "Inserting…"
-        case .failed(let m): m
+        case .idle:
+            if trialEnded { return "Trial ended — buy to continue" }
+            if let days = trialCountdown {
+                return days <= 1 ? "Trial ends today" : "\(days) days left in trial"
+            }
+            return "\(model.settings.language.uppercased()) · on-device"
+        case .recording: return "Listening"
+        case .transcribing: return "Transcribing…"
+        case .inserting: return "Inserting…"
+        case .failed(let m): return m
         }
     }
     private func elapsed(from start: Date, now: Date) -> String {
