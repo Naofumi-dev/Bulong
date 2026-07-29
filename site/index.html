@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bulong — Filipino &amp; Taglish dictation for macOS, on-device</title>
-  <meta name="description" content="Press a key, talk, and clean text lands in any app — English, Tagalog, or Taglish mid-sentence. Runs entirely on your Mac: no cloud, no account, no telemetry. $29 once.">
+  <title>Bulong — Offline Filipino &amp; Taglish Dictation for Mac</title>
+  <meta name="description" content="Private Filipino and Taglish voice typing for Mac. Hold one shortcut and Bulong types into any app. Fully on-device, no account, $29 once.">
   <meta name="theme-color" content="#F3F7FA">
   <link rel="canonical" href="https://bulong.app/">
   <link rel="icon" type="image/png" href="assets/icon.png">
@@ -12,19 +12,59 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Bulong">
   <meta property="og:url" content="https://bulong.app/">
-  <meta property="og:title" content="Bulong — Filipino &amp; Taglish dictation for macOS, on-device">
+  <meta property="og:title" content="Bulong — Offline Filipino &amp; Taglish Dictation for Mac">
   <meta property="og:description" content="Dictation that speaks Filipino — and never leaves your Mac. Real, unedited Taglish results. No cloud, no account, $29 once.">
   <meta property="og:image" content="https://bulong.app/assets/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Bulong, private Filipino and Taglish dictation for Mac">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Bulong — Filipino &amp; Taglish dictation for macOS, on-device">
+  <meta name="twitter:title" content="Bulong — Offline Filipino &amp; Taglish Dictation for Mac">
   <meta name="twitter:description" content="Dictation that speaks Filipino — and never leaves your Mac. Real, unedited Taglish results. No cloud, no account, $29 once.">
   <meta name="twitter:image" content="https://bulong.app/assets/og.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
+  <meta name="twitter:image:alt" content="Bulong, private Filipino and Taglish dictation for Mac">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://bulong.app/#website",
+        "url": "https://bulong.app/",
+        "name": "Bulong",
+        "description": "Private, on-device Filipino and Taglish dictation for Mac",
+        "inLanguage": ["en", "tl"]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://bulong.app/#app",
+        "name": "Bulong",
+        "url": "https://bulong.app/",
+        "image": "https://bulong.app/assets/og.png",
+        "description": "Offline Filipino, Tagalog, English, and Taglish voice dictation that types into any Mac app.",
+        "operatingSystem": "macOS 14 or later on Apple Silicon",
+        "applicationCategory": "UtilitiesApplication",
+        "softwareVersion": "1.0",
+        "isPartOf": {"@id": "https://bulong.app/#website"},
+        "offers": {
+          "@type": "Offer",
+          "price": "29",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/PreOrder",
+          "url": "https://bulong.app/download.html"
+        },
+        "featureList": [
+          "Filipino and Taglish dictation",
+          "On-device transcription",
+          "Works in any Mac app",
+          "No account or subscription",
+          "Local searchable history"
+        ]
+      }
+    ]
+  }
+  </script>
   <noscript><style>@media (max-width:720px){.nav-links{display:flex!important}.nav-toggle{display:none!important}}</style></noscript>
 </head>
 <body>
@@ -32,7 +72,7 @@
   <header class="site-header">
     <nav class="nav wrap" data-nav aria-label="Primary">
       <a class="brand mono" href="#top" aria-label="Bulong home">
-        <img class="brand-img" src="assets/icon.png" alt="">
+        <img class="brand-img" src="assets/icon.png" alt="" width="26" height="26">
         <span>Bulong</span>
       </a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
@@ -45,33 +85,36 @@
       <div class="nav-links" id="nav-links">
         <ul>
           <li><a href="#features">Features</a></li>
-          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="/privacy.html">Privacy</a></li>
           <li><a href="#pricing">Pricing</a></li>
         </ul>
-        <a class="btn btn-primary nav-cta" href="download.html">Download</a>
+        <a class="btn btn-primary nav-cta" href="/download.html#notify">Get notified</a>
       </div>
     </nav>
   </header>
   <main id="main">
     <section class="hero" id="top">
       <div class="wrap hero-inner">
-        <img class="hero-mark" src="assets/brand-mark.png" alt="" width="150" height="154" aria-hidden="true">
-        <p class="badge mono"><span class="badge-dot" aria-hidden="true"></span>100% on-device · nothing uploaded, ever</p>
+        <img class="hero-mark" src="assets/brand-mark-300.webp" alt="" width="150" height="154"
+             fetchpriority="high" decoding="async" aria-hidden="true">
+        <p class="badge mono"><span class="badge-dot" aria-hidden="true"></span>Private, offline Taglish voice typing for Mac</p>
         <h1>Dictation that speaks <span class="mint">Filipino</span>&nbsp;— and never leaves your Mac.</h1>
-        <p class="hero-sub">Press a key, talk, and clean text lands in any app — English, Tagalog, or Taglish mid-sentence. Everything is transcribed on your Mac: no cloud, no account, no telemetry.</p>
+        <p class="hero-sub">Hold one shortcut, speak in English, Filipino, or Taglish, and Bulong types the result into Slack, Mail, Notes, or any Mac app. Your audio never leaves your computer.</p>
         <div class="hero-cta">
-          <a class="btn btn-primary" href="download.html">
+          <a class="btn btn-primary" href="/download.html#notify">
             <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>
+              <path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/>
             </svg>
-            Get it for Mac
+            Get notified at launch
           </a>
-          <span class="mono price">Launching soon — <span data-price>$29</span> once · free 14-day trial</span>
+          <a class="btn btn-ghost" href="#demo">Watch the 30-second demo</a>
         </div>
-        <p class="mono req">Apple Silicon · macOS 14+</p>
+        <p class="mono price launch-meta">14-day free trial · <span data-price>$29</span> once · no subscription</p>
+        <p class="mono req">Apple Silicon · macOS 14+ · launching soon</p>
         <figure class="hud" role="img" aria-label="Bulong dictation bar: the whisper-mark logo, the word Listening with the live partial transcript “…na-approve na ba yung leave”, an animated waveform, an on-device badge, and a Tagalog language badge.">
           <div class="hud-inner">
-            <img class="hud-logo" src="assets/brand-mark.png" alt="" aria-hidden="true">
+            <img class="hud-logo" src="assets/brand-mark-300.webp" alt="" width="47" height="48"
+                 decoding="async" aria-hidden="true">
             <div class="hud-text">
               <span class="hud-title">Listening</span>
               <span class="hud-partial mono">…na-approve na ba yung leave</span>
@@ -93,9 +136,13 @@
           <h2>Thirty seconds, start to finish.</h2>
           <p>Press a key, talk in Taglish, and watch the words land in the app you're using.</p>
         </div>
-        <video class="demo-video reveal" src="assets/bulong-demo.mp4?v=2" poster="assets/demo-poster.png?v=2"
-               autoplay muted loop playsinline
+        <video class="demo-video reveal" data-src="assets/bulong-demo.mp4?v=3" poster="assets/demo-poster-960.webp"
+               preload="none" controls muted loop playsinline aria-describedby="demo-transcript"
                aria-label="Bulong demo: the dictation bar listens to a Taglish sentence, transcribes it on-device, and types it into an app."></video>
+        <details class="demo-transcript" id="demo-transcript">
+          <summary>Read the demo description</summary>
+          <p>Bulong is activated with its keyboard shortcut. The dictation bar listens to a Taglish sentence, shows the partial transcript, and inserts the final text into the active Mac app. The speech-to-text processing happens entirely on the Mac.</p>
+        </details>
       </div>
     </section>
 
@@ -170,7 +217,7 @@
         </div>
         <div class="callout">
           <p>After the one-time model download, turn off your Wi-Fi and dictate &mdash; it still works. That's the whole point.</p>
-          <a href="privacy.html">See exactly what's handled &rarr;</a>
+          <a href="/privacy.html">See exactly what's handled &rarr;</a>
         </div>
       </div>
     </section>
@@ -289,7 +336,7 @@
       <div class="wrap">
         <div class="section-head reveal">
           <span class="eyebrow">Compared</span>
-          <h2>Why on-device wins.</h2>
+          <h2>Where Bulong differs.</h2>
         </div>
         <div class="table-scroll">
           <table class="compare-table">
@@ -307,7 +354,7 @@
                 <th scope="row">Where your audio goes</th>
                 <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>This Mac</td>
                 <td>Their servers</td>
-                <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>This Mac</td>
+                <td>On-device when supported; check settings</td>
               </tr>
               <tr>
                 <th scope="row">Price</th>
@@ -322,10 +369,10 @@
                 <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>No</td>
               </tr>
               <tr>
-                <th scope="row">Works offline</th>
+                <th scope="row">Works without an internet connection</th>
                 <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>Yes</td>
                 <td>No</td>
-                <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>Yes</td>
+                <td>Depends on language and settings</td>
               </tr>
               <tr>
                 <th scope="row">Filipino (Tagalog) &amp; Taglish</th>
@@ -334,10 +381,10 @@
                 <td>Varies</td>
               </tr>
               <tr>
-                <th scope="row">Remappable hotkey &amp; push-to-talk</th>
-                <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>Yes</td>
+                <th scope="row">Activation</th>
+                <td class="yes"><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>Custom shortcut; hold or toggle</td>
                 <td>Varies</td>
-                <td>No</td>
+                <td>Custom shortcut; toggle</td>
               </tr>
               <tr>
                 <th scope="row">History you can read and export</th>
@@ -348,7 +395,7 @@
             </tbody>
           </table>
         </div>
-        <p class="compare-foot">Apple has announced improved macOS dictation &mdash; launching English-only.</p>
+        <p class="compare-foot">Apple Dictation capabilities vary by macOS version, language, region, and settings. <a href="https://support.apple.com/guide/mac-help/mh40584/mac">Check Apple&rsquo;s current documentation.</a></p>
       </div>
     </section>
 
@@ -366,11 +413,41 @@
             <li><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>14-day full free trial</li>
             <li><svg class="check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4 4 10-10"/></svg>Free updates throughout 1.x</li>
           </ul>
-          <a class="btn btn-primary price-cta" href="download.html#buy">
-            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
-            Get Bulong
+          <a class="btn btn-primary price-cta" href="/download.html#notify">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+            Get notified at launch
           </a>
           <p class="price-note">No account. No recurring charge. Start with the free 14-day trial, buy only if you keep it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="guides">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Learn</span>
+          <h2>Choose dictation that fits how you actually speak.</h2>
+          <p>Plain-language guides to Taglish voice typing, private offline transcription, and the limits of built-in Mac dictation.</p>
+        </div>
+        <div class="resource-grid reveal-stagger">
+          <a class="resource-card card lift" href="/guides/taglish-dictation-for-mac.html">
+            <span class="eyebrow">Language</span>
+            <h3>Taglish dictation for Mac</h3>
+            <p>What code-switching changes, what accuracy to expect, and how to test it with your own voice.</p>
+            <span class="resource-link">Read the guide &rarr;</span>
+          </a>
+          <a class="resource-card card lift" href="/guides/offline-dictation-for-mac.html">
+            <span class="eyebrow">Privacy</span>
+            <h3>Offline dictation for Mac</h3>
+            <p>How on-device speech-to-text works and what to verify before trusting a dictation app.</p>
+            <span class="resource-link">Read the guide &rarr;</span>
+          </a>
+          <a class="resource-card card lift" href="/guides/bulong-vs-apple-dictation.html">
+            <span class="eyebrow">Comparison</span>
+            <h3>Bulong vs Apple Dictation</h3>
+            <p>Compare Taglish support, hotkeys, history, offline use, and the tradeoffs of each option.</p>
+            <span class="resource-link">Read the comparison &rarr;</span>
+          </a>
         </div>
       </div>
     </section>
@@ -422,34 +499,15 @@
       <div class="wrap">
         <div class="section-head reveal">
           <span class="eyebrow">Talk to us</span>
-          <h2>Questions? Want a walkthrough?</h2>
-          <p>Send a message or grab a time — either lands directly with the maker.</p>
+          <h2>Questions or accuracy reports?</h2>
+          <p>Email the maker directly. English and Taglish are both welcome.</p>
         </div>
-        <div class="contact-grid reveal-stagger">
-          <!-- GHL FORM: paste your widget URL into data-ghl-src, e.g.
-               https://api.leadconnectorhq.com/widget/form/YOUR_FORM_ID -->
-          <div class="card contact-card">
-            <h3>Message us</h3>
-            <p>Feature requests, accuracy reports, anything.</p>
-            <div data-ghl-src="" data-ghl-title="Contact form">
-              <div class="contact-fallback">
-                <p>The contact form is warming up — email works right now:</p>
-                <a class="btn btn-ghost" href="mailto:hello@bulong.app">hello@bulong.app</a>
-              </div>
-            </div>
+        <div class="card contact-card contact-card--single reveal">
+          <div>
+            <h3>Talk to the person building Bulong</h3>
+            <p>Send a feature request, a tricky Taglish sentence, or ask for a short walkthrough.</p>
           </div>
-          <!-- GHL CALENDAR: paste your widget URL into data-ghl-src, e.g.
-               https://api.leadconnectorhq.com/widget/booking/YOUR_CALENDAR_ID -->
-          <div class="card contact-card">
-            <h3>Book a 15-minute call</h3>
-            <p>A live walkthrough of Bulong, in English or Taglish.</p>
-            <div data-ghl-src="" data-ghl-title="Book a call">
-              <div class="contact-fallback">
-                <p>The calendar is warming up — ask for a slot by email:</p>
-                <a class="btn btn-ghost" href="mailto:hello@bulong.app?subject=Bulong%20walkthrough%20call">Request a time</a>
-              </div>
-            </div>
-          </div>
+          <a class="btn btn-ghost" href="mailto:hello@bulong.app?subject=Bulong%20question">Email the maker</a>
         </div>
       </div>
     </section>
@@ -458,9 +516,9 @@
       <div class="wrap cta-final-inner">
         <h2>Try it in Taglish. Then turn off your Wi-Fi.</h2>
         <div class="hero-cta">
-          <a class="btn btn-primary" href="download.html">
-            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
-            Get it for Mac
+          <a class="btn btn-primary" href="/download.html#notify">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+            Get notified at launch
           </a>
           <span class="mono price"><span data-price>$29</span> once · free 14-day trial</span>
         </div>
@@ -472,15 +530,16 @@
     <div class="wrap footer-inner">
       <div class="footer-brand">
         <a class="brand mono" href="#top" aria-label="Bulong home">
-          <img class="brand-img" src="assets/icon.png" alt="">
+          <img class="brand-img" src="assets/icon.png" alt="" width="26" height="26">
           <span>Bulong</span>
         </a>
         <p class="footer-tag">Private, on-device dictation for macOS &mdash; in English, Filipino, and Taglish.</p>
       </div>
       <nav class="footer-links" aria-label="Footer">
         <ul>
-          <li><a href="download.html#notify">Get notified</a></li>
-          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="/download.html#notify">Get notified</a></li>
+          <li><a href="/guides/taglish-dictation-for-mac.html">Guides</a></li>
+          <li><a href="/privacy.html">Privacy</a></li>
           <li><a href="mailto:hello@bulong.app">Contact</a></li>
         </ul>
       </nav>
@@ -490,6 +549,6 @@
       </div>
     </div>
   </footer>
-  <script src="main.js?v=5" defer></script>
+  <script src="main.js?v=6" defer></script>
 </body>
 </html>

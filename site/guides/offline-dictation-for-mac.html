@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline Dictation for Mac: What “On-Device” Means | Bulong</title>
+  <meta name="description" content="A practical guide to offline Mac dictation: local speech models, privacy checks, model downloads, permissions, and how to verify that your audio stays on your computer.">
+  <meta name="theme-color" content="#F3F7FA">
+  <link rel="canonical" href="https://bulong.app/guides/offline-dictation-for-mac.html">
+  <link rel="icon" type="image/png" href="/assets/icon.png">
+  <link rel="apple-touch-icon" href="/assets/icon.png">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Bulong">
+  <meta property="og:url" content="https://bulong.app/guides/offline-dictation-for-mac.html">
+  <meta property="og:title" content="Offline Dictation for Mac: What “On-Device” Means">
+  <meta property="og:description" content="How local speech-to-text works and what to verify before trusting an offline dictation app.">
+  <meta property="og:image" content="https://bulong.app/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Bulong, private Filipino and Taglish dictation for Mac">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Offline Dictation for Mac: What “On-Device” Means">
+  <meta name="twitter:description" content="How local speech-to-text works and what to verify before trusting an offline dictation app.">
+  <meta name="twitter:image" content="https://bulong.app/assets/og.png">
+  <meta name="twitter:image:alt" content="Bulong, private Filipino and Taglish dictation for Mac">
+  <link rel="stylesheet" href="/styles.css?v=9">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": "https://bulong.app/guides/offline-dictation-for-mac.html#article",
+        "headline": "Offline dictation for Mac: what on-device really means",
+        "description": "A practical guide to local speech recognition, model downloads, and privacy verification.",
+        "datePublished": "2026-07-29",
+        "dateModified": "2026-07-29",
+        "mainEntityOfPage": "https://bulong.app/guides/offline-dictation-for-mac.html",
+        "image": "https://bulong.app/assets/og.png",
+        "author": {"@type": "Organization", "name": "Bulong", "url": "https://bulong.app/"},
+        "inLanguage": "en"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Bulong", "item": "https://bulong.app/"},
+          {"@type": "ListItem", "position": 2, "name": "Guides"},
+          {"@type": "ListItem", "position": 3, "name": "Offline dictation for Mac"}
+        ]
+      }
+    ]
+  }
+  </script>
+  <noscript><style>@media (max-width:720px){.nav-links{display:flex!important}.nav-toggle{display:none!important}}</style></noscript>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav wrap" data-nav aria-label="Primary">
+      <a class="brand mono" href="/" aria-label="Bulong home"><img class="brand-img" src="/assets/icon.png" alt="" width="26" height="26"><span>Bulong</span></a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="16" x2="20" y2="16"/></svg>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <ul><li><a href="/#features">Features</a></li><li><a href="/privacy.html">Privacy</a></li><li><a href="/#pricing">Pricing</a></li></ul>
+        <a class="btn btn-primary nav-cta" href="/download.html#notify">Get notified</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <article class="guide">
+      <div class="wrap">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <a href="/">Bulong</a><span aria-hidden="true">/</span><a href="/#guides">Guides</a><span aria-hidden="true">/</span><span>Offline dictation</span>
+        </nav>
+        <header class="guide-head">
+          <span class="eyebrow">Privacy guide</span>
+          <h1>Offline dictation for Mac: what “on-device” really means.</h1>
+          <p class="guide-deck">A speech app can look local while still sending audio, transcripts, analytics, or license checks over the network. Here is how to tell what actually stays on your Mac.</p>
+          <p class="guide-meta mono">Updated 29 July 2026 · 6 minute read</p>
+        </header>
+
+        <div class="guide-layout">
+          <div class="prose guide-body">
+            <section>
+              <h2>Local transcription versus cloud transcription</h2>
+              <p>Every dictation app needs a speech model. A cloud app records your voice, uploads it to a remote server, and receives text in return. An offline app downloads the model to your computer and runs that same kind of speech recognition locally.</p>
+              <p>Local processing removes the network round trip and keeps working without Wi-Fi. It also changes the privacy model: the developer does not need to receive your voice to turn it into text.</p>
+              <div class="guide-note">
+                <strong>“Offline mode” is not always the default</strong>
+                <p>Some apps offer both cloud and local models. Check which model is selected, whether AI rewriting uses another provider, and whether history sync is enabled.</p>
+              </div>
+            </section>
+
+            <section>
+              <h2>Why an offline app still downloads files</h2>
+              <p>On-device does not mean the app never touches the internet. Speech models are large, so many apps download one during setup instead of bundling it with the application.</p>
+              <p>The important distinction is what happens after that download. A genuinely offline transcription path should still work when the connection is disabled. Bulong downloads its speech model once, stores it on the Mac, and uses it locally for later dictation.</p>
+            </section>
+
+            <section>
+              <h2>A five-minute privacy test</h2>
+              <ol>
+                <li>Install the app and finish any required speech-model download.</li>
+                <li>Quit and reopen it so you are testing a normal session.</li>
+                <li>Turn off Wi-Fi and disconnect any wired network.</li>
+                <li>Dictate a new sentence into a plain text field.</li>
+                <li>Confirm that transcription, insertion, and history still work.</li>
+              </ol>
+              <p>For a deeper check, use a network monitor such as Little Snitch or a firewall log. Look for traffic while recording, immediately after stopping, and while opening transcript history.</p>
+            </section>
+
+            <section>
+              <h2>Permissions an offline dictation app may need</h2>
+              <h3>Microphone</h3>
+              <p>The microphone permission lets the app capture audio while you dictate. It should not imply that the microphone is active all the time. A clear listening indicator and an explicit start-and-stop action make recording state easier to understand.</p>
+              <h3>Accessibility</h3>
+              <p>A Mac app may request Accessibility permission so it can insert the result into whichever text field is focused. That permission is powerful, so the app should explain why it is needed and provide a safe fallback such as copying the result to the clipboard.</p>
+              <h3>Network access</h3>
+              <p>Network access may be needed for the initial model download. It should not be required for later transcription if the selected model is genuinely local.</p>
+            </section>
+
+            <section>
+              <h2>Questions to ask before choosing an app</h2>
+              <ul>
+                <li>Is audio uploaded for transcription?</li>
+                <li>Does text get sent to an AI rewriting service?</li>
+                <li>Is transcript history stored locally or synced to an account?</li>
+                <li>Are analytics or crash reports enabled?</li>
+                <li>Does license activation require the app to phone home?</li>
+                <li>Can you delete local audio and transcript data?</li>
+              </ul>
+              <p>Bulong keeps transcript history in a local plaintext file, verifies its license locally, and does not include analytics or crash reporting. Its complete handling is documented on the <a href="/privacy.html">privacy page</a>.</p>
+            </section>
+
+            <section>
+              <h2>When cloud dictation may still be useful</h2>
+              <p>Cloud processing can offer larger models, centralized team features, or consistent performance on older computers. Local dictation uses your Mac’s memory and compute, and the first model load can take longer.</p>
+              <p>The right choice depends on the sensitivity of your speech, the hardware you use, the languages you need, and whether you value cloud features more than offline independence. The important part is knowing which tradeoff you are accepting.</p>
+            </section>
+          </div>
+
+          <aside class="guide-aside card" aria-label="Try Bulong">
+            <span class="eyebrow">Bulong for Mac</span>
+            <h2>Turn off Wi-Fi and keep dictating.</h2>
+            <p>Private, on-device Filipino, English, and Taglish dictation. Free for 14 days at launch, then $29 once.</p>
+            <a class="btn btn-primary" href="/download.html#notify">Get the launch email</a>
+          </aside>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <a class="brand mono" href="/" aria-label="Bulong home"><img class="brand-img" src="/assets/icon.png" alt="" width="26" height="26"><span>Bulong</span></a>
+        <p class="footer-tag">Private, on-device dictation for macOS — in English, Filipino, and Taglish.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <ul><li><a href="/download.html#notify">Get notified</a></li><li><a href="/#guides">Guides</a></li><li><a href="/privacy.html">Privacy</a></li><li><a href="mailto:hello@bulong.app">Contact</a></li></ul>
+      </nav>
+      <div class="footer-legal"><p class="mono">Includes NVIDIA Parakeet, © NVIDIA, CC-BY-4.0</p><p class="mono">© 2026 Bulong. Apple Silicon · macOS 14+.</p></div>
+    </div>
+  </footer>
+  <script src="/main.js?v=6" defer></script>
+</body>
+</html>

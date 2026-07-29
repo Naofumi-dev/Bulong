@@ -1,50 +1,53 @@
 # Bulong marketing site
 
-Static landing page + privacy page for **bulong.app**. Hand-written HTML/CSS/JS —
-no framework, no build step. The mint-on-ink brand mirrors the app.
+Static marketing site for **bulong.app**. Hand-written HTML/CSS/JS — no
+framework and no build step. The light-glass brand mirrors the app.
 
 ```
 site/
   index.html      landing (long scroll)
-  privacy.html    privacy page
+  download.html   launch-list now; download/install page when body is dl-live
+  privacy.html    privacy explanation
+  guides/         search-focused educational and comparison pages
   styles.css      Bulong tokens (:root) + all section styles
-  main.js         mobile-nav toggle only (progressive enhancement)
+  main.js         nav, progressive reveals, lazy demo, and lead form
   robots.txt      allow all + sitemap
-  sitemap.xml     the two page URLs
-  assets/         icon.png, og.png, and the app render crops
+  sitemap.xml     canonical public URLs
+  vercel.json     canonical redirect and response headers
+  assets/         product media, self-hosted font, and optimized web assets
 ```
 
 ## Preview locally
 
 ```sh
 python3 -m http.server 8000 --directory site
-# then open http://localhost:8000/index.html
+# then open http://localhost:8000/
 ```
 
 No server-side anything — any static file server works.
 
 ## Changing the price
 
-The price string lives in **exactly three** `data-price` spans in `index.html`
-(hero, pricing card, final CTA). To change $29, update **all three**:
+The price string appears in `data-price` spans on the landing and launch pages.
+To change $29, update every matching span:
 
 ```sh
-grep -n 'data-price' site/index.html   # shows the 3 lines to edit
+grep -R -n 'data-price' site/*.html
 ```
 
 There is no other source of the price — it is not generated from CSS.
 
-## Placeholder links to wire later
+## Pre-launch to live
 
-These are intentional placeholders for this phase (distribution/licensing land
-in later sub-projects). Search and replace when the real endpoints exist:
+The public site is honest about the current pre-launch state. Primary calls to
+action point to `download.html#notify`. When the app is ready:
 
-| Placeholder | Where | Wire to |
-|---|---|---|
-| `#download` | pricing-card button + final-CTA button + footer "Download" | the notarized DMG URL. `#download` is the final-CTA section id, so these smooth-scroll there until the real URL is set. |
-| `#pricing` | nav + hero "Download" | interim: these scroll to the pricing card (something useful) instead of looping to themselves. Repoint to the DMG/checkout URL when wired. |
-| checkout | the "Download for macOS" buttons | the Lemon Squeezy checkout URL, if buy and download are split |
-| `hello@bulong.app` | footer Contact, privacy page Contact | the real support/privacy inbox |
+1. Change `<body class="dl-soon">` to `<body class="dl-live">`.
+2. Replace each `DMG-URL` placeholder with the notarized download.
+3. Replace each `BUY-URL` placeholder with the checkout.
+4. Change homepage CTAs from launch notification to download.
+5. Update the `SoftwareApplication` offer availability from `PreOrder` to
+   `InStock`.
 
 ## Regenerating the OG image
 
@@ -57,9 +60,10 @@ swift script/render_og.swift   # run from the repo root; writes site/assets/og.p
 
 ## Deploy
 
-Upload the **contents of `site/`** to Hostinger's `public_html` for bulong.app
-(or use the Hostinger hosting tools with your authorization). Then point the
-domain — DNS/purchase is not automated here; do that step yourself.
+The directory is linked to the Vercel project recorded in
+`site/.vercel/project.json`. Deploy the **contents of `site/`**. Configure
+`www.bulong.app` as a permanent redirect to `bulong.app` in the project domain
+settings so both hosts do not serve duplicate 200 responses.
 
 ## Notes
 
@@ -71,5 +75,5 @@ domain — DNS/purchase is not automated here; do that step yourself.
   English, clipboard preservation). No custom vocabulary, no cloud AI, no tiers.
 - The hero HUD is a CSS/HTML recreation (crisp + animatable); its orb/waveform
   animation stops under `prefers-reduced-motion: reduce`.
-- The two-page nav/footer chrome is duplicated markup by design. A third page
-  should motivate a shared include.
+- Nav/footer chrome is duplicated markup because the site has no build step.
+  Keep canonical links and guide navigation synchronized when adding a page.

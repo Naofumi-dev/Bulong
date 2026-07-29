@@ -42,6 +42,38 @@ if (!reduceMotion && 'IntersectionObserver' in window) {
   revealables.forEach((el) => el.classList.add('in-view'));
 }
 
+// The demo is the largest page asset. Load it only when someone approaches
+// the section, then autoplay only when motion preferences allow it.
+const demoVideo = document.querySelector('video[data-src]');
+if (demoVideo && 'IntersectionObserver' in window) {
+  let loaded = false;
+  const demoObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          if (!loaded) {
+            demoVideo.src = demoVideo.dataset.src;
+            demoVideo.load();
+            loaded = true;
+          }
+          if (!reduceMotion) {
+            demoVideo.play().catch(() => {
+              // Browser autoplay policy may require an explicit user action.
+            });
+          }
+        } else if (loaded) {
+          demoVideo.pause();
+        }
+      });
+    },
+    { rootMargin: '320px 0px', threshold: 0.08 },
+  );
+  demoObserver.observe(demoVideo);
+} else if (demoVideo) {
+  demoVideo.src = demoVideo.dataset.src;
+  demoVideo.load();
+}
+
 // Lead-capture forms → POST /api/lead. On any failure the hidden mailto
 // fallback line is revealed, so a lead always has a way in.
 document.querySelectorAll('form[data-lead-form]').forEach((form) => {
@@ -49,13 +81,24 @@ document.querySelectorAll('form[data-lead-form]').forEach((form) => {
     e.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
     const status = form.querySelector('.lead-status');
+    let validation = form.querySelector('.lead-validation');
     const email = form.elements.email.value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       form.elements.email.focus();
       form.elements.email.setAttribute('aria-invalid', 'true');
+      if (!validation) {
+        validation = document.createElement('p');
+        validation.className = 'lead-status lead-validation';
+        validation.setAttribute('role', 'alert');
+        validation.textContent = 'Enter a valid email address.';
+        btn.insertAdjacentElement('afterend', validation);
+      }
+      validation.hidden = false;
       return;
     }
     form.elements.email.removeAttribute('aria-invalid');
+    if (validation) validation.hidden = true;
+    if (status) status.hidden = true;
     const label = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Sending…';
@@ -82,20 +125,4 @@ document.querySelectorAll('form[data-lead-form]').forEach((form) => {
       if (status) status.hidden = false;
     }
   });
-});
-
-// GoHighLevel embeds — form + calendar.
-// To go live: paste your GHL widget URLs into the data-ghl-src attributes in
-// index.html (form:  https://api.leadconnectorhq.com/widget/form/FORM_ID,
-// calendar: https://api.leadconnectorhq.com/widget/booking/CALENDAR_ID).
-// While an attribute is empty, the styled email fallback inside the slot stays.
-document.querySelectorAll('[data-ghl-src]').forEach((slot) => {
-  const src = slot.getAttribute('data-ghl-src');
-  if (!src) return;
-  const frame = document.createElement('iframe');
-  frame.src = src;
-  frame.className = 'contact-embed';
-  frame.loading = 'lazy';
-  frame.title = slot.getAttribute('data-ghl-title') || 'Contact';
-  slot.replaceChildren(frame);
 });
