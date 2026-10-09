@@ -8,6 +8,10 @@ Bulong — Tagalog for "whisper." Private, on-device dictation for macOS: press 
 - The only network traffic is one-time model downloads from Hugging Face
 - No telemetry, no cloud transcription, no API key
 
+## Install (friend build)
+
+See [INSTALL.md](INSTALL.md). The unsigned DMG is in `downloads/`.
+
 ## Develop
 
 ```bash
